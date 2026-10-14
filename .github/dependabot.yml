@@ -1,0 +1,30 @@
+# Dependabot — weekly dependency + action updates.
+# Version updates land as PRs; security updates are always on.
+# Note: bun.lock is supported by the "bun" ecosystem? Not yet — the "npm"
+# ecosystem reads package.json (not bun.lock) for this repo, so PR bumps are
+# advisory; run `bun update <pkg>` to apply them to the lockfile.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      dev-minor:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Pinned majors managed deliberately via package.json "overrides"
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

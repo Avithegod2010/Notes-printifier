@@ -55,9 +55,20 @@ Last full audit: 2026-10-14 (`bun audit`).
   `@reactuses/core`, `next-intl`, `@tanstack/react-query`, `uuid`, `date-fns`.
 - **Updated `next` 16.1.3 → 16.4.0**, clearing the critical Image-Optimization RCE
   (GHSA-2xp9-vwfh-vxw4) and the Windows-hosted RCE (GHSA-p293-qw3h-jr36) advisories.
-- Result: **104 advisories (3 critical) → 44 (0 critical, 31 high, 12 moderate, 1 low)**.
-- Remaining advisories sit in **dev/toolchain transitive dependencies** (ESLint plugin
-  chains, Prisma's `effect`, glob matchers) that are never bundled into the static site
-  or the APK. The shipped client runtime (`next`, `react`, `pdfjs-dist`, `pdf-lib`,
-  `tesseract.js`, `zustand`, `framer-motion`) is current. Self-hosters running the API
-  routes should re-run `bun audit` after `bun install` and keep dependencies updated.
+- **Removed unused `sharp`** (GHSA-wq5f-xc86-pv6w, GHSA-rgj7-g3m4-5g8c, GHSA-f88m-g3jw-g9cj —
+  the three Dependabot "high" alerts; sharp is not used anywhere: the static export
+  runs with `images: { unoptimized: true }`) and the unused `recharts` +
+  `ui/chart.tsx` wrapper (its `lodash` chain carried advisories of its own).
+- **Pinned 17 vulnerable transitive dependencies** via `package.json` → `overrides`
+  (ajv, js-yaml, minimatch, brace-expansion, @humanfs/node, flatted, defu,
+  deepmerge-ts, effect, nanoid, source-map-js, baseline-browser-mapping, picomatch,
+  browserslist, @babel/core, postcss) — all in dev/toolchain chains, all fixed in
+  their existing major lines.
+- Result: **104 advisories (3 critical) → 1 (1 high)**. The single remaining finding
+  is `braces <=3.0.3` (GHSA-vfj7-8cjw-p6xm, dev-chain ReDoS) which has **no upstream
+  patch** — 3.0.3 is the newest release. It is used only by the ESLint glob chain at
+  lint time on trusted local files; risk is accepted until upstream ships a fix.
+- The shipped client runtime (`next`, `react`, `pdfjs-dist`, `pdf-lib`, `tesseract.js`,
+  `zustand`, `framer-motion`) is current and advisory-free. Self-hosters running the
+  API routes should re-run `bun audit` after `bun install` and keep dependencies
+  updated. Dependabot (`.github/dependabot.yml`) opens weekly update PRs.
