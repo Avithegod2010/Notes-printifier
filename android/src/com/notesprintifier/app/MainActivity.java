@@ -17,6 +17,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -40,6 +43,11 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+
+    /** A PDF shared/opened into the app, waiting for the page to ingest it. */
+    private boolean pendingShared;
+    /** Staged copy of the shared PDF (cache dir), served to the WebView at /__shared.pdf. */
+    private File sharedFile;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -69,6 +77,84 @@ public class MainActivity extends Activity {
         } else {
             webView.loadUrl(START_URL);
         }
+
+        // A cold start may itself carry the share/view intent; with singleTask,
+        // later ones arrive here via onNewIntent.
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // replace the stale launch intent
+        handleIntent(intent);
+    }
+
+    /**
+     * Receives a PDF handed over from another app — either ACTION_SEND
+     * (share sheet, EXTRA_STREAM) or ACTION_VIEW (open-with, getData()).
+     * The content stream is copied into the cache dir so the WebView can
+     * re-read it at /__shared.pdf, then the page is nudged to ingest it.
+     */
+    private void handleIntent(Intent intent) {
+        try {
+            if (intent == null) return;
+            String action = intent.getAction();
+            Uri uri = null;
+            if (Intent.ACTION_SEND.equals(action)) {
+                uri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            } else if (Intent.ACTION_VIEW.equals(action)) {
+                uri = intent.getData();
+            }
+            if (uri == null) return;
+
+            File dest = new File(getCacheDir(), "shared.pdf");
+            InputStream in = null;
+            FileOutputStream out = null;
+            try {
+                in = getContentResolver().openInputStream(uri);
+                if (in == null) throw new IOException("Stream unavailable");
+                out = new FileOutputStream(dest);
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                out.flush();
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ignored) { }
+                if (out != null) try { out.close(); } catch (IOException ignored) { }
+            }
+
+            sharedFile = dest;
+            pendingShared = true;
+            maybeConsumeShared();
+        } catch (Exception e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this,
+                            "Could not open that PDF", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    /**
+     * If a shared PDF is staged and the page is up, nudge the web receiver.
+     * Called from handleIntent (share just arrived) and onPageFinished (the
+     * page may have finished loading after a cold-start share).
+     */
+    private void maybeConsumeShared() {
+        if (pendingShared && webView != null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (pendingShared && webView != null) {
+                        webView.evaluateJavascript(
+                                "if(window.__npConsumeShared){window.__npConsumeShared();}", null);
+                    }
+                }
+            });
+        }
     }
 
     /** Serves assets/www over the synthetic https origin. */
@@ -81,6 +167,22 @@ public class MainActivity extends Activity {
             String path = url.getPath();
             if (path == null || path.length() == 0) path = "/index.html";
             if (path.contains("..")) return null; // block path traversal
+
+            // A PDF shared into the app is staged at /__shared.pdf (never cached).
+            if ("/__shared.pdf".equals(path) && sharedFile != null && sharedFile.exists()) {
+                try {
+                    FileInputStream in = new FileInputStream(sharedFile);
+                    WebResourceResponse resp = new WebResourceResponse("application/pdf", null, in);
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Access-Control-Allow-Origin", "*");
+                    headers.put("Cache-Control", "no-store");
+                    resp.setResponseHeaders(headers);
+                    return resp;
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+
             try {
                 InputStream in = getAssets().open("www" + path);
                 String mime = guessMime(path);
@@ -113,6 +215,9 @@ public class MainActivity extends Activity {
             // Injected AFTER the page loads; the capture-phase click listener
             // sits above React's handlers, so patched <a download> links win.
             view.evaluateJavascript(INJECT_JS, null);
+            // The page may have finished loading after a cold-start share —
+            // give the web receiver another chance to pick the staged PDF up.
+            maybeConsumeShared();
             super.onPageFinished(view, url);
         }
     }

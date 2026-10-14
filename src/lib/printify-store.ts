@@ -14,8 +14,16 @@ import {
   type LayoutSettings,
 } from './pdf/compose';
 import { addOcrTextLayer, countOcrSlides, ocrComposeItems } from './pdf/ocr';
-import { saveRecentJob } from './recent-jobs';
-import { loadPresets, savePresetsToDisk, makePresetId, MAX_PRESETS, type Preset } from './presets';
+import { saveRecentJob, saveRecentSource, type RecentSourceFile } from './recent-jobs';
+import { recordJob } from './ink-stats';
+import {
+  allPresets,
+  loadPresets,
+  savePresetsToDisk,
+  makePresetId,
+  MAX_PRESETS,
+  type Preset,
+} from './presets';
 import {
   loadRememberFlag,
   loadSavedPrefs,
@@ -205,7 +213,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
 
   presets: [],
 
-  refreshPresets: () => set({ presets: loadPresets() }),
+  refreshPresets: () => set({ presets: allPresets() }),
 
   savePreset: (name) => {
     const preset: Preset = {
@@ -232,9 +240,10 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   },
 
   deletePreset: (id) => {
+    if (id.startsWith('builtin:')) return; // built-ins are permanent
     const list = loadPresets().filter((p) => p.id !== id);
     savePresetsToDisk(list);
-    set({ presets: list });
+    set({ presets: allPresets() });
   },
 
   addFiles: async (files) => {
@@ -571,8 +580,10 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         // stats are optional — never let them break processing
       }
 
-      // Private on-device history (IndexedDB) for quick re-download
-      void saveRecentJob({
+      // Private on-device history (IndexedDB) for quick re-download + re-run.
+      // Originals (≤15 MB total) are kept too, so "Re-printify" can start a
+      // fresh conversion from history without re-uploading anything.
+      const jobId = await saveRecentJob({
         name: fileName,
         inputPages: selected.length,
         outputPages: composed.outputPages,
@@ -581,6 +592,21 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         colorMode: filters.colorMode,
         layout: layoutLabel,
         blob: finalBlob,
+      });
+      const sourceFiles: RecentSourceFile[] = buffers
+        .map((b) => {
+          const name = docs.find((d) => d.id === b.id)?.name ?? 'document.pdf';
+          return { name, blob: new Blob([b.data], { type: 'application/pdf' }) };
+        })
+        .filter((f) => f.blob.size > 0);
+      void saveRecentSource(jobId, sourceFiles, inputBytes);
+
+      // Lifetime impact meter — local totals only, never uploaded.
+      recordJob({
+        inputPages: selected.length,
+        outputPages: composed.outputPages,
+        inkSavedPct: composed.inkSavedPct,
+        beforeInkPct: composed.beforeInkPct,
       });
     } catch (err) {
       if (!get().processing) return; // reset mid-run — nothing to report

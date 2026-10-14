@@ -16,10 +16,100 @@ export const MAX_PRESETS = 24;
 export interface Preset {
   id: string;
   name: string;
+  /** i18n key — when set, `name` is ignored and t(nameKey) is rendered. */
+  nameKey?: string;
+  /** Built-ins ship with the app and cannot be deleted. */
+  builtin?: boolean;
   ts: number;
   filters: FilterSettings;
   layout: LayoutSettings;
 }
+
+/**
+ * Built-in recipes — the answer to "which settings should I pick?".
+ * Economy squeezes the most out of every sheet, Balanced is the everyday
+ * default, Exam-cram trades some ink for readability.
+ */
+export const BUILTIN_PRESETS: Preset[] = [
+  {
+    id: 'builtin:economy',
+    name: 'Economy',
+    nameKey: 'pr.builtin.economy',
+    builtin: true,
+    ts: 0,
+    filters: {
+      colorMode: 'bw',
+      inkSaver: 65,
+      cleanStains: true,
+      trimMargins: true,
+      penBoost: 0,
+      searchable: false,
+    },
+    layout: {
+      pageSize: 'a4',
+      orientation: 'portrait',
+      rows: 3,
+      cols: 2,
+      separators: true,
+      pageNumbers: true,
+      quality: 'low',
+      booklet: false,
+      duplexPad: false,
+    },
+  },
+  {
+    id: 'builtin:balanced',
+    name: 'Balanced',
+    nameKey: 'pr.builtin.balanced',
+    builtin: true,
+    ts: 0,
+    filters: {
+      colorMode: 'auto',
+      inkSaver: 45,
+      cleanStains: true,
+      trimMargins: false,
+      penBoost: 0,
+      searchable: false,
+    },
+    layout: {
+      pageSize: 'a4',
+      orientation: 'portrait',
+      rows: 2,
+      cols: 2,
+      separators: true,
+      pageNumbers: true,
+      quality: 'medium',
+      booklet: false,
+      duplexPad: false,
+    },
+  },
+  {
+    id: 'builtin:exam-cram',
+    name: 'Exam cram',
+    nameKey: 'pr.builtin.exam',
+    builtin: true,
+    ts: 0,
+    filters: {
+      colorMode: 'original',
+      inkSaver: 55,
+      cleanStains: true,
+      trimMargins: true,
+      penBoost: 20,
+      searchable: false,
+    },
+    layout: {
+      pageSize: 'a4',
+      orientation: 'portrait',
+      rows: 2,
+      cols: 1,
+      separators: true,
+      pageNumbers: true,
+      quality: 'high',
+      booklet: false,
+      duplexPad: false,
+    },
+  },
+];
 
 function ls(): Storage | null {
   try {
@@ -49,6 +139,11 @@ export function loadPresets(): Preset[] {
   } catch {
     return [];
   }
+}
+
+/** Built-ins first, then the user's own — the full list shown in the UI. */
+export function allPresets(): Preset[] {
+  return [...BUILTIN_PRESETS, ...loadPresets()];
 }
 
 export function savePresetsToDisk(presets: Preset[]): void {

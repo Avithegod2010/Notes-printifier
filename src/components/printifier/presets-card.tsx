@@ -1,17 +1,35 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BookmarkPlus, Check, Share2, Trash2, Upload } from 'lucide-react';
+import {
+  BookmarkPlus,
+  Check,
+  Leaf,
+  Scale,
+  Share2,
+  Timer,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePrintifyStore } from '@/lib/printify-store';
 import {
+  BUILTIN_PRESETS,
   loadPresets,
   mergeImportedPresets,
   serializePresets,
 } from '@/lib/presets';
 import { downloadBlob } from '@/lib/recent-jobs';
+import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
+
+/** Icons for the built-in recipe chips, by preset id. */
+const BUILTIN_ICONS: Record<string, typeof Leaf> = {
+  'builtin:economy': Leaf,
+  'builtin:balanced': Scale,
+  'builtin:exam-cram': Timer,
+};
 
 /**
  * Saved presets (#2) — one-tap restore of a full Enhance + Layout recipe.
@@ -20,6 +38,8 @@ import { useT } from '@/lib/i18n';
 export function PresetsCard() {
   const t = useT();
   const presets = usePrintifyStore((s) => s.presets);
+  const filters = usePrintifyStore((s) => s.filters);
+  const layout = usePrintifyStore((s) => s.layout);
   const savePreset = usePrintifyStore((s) => s.savePreset);
   const applyPreset = usePrintifyStore((s) => s.applyPreset);
   const deletePreset = usePrintifyStore((s) => s.deletePreset);
@@ -125,9 +145,45 @@ export function PresetsCard() {
         </Button>
       )}
 
-      {presets.length > 0 ? (
+      {/* Built-in recipes — the "just pick one for me" row */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {BUILTIN_PRESETS.map((p) => {
+          const Icon = BUILTIN_ICONS[p.id] ?? BookmarkPlus;
+          const active =
+            filters.colorMode === p.filters.colorMode &&
+            filters.inkSaver === p.filters.inkSaver &&
+            layout.rows === p.layout.rows &&
+            layout.cols === p.layout.cols;
+          return (
+            <Button
+              key={p.id}
+              type="button"
+              size="sm"
+              onClick={() => applyPreset(p.id)}
+              aria-label={t(p.nameKey ?? p.name)}
+              title={t(`${p.nameKey}D`)}
+              className={cn(
+                'h-auto flex-col gap-1 rounded-xl border px-2 py-2.5 text-xs font-semibold transition-colors',
+                active
+                  ? 'border-violet-400/60 bg-violet-500/15 text-violet-100'
+                  : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-violet-500/40 hover:text-foreground',
+              )}
+            >
+              <Icon className="h-4 w-4 text-violet-300" aria-hidden="true" />
+              <span className="leading-tight">{t(p.nameKey ?? p.name)}</span>
+            </Button>
+          );
+        })}
+      </div>
+      <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+        {t('en.presets.builtinNote')}
+      </p>
+
+      {presets.filter((p) => !p.builtin).length > 0 ? (
         <ul className="pretty-scroll mt-3 max-h-44 space-y-2 overflow-y-auto pr-1">
-          {presets.map((p) => (
+          {presets
+            .filter((p) => !p.builtin)
+            .map((p) => (
             <li
               key={p.id}
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2"

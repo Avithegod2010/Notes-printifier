@@ -14,6 +14,7 @@ import {
   ScanText,
   Scissors,
   Smartphone,
+  Leaf,
 } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { COLOR_MODE_LABELS } from '@/lib/pdf/filters';
 import { estimateSavings, formatRupees } from '@/lib/savings';
+import { co2GramsFor, loadInkStats, resetInkStats, treesFor, type InkStats } from '@/lib/ink-stats';
 import { listRecentJobs, type RecentJob } from '@/lib/recent-jobs';
 import { useT } from '@/lib/i18n';
 
@@ -102,6 +104,7 @@ export function ResultStep() {
 
   // ---- personal savings history (local, on-device) -------------------------
   const [history, setHistory] = useState<RecentJob[] | null>(null);
+  const [impact, setImpact] = useState<InkStats | null>(null);
   useEffect(() => {
     let dead = false;
     void listRecentJobs().then((jobs) => {
@@ -110,6 +113,11 @@ export function ResultStep() {
     return () => {
       dead = true;
     };
+  }, []);
+
+  // Lifetime impact meter — refreshed after every result mounts.
+  useEffect(() => {
+    setImpact(loadInkStats().jobs > 0 ? loadInkStats() : null);
   }, []);
 
   if (!result) {
@@ -208,6 +216,48 @@ export function ResultStep() {
             {t('rs.saved', { rs: formatRupees(savings.rupees) })} — {t('rs.savedDetail', { n: savings.sheetsSaved })}
             <span className="block text-xs text-emerald-300/70">{t('rs.assume')}</span>
           </span>
+        </div>
+      )}
+
+      {/* Lifetime impact meter — pure local data, one tap to clear */}
+      {impact && (
+        <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.07] p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-200">
+              <Leaf className="h-4 w-4 text-emerald-300" /> {t('rs.impactTitle')}
+            </p>
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground underline-offset-2 hover:text-red-300 hover:underline"
+              onClick={() => {
+                resetInkStats();
+                setImpact(null);
+              }}
+            >
+              {t('rs.impactReset')}
+            </button>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+              <p className="text-base font-bold">{impact.jobs}</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('rs.impactJobs')}</p>
+            </div>
+            <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+              <p className="text-base font-bold">{impact.sheetsSaved}</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('rs.impactSheets')}</p>
+            </div>
+            <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+              <p className="text-base font-bold text-emerald-300">{formatRupees(impact.rupees)}</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('rs.impactMoney')}</p>
+            </div>
+            <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+              <p className="text-base font-bold">{impact.sheetsSaved >= 417 ? `${treesFor(impact.sheetsSaved)} 🌳` : `${(co2GramsFor(impact.sheetsSaved) / 1000).toFixed(2)} kg`}</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {impact.sheetsSaved >= 417 ? t('rs.impactTrees') : t('rs.impactCo2')}
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-snug text-muted-foreground/80">{t('rs.impactNote')}</p>
         </div>
       )}
 

@@ -8,6 +8,7 @@ import {
   Loader2,
   Printer,
   Sparkles,
+  Target,
   Type,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -165,6 +166,47 @@ export function LayoutStep() {
 
   const previewThumbs = selected.slice(0, perPage);
 
+  // ---- print-shop budget auto-fit (#2) ------------------------------------
+  // Xerox shops charge by the sheet. Type the number of sheets you can
+  // afford and we walk layouts from most aggressive down until the estimate
+  // fits — instant, arithmetic, no worker round-trip.
+  const [budget, setBudget] = useState('');
+  const [budgetMsg, setBudgetMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const BUDGET_CANDIDATES: Array<{ rows: number; cols: number; orientation: 'portrait' | 'landscape' }> = [
+    { rows: 4, cols: 2, orientation: 'landscape' },
+    { rows: 3, cols: 2, orientation: 'landscape' },
+    { rows: 2, cols: 2, orientation: 'portrait' },
+    { rows: 3, cols: 1, orientation: 'portrait' },
+    { rows: 2, cols: 1, orientation: 'portrait' },
+  ];
+
+  const fitBudget = () => {
+    const limit = Math.max(1, Math.floor(Number(budget) || 0));
+    setBudgetMsg(null);
+    if (!limit || selected.length === 0) return;
+    let last = BUDGET_CANDIDATES[0];
+    for (const c of BUDGET_CANDIDATES) {
+      last = c;
+      const perSheet = c.rows * c.cols;
+      let est = Math.ceil(selected.length / perSheet);
+      if (layout.duplexPad && est % 2 === 1) est += 1;
+      if (est <= limit) {
+        setLayout({ rows: c.rows, cols: c.cols, orientation: c.orientation });
+        setBudgetMsg({
+          ok: true,
+          text: t('ly.budget.fit', { n: est, per: perSheet }),
+        });
+        return;
+      }
+    }
+    // nothing fits — apply the most aggressive layout anyway
+    setLayout({ rows: last.rows, cols: last.cols, orientation: last.orientation });
+    const perSheet = last.rows * last.cols;
+    let est = Math.ceil(selected.length / perSheet);
+    if (layout.duplexPad && est % 2 === 1) est += 1;
+    setBudgetMsg({ ok: false, text: t('ly.budget.none', { n: est, limit }) });
+  };
+
   const processPct = progress
     ? Math.round((progress.done / Math.max(1, progress.total)) * 100)
     : 0;
@@ -244,6 +286,61 @@ export function LayoutStep() {
               ))}
             </RadioGroup>
           </div>
+        </div>
+
+        <div
+          className={cn(
+            'rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-opacity',
+            layout.booklet && 'pointer-events-none opacity-40',
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-violet-300" />
+            <p className="text-sm font-medium">{t('ly.budget.title')}</p>
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.budget.sub')}</p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              value={budget}
+              onChange={(e) => {
+                setBudget(e.target.value);
+                setBudgetMsg(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') fitBudget();
+              }}
+              placeholder={t('ly.budget.ph')}
+              aria-label={t('ly.budget.title')}
+              className="sm:max-w-[140px]"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!budget || selected.length === 0}
+              onClick={fitBudget}
+              className="shrink-0 border-violet-400/40 text-violet-200 hover:bg-violet-500/15"
+            >
+              {t('ly.budget.go')}
+            </Button>
+          </div>
+          {budgetMsg && (
+            <p
+              role="status"
+              className={cn(
+                'mt-2 rounded-lg px-3 py-2 text-xs font-semibold',
+                budgetMsg.ok
+                  ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                  : 'border border-amber-500/30 bg-amber-500/10 text-amber-300',
+              )}
+            >
+              {budgetMsg.text}
+            </p>
+          )}
         </div>
 
         <div

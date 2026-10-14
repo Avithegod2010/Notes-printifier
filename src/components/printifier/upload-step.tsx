@@ -9,6 +9,7 @@ import {
   FolderUp,
   Globe,
   Loader2,
+  RotateCcw,
   Sparkles,
   Trash2,
   UploadCloud,
@@ -21,10 +22,14 @@ import { Input } from '@/components/ui/input';
 import { usePrintifyStore } from '@/lib/printify-store';
 import {
   downloadBlob,
+  getRecentSource,
   listRecentJobs,
+  listRecentSources,
   removeRecentJob,
   type RecentJob,
 } from '@/lib/recent-jobs';
+import { formatRupees, treesFor } from '@/lib/ink-stats';
+import { loadInkStats, type InkStats } from '@/lib/ink-stats';
 import { useT } from '@/lib/i18n';
 
 function formatBytes(bytes: number): string {
@@ -59,6 +64,9 @@ export function UploadStep() {
   const folderRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [recent, setRecent] = useState<RecentJob[]>([]);
+  const [reprintable, setReprintable] = useState<Set<string>>(new Set());
+  const [impact, setImpact] = useState<InkStats | null>(null);
+  const [reprinting, setReprinting] = useState(false);
 
   // Folder (batch / teacher mode) import — the directory attributes are not
   // in React's typings, so they are set imperatively once on mount.
@@ -115,10 +123,33 @@ export function UploadStep() {
   // whenever the user comes back to this step.
   const refreshRecent = useCallback(() => {
     void listRecentJobs().then(setRecent);
+    void listRecentSources().then((sources) => {
+      setReprintable(new Set(sources.map((s) => s.id)));
+    });
+    setImpact(loadInkStats().jobs > 0 ? loadInkStats() : null);
   }, []);
   useEffect(() => {
     if (docs.length === 0) refreshRecent();
   }, [docs.length, refreshRecent]);
+
+  /** Re-run a history job's ORIGINAL files through the pipeline. */
+  const reprint = useCallback(
+    async (job: RecentJob) => {
+      if (reprinting) return;
+      setReprinting(true);
+      try {
+        const src = await getRecentSource(job.id);
+        if (!src || src.files.length === 0) return;
+        const files = src.files.map(
+          (f) => new File([f.blob], f.name, { type: 'application/pdf' }),
+        );
+        await addFiles(files);
+      } finally {
+        setReprinting(false);
+      }
+    },
+    [addFiles, reprinting],
+  );
 
   const onPick = useCallback(
     (fileList: FileList | null) => {
@@ -147,6 +178,20 @@ export function UploadStep() {
 
   return (
     <div className="space-y-6">
+      {/* Lifetime impact meter — local totals, shown right where work starts */}
+      {impact && (
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.07] px-4 py-2.5 text-center text-xs text-emerald-200/90">
+          <span className="font-semibold text-emerald-200">{t('up.impactTitle')}</span>
+          <span>
+            {t('up.impactJobs', { n: impact.jobs })} · {t('up.impactSheets', { n: impact.sheetsSaved })} ·{' '}
+            {t('up.impactRupees', { rs: formatRupees(impact.rupees) })}
+          </span>
+          <span className="text-emerald-300/70">
+            {t('up.impactTrees', { n: treesFor(impact.sheetsSaved) })}
+          </span>
+        </div>
+      )}
+
       <div
         role="button"
         tabIndex={0}
@@ -312,6 +357,25 @@ export function UploadStep() {
                 >
                   {t('up.download')}
                 </Button>
+                {reprintable.has(job.id) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={reprinting || loadingDocs}
+                    aria-label={t('up.reprint')}
+                    title={t('up.reprintHint')}
+                    className="h-8 shrink-0 border-violet-400/40 text-violet-200 hover:bg-violet-500/15"
+                    onClick={() => void reprint(job)}
+                  >
+                    {reprinting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    )}
+                    {t('up.reprint')}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
