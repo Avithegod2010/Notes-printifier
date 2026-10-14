@@ -45,3 +45,19 @@ sanitizes file names before writing to `Downloads/Printifier`.
   publicly, put a rate limit in front of it.
 - TypeScript build errors are currently not treated as fatal (`ignoreBuildErrors`);
   CI runs ESLint on every push.
+
+## Dependency audit
+
+Last full audit: 2026-10-14 (`bun audit`).
+
+- **Removed unused scaffold packages** that carried advisories: `next-auth` (critical
+  auth-bypass advisory, never used), `@mdxeditor/editor`, `react-syntax-highlighter`,
+  `@reactuses/core`, `next-intl`, `@tanstack/react-query`, `uuid`, `date-fns`.
+- **Updated `next` 16.1.3 → 16.4.0**, clearing the critical Image-Optimization RCE
+  (GHSA-2xp9-vwfh-vxw4) and the Windows-hosted RCE (GHSA-p293-qw3h-jr36) advisories.
+- Result: **104 advisories (3 critical) → 44 (0 critical, 31 high, 12 moderate, 1 low)**.
+- Remaining advisories sit in **dev/toolchain transitive dependencies** (ESLint plugin
+  chains, Prisma's `effect`, glob matchers) that are never bundled into the static site
+  or the APK. The shipped client runtime (`next`, `react`, `pdfjs-dist`, `pdf-lib`,
+  `tesseract.js`, `zustand`, `framer-motion`) is current. Self-hosters running the API
+  routes should re-run `bun audit` after `bun install` and keep dependencies updated.
