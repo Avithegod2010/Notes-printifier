@@ -11,10 +11,16 @@ Slides are rendered page-by-page, cleaned up (white background, grayscale/ink-sa
 - **Print layouts** — 1×1 up to 3×3 slides per A4 sheet, margins/gaps tuned for hole-punching, **booklet mode** (saddle-stitch ordering + fold guide) and **duplex pad** (blank page so backs line up).
 - **Ink-saving filters** — dark-slide inversion, 2-tone posterization, grayscale, per-channel tint removal, blue-mark cleanup, edge trim, separation lines, frameless mode.
 - **Page control** — rotate, drag/button reorder, per-page exclude, name/roll-number **stamp** on every sheet.
-- **Presets** — save your recipe, share it as a JSON file, import others'.
+- **Presets** — built-in recipes (**Economy / Balanced / Exam cram**) plus your own, shareable as a JSON file.
+- **Print budget** — type a sheet limit ("xerox shop charges per sheet") and the layout auto-fits it.
+- **Impact meter** — lifetime sheets / ₹ / trees / CO₂ saved on this device, updated after every conversion.
+- **History re-run** — recent jobs keep their originals (≤15 MB), so yesterday's files can be re-printified with different settings in one tap.
+- **Auto deskew** — tilted scans and phone photos of notes are straightened per page before filtering (in Labs-friendly Enhance step).
 - **Cloud import** — paste a Google Drive / Dropbox link (server-side proxy, hardened against SSRF; the feature auto-hides when self-hosting without a server).
 - **Privacy** — files never leave the device. History, presets and settings live in IndexedDB/localStorage. The only network call is an anonymous usage ping whose "file name" is a truncated SHA-256 hash, not the real name.
 - **Savings calculator & history** — estimate sheets/₹ saved per semester, see your last jobs charted.
+- **Labs** — experimental switches in the header: remember settings, **OCR text repaint** (pages re-typeset as crisp black-on-white text; handwriting/diagrams fall back to the scan automatically).
+- **Android share-sheet** — share any PDF into the app (or "Open with → Notes Printifier") and it lands in the pipeline.
 - **Bilingual** — every string in English and हिन्दी.
 
 ## Quick start
@@ -81,7 +87,7 @@ public/                  PWA assets, local pdf.js/tesseract runtimes
 ## Versioning & releases
 
 Two release lines from one codebase — **stable** (beginners, frozen artifacts) and
-**beta** (rolling). Tags: `v1.0.0-stable` on the `stable` branch, `v1.3.x-beta` on
+**beta** (rolling). Tags: `v1.0.0-stable` on the `stable` branch, `v1.x.y-beta` on
 `main`. Signed APKs ship as Release assets. See [VERSIONING.md](VERSIONING.md) for the
 release ritual and [SECURITY.md](SECURITY.md) for the security model and reporting policy.
 

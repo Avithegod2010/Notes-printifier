@@ -140,13 +140,28 @@ function runWorkerOp(
 /**
  * Compose via the worker when possible; fall back to the main thread on any
  * failure so processing NEVER dead-ends.
+ *
+ * Text-repaint canvases are handled specially: OffscreenCanvas instances are
+ * transferable and ride along in the worker message's transfer list; DOM
+ * canvases are NOT transferable, so if any repaint canvas is a DOM canvas the
+ * worker is skipped for this run and the main-thread pipeline is used.
  */
 export async function composePdf(o: ComposeOptions): Promise<ComposeResult> {
-  if (o.buffers.length > 0) {
+  const repaintList = o.repaintCanvases ? Array.from(o.repaintCanvases.values()) : [];
+  const repaintTransferrable =
+    repaintList.length === 0 ||
+    (typeof OffscreenCanvas !== 'undefined' &&
+      repaintList.every((c) => c instanceof OffscreenCanvas));
+
+  if (o.buffers.length > 0 && repaintTransferrable) {
     try {
       // slice(): doc buffers must stay intact for previews / re-runs, so the
       // worker gets private copies that we transfer (zero extra copies).
       const copies = o.buffers.map((b) => b.data.slice(0));
+      const transfer: Transferable[] = [
+        ...(copies as unknown as Transferable[]),
+        ...(repaintList as unknown as Transferable[]),
+      ];
       const result = (await runWorkerOp(
         'compose',
         {
@@ -154,8 +169,9 @@ export async function composePdf(o: ComposeOptions): Promise<ComposeResult> {
           items: o.items,
           filters: o.filters,
           layout: o.layout,
+          repaintCanvases: o.repaintCanvases ?? null,
         },
-        copies as unknown as Transferable[],
+        transfer,
         o.onProgress,
       )) as ComposeCoreResult;
       return {
@@ -165,6 +181,13 @@ export async function composePdf(o: ComposeOptions): Promise<ComposeResult> {
     } catch (err) {
       if (!workerBroken) {
         console.warn('Worker compose failed — falling back to main thread.', err);
+      }
+      if (repaintList.length > 0) {
+        // The worker attempt may already have TRANSFERRED (neutered) the
+        // repaint canvases — a detached OffscreenCanvas cannot be redrawn.
+        // Degrade gracefully: fall back to plain page rendering (repaint off)
+        // rather than risk blank repainted pages.
+        return composePdfMainThread({ ...o, repaintCanvases: null });
       }
     }
   }

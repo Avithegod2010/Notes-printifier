@@ -7,8 +7,9 @@
  *    fully responsive during processing
  *
  * The pipeline:
- *   render page → measure (smart invert + ink stats) → filters → trim →
- *   JPEG → place into rows×cols grid → pdf-lib A4 output
+ *   render page → measure (smart invert + ink stats) → deskew (optional) →
+ *   filters → trim (optional) → JPEG → place into rows×cols grid →
+ *   pdf-lib A4 output
  *
  * It also records every slide's final placement rectangle, which the OCR
  * text-layer pass maps word bounding boxes onto.
@@ -16,10 +17,9 @@
 
 import { PDFDocument, StandardFonts, rgb, type PDFPage } from 'pdf-lib';
 import {
-  applyFilters,
   inkCoverage,
+  preparePageCanvas,
   resolveColorMode,
-  trimCanvasMargins,
   type AnyCanvas,
   type AnyCtx,
   type FilterSettings,
@@ -64,6 +64,17 @@ export interface ComposeItem {
   blank?: boolean;
 }
 
+/**
+ * Canonical lookup key for one unique slide: `docId:pageNumber:rotation`.
+ * The OCR/repaint passes and the compose loop MUST agree on this format, so
+ * both sides build keys through this helper (they can never drift).
+ */
+export function composeItemKey(
+  item: Pick<ComposeItem, 'docId' | 'pageNumber' | 'rotation'>,
+): string {
+  return `${item.docId}:${item.pageNumber}:${item.rotation}`;
+}
+
 export interface ComposeOptions {
   /** Raw PDF bytes, each tagged with the docId it belongs to. */
   buffers: Array<{ id: number; data: ArrayBuffer }>;
@@ -71,6 +82,14 @@ export interface ComposeOptions {
   items: ComposeItem[];
   filters: FilterSettings;
   layout: LayoutSettings;
+  /**
+   * LABS text-repaint: pre-rendered canvases (OCR text re-typeset as black
+   * on white), keyed by composeItemKey(item). When an entry exists for an
+   * item, the pdf.js page render is SKIPPED entirely and this canvas flows
+   * through the normal preparePageCanvas chain instead — that skip is the
+   * perf win. Items without an entry render from the PDF as usual.
+   */
+  repaintCanvases?: Map<string, AnyCanvas> | null;
   onProgress?: (done: number, total: number) => void;
 }
 
@@ -96,6 +115,8 @@ export interface ComposeCoreResult {
   placements: Placement[];
   /** How many pages the smart (auto) mode decided to invert. */
   autoInverted: number;
+  /** How many items used a text-repaint canvas instead of a page render. */
+  repainted: number;
 }
 
 export const QUALITY: Record<QualityOpt, { dpi: number; jpeg: number }> = {
@@ -309,6 +330,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   let inkSamples = 0;
   let inkBeforeSum = 0;
   let autoInverted = 0;
+  let repainted = 0;
   const placements: Placement[] = [];
   const chunks: ComposeItem[][] = [];
   for (let i = 0; i < o.items.length; i += perPage) {
@@ -339,37 +361,56 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       }
       const itemIndex = ci * perPage + local;
 
-      const src = srcDocs.get(item.docId);
-      if (!src) {
-        throw new Error(
-          'Source file is no longer available — please go back and re-upload it.',
+      // LABS text-repaint: when a repaint canvas exists for this item, use it
+      // INSTEAD of rendering the pdf page (skipping the render entirely is the
+      // perf win). The canvas still goes through the normal chain below.
+      const repaintCanvas = o.repaintCanvases?.get(composeItemKey(item)) ?? null;
+
+      let canvas: AnyCanvas;
+      let ctx: AnyCtx;
+      let pdfPage: PdfPageLike | null = null;
+      if (repaintCanvas) {
+        canvas = repaintCanvas;
+        repainted++;
+        const repaintCtx = canvas.getContext('2d', {
+          willReadFrequently: true,
+        }) as AnyCtx | null;
+        if (!repaintCtx) throw new Error('Canvas 2D context unavailable');
+        ctx = repaintCtx;
+      } else {
+        const src = srcDocs.get(item.docId);
+        if (!src) {
+          throw new Error(
+            'Source file is no longer available — please go back and re-upload it.',
+          );
+        }
+        pdfPage = await src.getPage(item.pageNumber);
+        const base = pdfPage.getViewport({ scale: 1 });
+        const rotation = (base.rotation + item.rotation) % 360;
+
+        // render at just enough pixels for the cell at the chosen dpi.
+        // NOTE: Math.floor, NOT ceil — the canvas must never be larger than the
+        // viewport rect pdf.js actually paints. With ceil, the fractional
+        // overflow row/column stayed unpainted (white) and inversion turned it
+        // into a pure-black hairline frame around every slide.
+        const targetPxW = (cellW * dpi) / 72;
+        const scale = Math.min(4, Math.max(0.3, targetPxW / base.width));
+        const viewport = pdfPage.getViewport({ scale, rotation });
+
+        canvas = env.createCanvas(
+          Math.max(1, Math.floor(viewport.width)),
+          Math.max(1, Math.floor(viewport.height)),
         );
+        const renderCtx = canvas.getContext('2d', {
+          willReadFrequently: true,
+        }) as AnyCtx | null;
+        if (!renderCtx) throw new Error('Canvas 2D context unavailable');
+        ctx = renderCtx;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        await pdfPage.render({ canvasContext: ctx, viewport }).promise;
       }
-      const pdfPage = await src.getPage(item.pageNumber);
-      const base = pdfPage.getViewport({ scale: 1 });
-      const rotation = (base.rotation + item.rotation) % 360;
-
-      // render at just enough pixels for the cell at the chosen dpi.
-      // NOTE: Math.floor, NOT ceil — the canvas must never be larger than the
-      // viewport rect pdf.js actually paints. With ceil, the fractional
-      // overflow row/column stayed unpainted (white) and inversion turned it
-      // into a pure-black hairline frame around every slide.
-      const targetPxW = (cellW * dpi) / 72;
-      const scale = Math.min(4, Math.max(0.3, targetPxW / base.width));
-      const viewport = pdfPage.getViewport({ scale, rotation });
-
-      const canvas = env.createCanvas(
-        Math.max(1, Math.floor(viewport.width)),
-        Math.max(1, Math.floor(viewport.height)),
-      );
-      const ctx = canvas.getContext('2d', {
-        willReadFrequently: true,
-      }) as AnyCtx | null;
-      if (!ctx) throw new Error('Canvas 2D context unavailable');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      await pdfPage.render({ canvasContext: ctx, viewport }).promise;
 
       // smart per-page invert decision (before any filtering)
       const effMode = resolveColorMode(canvas, o.filters.colorMode);
@@ -381,11 +422,9 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
         before = inkCoverage(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
       }
 
-      applyFilters(canvas, o.filters, effMode);
-      let finalCanvas: AnyCanvas = canvas;
-      if (o.filters.trimMargins) {
-        finalCanvas = trimCanvasMargins(canvas);
-      }
+      // deskew (optional) → filters → trim — the exact per-page chain,
+      // worker-safe, in one call
+      const finalCanvas = preparePageCanvas(canvas, o.filters, effMode);
 
       if (inkSamples < 6 && before > 0.03) {
         const afterCtx = finalCanvas.getContext('2d', {
@@ -411,7 +450,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       page.drawImage(img, { x, y, width: w, height: h });
       placements.push({ itemIndex, outPage: ci + 1, x, y, w, h });
 
-      pdfPage.cleanup();
+      pdfPage?.cleanup();
 
       done++;
       o.onProgress?.(done, o.items.length);
@@ -430,7 +469,15 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
     ? Math.min(100, Math.round((inkBeforeSum / inkSamples) * 100))
     : 0;
 
-  return { pdfBytes, outputPages: chunks.length, inkSavedPct, beforeInkPct, placements, autoInverted };
+  return {
+    pdfBytes,
+    outputPages: chunks.length,
+    inkSavedPct,
+    beforeInkPct,
+    placements,
+    autoInverted,
+    repainted,
+  };
 }
 
 /**
@@ -557,9 +604,7 @@ export async function estimateCore(
 
     const before = inkCoverage(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
     const effMode = resolveColorMode(canvas, filters.colorMode);
-    applyFilters(canvas, filters, effMode);
-    let finalCanvas: AnyCanvas = canvas;
-    if (filters.trimMargins) finalCanvas = trimCanvasMargins(canvas);
+    const finalCanvas = preparePageCanvas(canvas, filters, effMode);
 
     if (before > 0.03) {
       const afterCtx = finalCanvas.getContext('2d', {

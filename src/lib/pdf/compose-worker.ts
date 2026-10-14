@@ -25,6 +25,7 @@ import {
   type LayoutSettings,
   type PdfDocLike,
 } from './compose-core';
+import type { AnyCanvas } from './filters';
 import { PDF_WASM_URL } from './pdfjs';
 
 // pdf.js normally spawns its own worker for parsing. Inside this worker we
@@ -77,6 +78,11 @@ interface WorkerRequest {
   items: ComposeItem[];
   filters: FilterSettings;
   layout: LayoutSettings;
+  /**
+   * LABS text-repaint canvases (OffscreenCanvas only — the client transfers
+   * them). Read-only here: draw through composePdfCore, never close/destroy.
+   */
+  repaintCanvases?: Map<string, AnyCanvas> | null;
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -91,6 +97,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         items: e.data.items,
         filters: e.data.filters,
         layout: e.data.layout,
+        repaintCanvases: e.data.repaintCanvases ?? null,
         onProgress: (done, total) => post({ type: 'progress', id, done, total }),
       });
       post({ type: 'done', id, result }, [result.pdfBytes.buffer as ArrayBuffer]);

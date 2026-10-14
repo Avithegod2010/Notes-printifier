@@ -16,7 +16,8 @@
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { loadPdfDocument } from './pdfjs';
-import type { ComposeItem, Placement } from './compose-core';
+import { composeItemKey, type ComposeItem, type Placement } from './compose-core';
+import type { AnyCanvas, AnyCtx } from './filters';
 
 export interface OcrWord {
   text: string;
@@ -25,6 +26,8 @@ export interface OcrWord {
   fy0: number;
   fx1: number;
   fy1: number;
+  /** Tesseract confidence 0..100 (already ≥ MIN_WORD_CONFIDENCE). */
+  confidence: number;
 }
 
 export interface OcrKey {
@@ -43,7 +46,9 @@ function sanitize(text: string): string {
 }
 
 export function ocrKeyString(k: OcrKey): string {
-  return `${k.docId}:${k.pageNumber}:${k.rotation}`;
+  // delegate to the shared helper so OCR keys can never drift from the
+  // compose-side lookup keys (same docId:page:rotation format)
+  return composeItemKey(k);
 }
 
 export function countOcrSlides(items: ComposeItem[]): number {
@@ -67,7 +72,7 @@ export async function ocrComposeItems(
   const unique = new Map<string, OcrKey>();
   for (const item of items) {
     if (item.blank) continue;
-    const key = `${item.docId}:${item.pageNumber}:${item.rotation}`;
+    const key = composeItemKey(item);
     if (!unique.has(key)) {
       unique.set(key, { docId: item.docId, pageNumber: item.pageNumber, rotation: item.rotation });
     }
@@ -134,7 +139,7 @@ export async function ocrComposeItems(
               const fy0 = w.bbox.y0 / canvas.height;
               const fy1 = w.bbox.y1 / canvas.height;
               if (fx1 - fx0 <= 0.001 || fy1 - fy0 <= 0.002) continue;
-              words.push({ text, fx0, fy0, fx1, fy1 });
+              words.push({ text, fx0, fy0, fx1, fy1, confidence: w.confidence });
             }
           }
         }
@@ -149,6 +154,154 @@ export async function ocrComposeItems(
   }
 
   return results;
+}
+
+/**
+ * Group OCR word boxes into text lines by clustering vertical centers
+ * (tolerance ≈ 0.6 × median word height). Words inside a line are sorted
+ * left-to-right so the repaint pass draws them in reading order.
+ */
+export function groupOcrWordsIntoLines(words: OcrWord[]): OcrWord[][] {
+  if (words.length === 0) return [];
+  const heights = words.map((w) => w.fy1 - w.fy0).sort((a, b) => a - b);
+  const medianH = heights[Math.floor(heights.length / 2)];
+  const tol = 0.6 * medianH;
+  const sorted = [...words].sort(
+    (a, b) => (a.fy0 + a.fy1) / 2 - (b.fy0 + b.fy1) / 2,
+  );
+  const lines: OcrWord[][] = [];
+  let current: OcrWord[] = [];
+  let center = 0;
+  for (const w of sorted) {
+    const c = (w.fy0 + w.fy1) / 2;
+    if (current.length === 0 || Math.abs(c - center) <= tol) {
+      if (current.length === 0) {
+        center = c;
+      } else {
+        // running mean keeps the cluster anchored as it grows
+        center = (center * current.length + c) / (current.length + 1);
+      }
+      current.push(w);
+    } else {
+      lines.push(current);
+      current = [w];
+      center = c;
+    }
+  }
+  if (current.length) lines.push(current);
+  for (const line of lines) line.sort((a, b) => a.fx0 - b.fx0);
+  return lines;
+}
+
+/** Repaint quality gates: fewer words / lower confidence → keep the scan. */
+const REPAINT_MIN_WORDS = 8;
+const REPAINT_MIN_AVG_CONFIDENCE = 55;
+
+/** OffscreenCanvas when available, else a document canvas (worker-safe). */
+function makeRepaintCanvas(w: number, h: number): AnyCanvas {
+  if (typeof OffscreenCanvas !== 'undefined') {
+    return new OffscreenCanvas(Math.max(1, Math.floor(w)), Math.max(1, Math.floor(h)));
+  }
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.floor(w));
+  c.height = Math.max(1, Math.floor(h));
+  return c;
+}
+
+/**
+ * LABS "text repaint": build one crisp black-on-white canvas per unique
+ * slide, re-typesetting the OCR word boxes (per word — spacing is preserved,
+ * words are NOT joined into strings). Keys are composeItemKey format, the
+ * exact keys composePdfCore looks up. Slides that fail the quality gates
+ * (< 8 words, avg confidence < 55) get NO entry → compose falls back to the
+ * original scan for them.
+ *
+ * Consumes the output of the SAME OCR pass that feeds the searchable layer,
+ * so enabling repaint never runs Tesseract twice. MAX_OCR_SLIDES is already
+ * enforced inside ocrComposeItems — repaint can never exceed it (it only
+ * consumes keys that pass produced).
+ */
+export async function buildRepaintCanvases(
+  buffers: Array<{ id: number; data: ArrayBuffer }>,
+  items: ComposeItem[],
+  wordsByKey: Map<string, OcrWord[]>,
+  onProgress?: (done: number, total: number) => void,
+): Promise<Map<string, AnyCanvas>> {
+  const out = new Map<string, AnyCanvas>();
+  const unique = new Map<string, OcrKey>();
+  for (const item of items) {
+    if (item.blank) continue;
+    const key = composeItemKey(item);
+    if (!unique.has(key) && wordsByKey.has(key)) {
+      unique.set(key, { docId: item.docId, pageNumber: item.pageNumber, rotation: item.rotation });
+    }
+  }
+  const total = unique.size;
+  if (total === 0) return out;
+
+  const docs = new Map<number, Awaited<ReturnType<typeof loadPdfDocument>>>();
+  const buffersById = new Map(buffers.map((b) => [b.id, b.data]));
+
+  let done = 0;
+  for (const [key, k] of unique) {
+    const words = wordsByKey.get(key) ?? [];
+    const avgConfidence = words.length
+      ? words.reduce((sum, w) => sum + w.confidence, 0) / words.length
+      : 0;
+    if (words.length < REPAINT_MIN_WORDS || avgConfidence < REPAINT_MIN_AVG_CONFIDENCE) {
+      done++;
+      onProgress?.(done, total);
+      continue;
+    }
+    try {
+      // Only the page DIMENSIONS are needed — the repaint canvas is white
+      // paper + re-typeset text, no scan content is drawn.
+      let doc = docs.get(k.docId);
+      if (!doc) {
+        const buf = buffersById.get(k.docId);
+        if (!buf) throw new Error('Source file is no longer available for repaint');
+        doc = await loadPdfDocument(buf);
+        docs.set(k.docId, doc);
+      }
+      const page = await doc.getPage(k.pageNumber);
+      const base = page.getViewport({ scale: 1 });
+      // Same dimensions logic as the OCR render in ocrComposeItems — word
+      // boxes are fractions of this viewport, so any consistent aspect works.
+      const scale = Math.min(3, OCR_RENDER_WIDTH / base.width);
+      const rotation = (base.rotation + k.rotation) % 360;
+      const viewport = page.getViewport({ scale, rotation });
+      const w = Math.max(1, Math.floor(viewport.width));
+      const h = Math.max(1, Math.floor(viewport.height));
+      page.cleanup();
+
+      const canvas = makeRepaintCanvas(w, h);
+      const ctx = canvas.getContext('2d') as AnyCtx | null;
+      if (!ctx) throw new Error('Canvas unavailable for repaint');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#000000';
+      ctx.textBaseline = 'alphabetic';
+      for (const line of groupOcrWordsIntoLines(words)) {
+        for (const wd of line) {
+          // box height fraction × canvas height, clamped so noise / giant
+          // boxes can't produce absurd font sizes
+          const wordHeightPx = (wd.fy1 - wd.fy0) * h;
+          const px = Math.min(90, Math.max(9, Math.round(wordHeightPx)));
+          ctx.font = `${px}px sans-serif`;
+          // baseline sits slightly above the box bottom (descender margin)
+          ctx.fillText(wd.text, wd.fx0 * w, wd.fy1 * h - 0.15 * wordHeightPx);
+        }
+      }
+      out.set(key, canvas);
+    } catch (err) {
+      // one broken slide must not kill the pass — it just keeps its scan
+      console.warn('[ocr] repaint build failed, keeping original scan:', key, err);
+    }
+    done++;
+    onProgress?.(done, total);
+  }
+
+  return out;
 }
 
 /**

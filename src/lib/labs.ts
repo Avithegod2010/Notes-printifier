@@ -9,12 +9,15 @@
  * Currently gated:
  *  - rememberSettings: persist Enhance (filters) + Layout choices to
  *    localStorage and restore them on the next visit.
+ *  - textRepaint: experimental OCR "text repaint" — recognized text is
+ *    re-typeset as crisp black-on-white instead of a re-compressed scan.
  *
  * To add a new lab feature: add a field to LabsFlags + a loader/saver, a
  * switch in labs-popover.tsx, and gate the feature code on the store flag.
  */
 
 const LS_FLAG = 'printifier.labs.rememberSettings';
+const LS_REPAINT_FLAG = 'printifier.labs.textRepaint';
 const LS_PREFS = 'printifier.saved-prefs.v1';
 
 export interface SavedPrefs {
@@ -43,6 +46,17 @@ export function saveRememberFlag(on: boolean): void {
     s.removeItem(LS_FLAG);
     s.removeItem(LS_PREFS); // opting out clears the saved prefs too
   }
+}
+
+export function loadTextRepaintFlag(): boolean {
+  return ls()?.getItem(LS_REPAINT_FLAG) === '1';
+}
+
+export function saveTextRepaintFlag(on: boolean): void {
+  const s = ls();
+  if (!s) return;
+  if (on) s.setItem(LS_REPAINT_FLAG, '1');
+  else s.removeItem(LS_REPAINT_FLAG);
 }
 
 export function loadSavedPrefs(): SavedPrefs | null {

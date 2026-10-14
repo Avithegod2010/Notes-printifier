@@ -41,16 +41,28 @@ export function installSharedPdfReceiver(onPdf: (file: File) => void): () => voi
 
   window.__npSharedReceiverInstalled = true;
 
+  // One-shot semantics: the first successful fetch consumes the staged file
+  // and deletes the hook, so later nudges (onPageFinished, onNewIntent) can
+  // never ingest the same PDF twice. A failed attempt re-arms itself.
+  let settled = false;
+  let inFlight = false;
+
   window.__npConsumeShared = async () => {
+    if (settled || inFlight) return;
+    inFlight = true;
     try {
       // ?ts= busts any cached miss from before the file was staged.
       const res = await fetch('/__shared.pdf?ts=' + Date.now());
-      if (!res.ok) return;
-      const blob = await res.blob();
-      const file = new File([blob], 'shared.pdf', { type: 'application/pdf' });
-      onPdf(file);
+      if (res.ok) {
+        const blob = await res.blob();
+        settled = true;
+        delete window.__npConsumeShared;
+        onPdf(new File([blob], 'shared.pdf', { type: 'application/pdf' }));
+      }
     } catch {
       // Silent — nothing staged (e.g. plain web build) or fetch failed.
+    } finally {
+      inFlight = false;
     }
   };
 

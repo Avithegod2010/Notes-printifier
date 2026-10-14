@@ -3,6 +3,7 @@ import { loadPdfDocument } from './pdf/pdfjs';
 import { renderPageToCanvas, canvasToDataUrl, getPageDimensions } from './pdf/render';
 import {
   defaultFilters,
+  type AnyCanvas,
   type FilterSettings,
 } from './pdf/filters';
 import {
@@ -13,7 +14,13 @@ import {
   type ComposeItem,
   type LayoutSettings,
 } from './pdf/compose';
-import { addOcrTextLayer, countOcrSlides, ocrComposeItems } from './pdf/ocr';
+import {
+  addOcrTextLayer,
+  buildRepaintCanvases,
+  countOcrSlides,
+  ocrComposeItems,
+  type OcrWord,
+} from './pdf/ocr';
 import { saveRecentJob, saveRecentSource, type RecentSourceFile } from './recent-jobs';
 import { recordJob } from './ink-stats';
 import {
@@ -27,8 +34,10 @@ import {
 import {
   loadRememberFlag,
   loadSavedPrefs,
+  loadTextRepaintFlag,
   savePrefs,
   saveRememberFlag,
+  saveTextRepaintFlag,
 } from './labs';
 
 export interface DocInfo {
@@ -63,6 +72,8 @@ export interface ProcessResult {
   autoInverted: number;
   /** True when the searchable OCR text layer was added successfully. */
   searchable: boolean;
+  /** LABS text repaint: how many pages were re-typeset as crisp text (0 = off / all fell back). */
+  repainted: number;
   /** Set when OCR was requested but failed (PDF itself is still fine). */
   ocrWarning: string | null;
 }
@@ -167,6 +178,8 @@ interface PrintifyState {
 
   /** LABS: persist Enhance + Layout choices on this device (off by default). */
   labsRemember: boolean;
+  /** LABS: OCR pages and re-typeset them as crisp text instead of scans (off by default). */
+  labsTextRepaint: boolean;
 
   /** Saved presets (localStorage-backed, hydrated on mount). */
   presets: Preset[];
@@ -188,6 +201,7 @@ interface PrintifyState {
   setLayout: (patch: Partial<LayoutSettings>) => void;
   setStep: (step: number) => void;
   setLabsRemember: (on: boolean) => void;
+  setLabsTextRepaint: (on: boolean) => void;
   /** LABS: restore the labs flag + saved prefs from localStorage (mount-time, client only). */
   hydrateLabs: () => void;
   process: () => Promise<void>;
@@ -210,6 +224,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   result: null,
 
   labsRemember: false,
+  labsTextRepaint: false,
 
   presets: [],
 
@@ -444,11 +459,22 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
     saveRememberFlag(on);
     if (on) savePrefs(get().filters, get().layout);
   },
+  setLabsTextRepaint: (on) => {
+    set({ labsTextRepaint: on });
+    saveTextRepaintFlag(on);
+  },
   hydrateLabs: () => {
-    if (!loadRememberFlag()) return;
+    // Text repaint is an independent flag — restore it even when the user
+    // never opted into "remember my settings".
+    const repaint = loadTextRepaintFlag();
+    if (!loadRememberFlag()) {
+      if (repaint) set({ labsTextRepaint: true });
+      return;
+    }
     const prefs = loadSavedPrefs();
     set((s) => ({
       labsRemember: true,
+      labsTextRepaint: repaint,
       filters:
         prefs?.filters && typeof prefs.filters === 'object'
           ? { ...s.filters, ...(prefs.filters as Partial<FilterSettings>) }
@@ -494,6 +520,47 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         ? buildBookletItems(baseItems)
         : baseItems;
 
+      // LABS text repaint — OCR must run BEFORE compose so recognized words
+      // can be re-typeset into canvases that replace the pdf page renders.
+      // When "searchable" is also on, this ONE OCR pass feeds both consumers
+      // (Tesseract never runs twice); repaint-only mode runs it just once too.
+      const useRepaint = get().labsTextRepaint;
+      let sharedOcrWords: Map<string, OcrWord[]> | null = null;
+      let sharedOcrError: Error | null = null;
+      let sharedOcrRan = false;
+      if (useRepaint) {
+        sharedOcrRan = true;
+        const total = countOcrSlides(items);
+        set({ progress: { done: 0, total, ocr: true } });
+        try {
+          sharedOcrWords = await ocrComposeItems(
+            buffers,
+            items,
+            (done, t) => set({ progress: { done, total: t, ocr: true } }),
+            () => !get().processing,
+          );
+        } catch (err) {
+          if (!get().processing) return; // user reset mid-OCR — stop quietly
+          console.error('OCR pass (repaint) failed:', err);
+          sharedOcrError = err instanceof Error ? err : new Error('OCR pass failed');
+        }
+      }
+
+      let repaintCanvases: Map<string, AnyCanvas> | null = null;
+      if (useRepaint && sharedOcrWords) {
+        try {
+          repaintCanvases = await buildRepaintCanvases(
+            buffers,
+            items,
+            sharedOcrWords,
+            (done, t) => set({ progress: { done, total: t, ocr: true } }),
+          );
+        } catch (err) {
+          if (!get().processing) return; // user reset — stop quietly
+          console.error('Repaint canvas build failed:', err);
+        }
+      }
+
       // Runs in the processing Web Worker when available (UI stays fluid);
       // falls back to the identical main-thread pipeline otherwise.
       const composed = await composePdf({
@@ -501,8 +568,12 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         items,
         filters,
         layout: effLayout,
+        repaintCanvases,
         onProgress: (done, total) => set({ progress: { done, total } }),
       });
+      // Repaint canvases were consumed by compose (and possibly transferred
+      // to the worker) — let the map go out of scope, no manual dispose.
+      repaintCanvases = null;
 
       // Optional OCR pass — adds an invisible searchable text layer.
       let finalBlob = composed.blob;
@@ -510,14 +581,22 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
       let ocrWarning: string | null = null;
       if (filters.searchable) {
         try {
-          const total = countOcrSlides(items);
-          set({ progress: { done: 0, total, ocr: true } });
-          const words = await ocrComposeItems(
-            buffers,
-            items,
-            (done, t) => set({ progress: { done, total: t, ocr: true } }),
-            () => !get().processing,
-          );
+          // With repaint on, the pre-compose OCR pass already produced the
+          // words — reuse them instead of running Tesseract again.
+          let words: Map<string, OcrWord[]>;
+          if (sharedOcrRan) {
+            if (!sharedOcrWords) throw sharedOcrError ?? new Error('OCR pass failed');
+            words = sharedOcrWords;
+          } else {
+            const total = countOcrSlides(items);
+            set({ progress: { done: 0, total, ocr: true } });
+            words = await ocrComposeItems(
+              buffers,
+              items,
+              (done, t) => set({ progress: { done, total: t, ocr: true } }),
+              () => !get().processing,
+            );
+          }
           const withText = await addOcrTextLayer(composed.pdfBytes, items, composed.placements, words);
           finalBlob = new Blob([withText as BlobPart], { type: 'application/pdf' });
           searchable = true;
@@ -541,8 +620,18 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         beforeInkPct: composed.beforeInkPct,
         autoInverted: composed.autoInverted,
         searchable,
+        repainted: composed.repainted,
         ocrWarning,
       };
+      // Impact meter BEFORE the step switch — ResultStep reads the totals on
+      // mount, and recordJob is a cheap synchronous localStorage write while
+      // the IndexedDB history saves below are async.
+      recordJob({
+        inputPages: selected.length,
+        outputPages: composed.outputPages,
+        inkSavedPct: composed.inkSavedPct,
+        beforeInkPct: composed.beforeInkPct,
+      });
       set({ processing: false, progress: null, result, step: 4 });
 
       const layoutLabel = useBooklet
@@ -601,13 +690,6 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         .filter((f) => f.blob.size > 0);
       void saveRecentSource(jobId, sourceFiles, inputBytes);
 
-      // Lifetime impact meter — local totals only, never uploaded.
-      recordJob({
-        inputPages: selected.length,
-        outputPages: composed.outputPages,
-        inkSavedPct: composed.inkSavedPct,
-        beforeInkPct: composed.beforeInkPct,
-      });
     } catch (err) {
       if (!get().processing) return; // reset mid-run — nothing to report
       console.error('Processing failed:', err);

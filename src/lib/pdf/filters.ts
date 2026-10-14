@@ -10,6 +10,9 @@
  *  - inkSaver: a levels adjustment that pushes near-white pixels to pure
  *    white (and near-black to black), so printers lay down almost no ink
  *    on backgrounds.
+ *  - deskew: estimates each page's tilt from the ink mask itself and
+ *    counter-rotates tilted scans / phone photos straight BEFORE the other
+ *    filters run (see estimateSkewAngle / deskewCanvas / preparePageCanvas).
  *  - penBoost: darkens handwriting strokes (mid-tones) while keeping paper
  *    white — makes pencil/light-pen notes survive printing.
  *  - cleanStains: kills light cyan/blue "watercolor" washes and bright cyan
@@ -59,6 +62,17 @@ export interface FilterSettings {
   penBoost: number;
   /** Add an invisible OCR text layer so the output PDF is searchable. */
   searchable: boolean;
+  /**
+   * Auto deskew — detect tilted scans / phone photos and rotate each page
+   * straight before the other filters run.
+   *
+   * Optional in the type (not required) on purpose: built-in preset recipes
+   * in src/lib/presets.ts hardcode full FilterSettings literals and must keep
+   * type-checking unchanged. Runtime values always carry the field because
+   * every settings object is spread over defaultFilters, which sets
+   * `deskew: false`.
+   */
+  deskew?: boolean;
 }
 
 export const defaultFilters: FilterSettings = {
@@ -68,6 +82,7 @@ export const defaultFilters: FilterSettings = {
   trimMargins: false,
   penBoost: 0,
   searchable: false,
+  deskew: false,
 };
 
 /** Bright-cyan cut (QUESTION pills, option keys, cyan wash cores). */
@@ -300,6 +315,10 @@ export function applyFilters(
  * Auto-crop near-white margins so the content fills each grid cell — bigger,
  * more readable output on the same paper. Returns a NEW cropped canvas (or the
  * original when there is nothing meaningful to trim).
+ *
+ * The default padding scales with the render (1.5% of the shorter side,
+ * minimum 8 px) so high-DPI renders keep the same visible breathing margin
+ * around the content instead of a relatively shrinking hairline gap.
  */
 export function trimCanvasMargins(
   canvas: AnyCanvas,
@@ -366,7 +385,7 @@ export function trimCanvasMargins(
   // fully blank page — nothing to crop to
   if (maxX < 0) return canvas;
 
-  const pad = opts?.padding ?? 8;
+  const pad = opts?.padding ?? Math.max(8, Math.round(Math.min(w, h) * 0.015));
   minX = Math.max(left, minX - pad);
   minY = Math.max(top, minY - pad);
   maxX = Math.min(w - 1 - right, maxX + pad);
@@ -381,6 +400,340 @@ export function trimCanvasMargins(
   const octx = out.getContext('2d') as AnyCtx | null;
   if (!octx) return canvas;
   octx.drawImage(canvas, minX, minY, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Auto deskew — straighten tilted scans & phone photos
+// ---------------------------------------------------------------------------
+
+/** Work-resolution cap for skew estimation (longest side, in px). */
+const DESKEW_WORK_MAX = 420;
+/** |lum − mean| above which a pixel counts as "ink". */
+const DESKEW_INK_DIFF = 36;
+/** Below this ink fraction the page is blank-ish — skip the whole search. */
+const DESKEW_MIN_INK = 0.005;
+/** Cap on mask points fed to the search — keeps one run well under 120 ms. */
+const DESKEW_MAX_POINTS = 30000;
+
+/**
+ * Estimate how many degrees a page is tilted, from its own ink mask.
+ *
+ * Convention: a POSITIVE angle means the content is rotated clockwise on
+ * screen (text lines droop to the right); `deskewCanvas(canvas, a)` applies
+ * the opposite (−a) rotation, so a positive estimate straightens with a
+ * counter-clockwise turn. Returns 0 for confident-straight pages.
+ *
+ * How it works:
+ *  1. Downscale to a ≤420 px work canvas (aspect preserved, floor dims).
+ *  2. Luminance map → mean → ink mask = |lum − mean| > 36. The mask is
+ *     symmetric around the mean so the SAME threshold finds dark ink on
+ *     white scans AND bright text on dark slides.
+ *  3. Score(angle) = variance of the horizontal row-projection profile of
+ *     the mask after counter-rotating by `angle`. Straight text lines pile
+ *     up into sharp dark rows → high variance; skew smears them flat.
+ *  4. Coarse sweep −12…+12° (step 3°), then a fine sweep ±2.5° (step 0.5°)
+ *     around the coarse winner. Rotation happens on MASK POINTS only
+ *     (y' = y·cosA − x·sinA into a reused histogram) — no per-angle image
+ *     copies, no per-angle allocations.
+ *  5. Confidence guards: pages with <0.5% ink are skipped (blank-ish), and
+ *     a candidate must beat the 0° profile by ≥8% variance or the page
+ *     stays at exactly 0 (never jitter clean scans).
+ *
+ * Budget: ~420×315 work image, ≤30k mask points × 20 angle probes ≈ a few
+ * ms on a mid-range phone — far below the 120 ms/page target.
+ */
+export function estimateSkewAngle(canvas: AnyCanvas): number {
+  const w = canvas.width;
+  const h = canvas.height;
+  if (w < 16 || h < 16) return 0;
+
+  const scale = Math.min(1, DESKEW_WORK_MAX / Math.max(w, h));
+  const ww = Math.max(8, Math.floor(w * scale));
+  const wh = Math.max(8, Math.floor(h * scale));
+
+  const work = createLikeCanvas(canvas, ww, wh);
+  const wctx = work.getContext('2d', {
+    willReadFrequently: true,
+  }) as AnyCtx | null;
+  if (!wctx) return 0;
+  // white underlay so transparent sources don't read as black "ink"
+  wctx.fillStyle = '#ffffff';
+  wctx.fillRect(0, 0, ww, wh);
+  wctx.drawImage(canvas, 0, 0, ww, wh);
+
+  const d = wctx.getImageData(0, 0, ww, wh).data;
+  const total = ww * wh;
+
+  // mean luminance (mask threshold anchor)
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+  }
+  const mean = sum / total;
+
+  // ink mask — built once, reused by the density filter below
+  const mask = new Uint8Array(total);
+  let count = 0;
+  for (let y = 0; y < wh; y++) {
+    const rowOff = y * ww * 4;
+    for (let x = 0; x < ww; x++) {
+      const i = rowOff + x * 4;
+      const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      if (Math.abs(lum - mean) > DESKEW_INK_DIFF) {
+        mask[y * ww + x] = 1;
+        count++;
+      }
+    }
+  }
+  if (count / total < DESKEW_MIN_INK) return 0;
+
+  // Thin-structure filter — the crucial anti-false-positive step. Skew
+  // detection relies on TEXT LINES (thin strokes); photos, big headline art
+  // and filled shapes are dense blobs whose diagonals can out-score real
+  // line structure and produce spurious rotations (seen on a cover slide
+  // with a person photo). Summed-area table over the mask: a point survives
+  // only if its 9×9 neighborhood is NOT mostly ink (blobs die, strokes and
+  // blob EDGES survive as thin structure).
+  const iw = ww + 1;
+  const sat = new Int32Array(iw * (wh + 1));
+  for (let y = 0; y < wh; y++) {
+    let rowSum = 0;
+    for (let x = 0; x < ww; x++) {
+      rowSum += mask[y * ww + x];
+      sat[(y + 1) * iw + (x + 1)] = sat[y * iw + (x + 1)] + rowSum;
+    }
+  }
+  const RADIUS = 4;
+  const BLOCK = 2 * RADIUS + 1;
+  const BLOCK_MAX = BLOCK * BLOCK * 0.75;
+  const dense = (x: number, y: number): boolean => {
+    const x0 = Math.max(0, x - RADIUS);
+    const y0 = Math.max(0, y - RADIUS);
+    const x1 = Math.min(ww, x + RADIUS + 1);
+    const y1 = Math.min(wh, y + RADIUS + 1);
+    const area = (x1 - x0) * (y1 - y0);
+    const s =
+      sat[y1 * iw + x1] - sat[y0 * iw + x1] - sat[y1 * iw + x0] + sat[y0 * iw + x0];
+    // edge-clamped blocks shrink the denominator, so compare against the
+    // area actually covered, not the full block size
+    return s > area * 0.75 || s > BLOCK_MAX;
+  };
+
+  // collect center-relative THIN-ink coordinates, strided down to the cap
+  const stride = Math.max(1, Math.ceil(count / DESKEW_MAX_POINTS));
+  const xs = new Int16Array(Math.ceil(count / stride) + 1);
+  const ys = new Int16Array(xs.length);
+  let n = 0;
+  for (let y = 0; y < wh; y++) {
+    for (let x = 0; x < ww; x++) {
+      if (!mask[y * ww + x] || dense(x, y)) continue;
+      if (n >= xs.length) break;
+      xs[n] = x - ww * 0.5;
+      ys[n] = y - wh * 0.5;
+      n++;
+    }
+  }
+  // not enough thin structure (pure photo/blob page) — no trustworthy skew
+  if (n < 200) return 0;
+
+  // variance of the row-projection profile at a candidate angle. ≤420 px
+  // sides → the rotated profile never exceeds ~594 rows; one shared histogram.
+  // Returns the variance plus the number of non-empty rows (a structure
+  // signal — real text pages ink many rows, cover art ink few).
+  const hist = new Uint32Array(640);
+  const profileAt = (aDeg: number): { v: number; rows: number } => {
+    const rad = (aDeg * Math.PI) / 180;
+    const s = Math.sin(rad);
+    const c = Math.cos(rad);
+    const R = Math.min(Math.floor(ww * Math.abs(s) + wh * Math.abs(c)) + 1, hist.length);
+    hist.fill(0, 0, R);
+    for (let k = 0; k < n; k++) {
+      // counter-rotate the mask point by `aDeg` (the corrective rotation):
+      // y' = y·cosA − x·sinA, back to absolute rows via +wh/2
+      let row = (ys[k] * c - xs[k] * s + wh * 0.5) | 0;
+      if (row < 0) row = 0;
+      else if (row >= R) row = R - 1;
+      hist[row]++;
+    }
+    let sum2 = 0;
+    let rows = 0;
+    for (let r = 0; r < R; r++) {
+      sum2 += hist[r] * hist[r];
+      if (hist[r] > 0) rows++;
+    }
+    const mu = n / R;
+    return { v: sum2 / R - mu * mu, rows };
+  };
+
+  const base = profileAt(0);
+  // Structural guard: the projection-variance trick only means "straighter
+  // text lines" when the page HAS line structure. Sparse pages (title
+  // slides, cover art, big photos) can beat the 0° variance with a spurious
+  // angle — require a decent number of inked rows before trusting anything.
+  if (base.rows < Math.max(8, wh * 0.12)) return 0;
+
+  let bestA = 0;
+  let bestV = base.v;
+  // coarse sweep −9…+9° step 3° — camera/scan skews beyond 9° are rare, and
+  // larger "wins" are almost always content geometry, not skew.
+  for (let i = -3; i <= 3; i++) {
+    if (i === 0) continue;
+    const p = profileAt(i * 3);
+    if (p.v > bestV) {
+      bestV = p.v;
+      bestA = i * 3;
+    }
+  }
+  // fine sweep ±2.5° around the coarse winner, step 0.5°
+  const center = bestA;
+  for (let i = -5; i <= 5; i++) {
+    const a = center + i * 0.5;
+    const p = profileAt(a);
+    if (p.v > bestV) {
+      bestV = p.v;
+      bestA = a;
+    }
+  }
+
+  // confident-straight guard — clean scans must never get nudged by noise.
+  // A real 1.5–3° skew on a text page lifts the projection variance by well
+  // over 50%; content-geometry false positives rarely clear +35%.
+  if (bestA === 0 || bestV < base.v * 1.35) return 0;
+  return Math.max(-9, Math.min(9, bestA));
+}
+
+/**
+ * Dominant border color of a canvas — the mode over an 8 px edge ring
+ * (32-step RGB buckets, refined to the bucket's mean). Used as the deskew
+ * wedge fill so rotated-in background matches the page's own background:
+ * white scans keep white corners, and a dark slide rotated before its
+ * invert filter doesn't grow black corner triangles in the print.
+ * Returns '#ffffff' for degenerate/transparent sources.
+ */
+function edgeRingModeColor(canvas: AnyCanvas, ctx: AnyCtx): string {
+  const w = canvas.width;
+  const h = canvas.height;
+  if (w < 2 || h < 2) return '#ffffff';
+  const t = Math.max(1, Math.min(8, h >> 2));
+  const s = Math.max(1, Math.min(8, w >> 2));
+  const strips = [
+    ctx.getImageData(0, 0, w, t),
+    ctx.getImageData(0, h - t, w, t),
+    ctx.getImageData(0, 0, s, h),
+    ctx.getImageData(w - s, 0, s, h),
+  ];
+  const bucket = (r: number, g: number, b: number): number =>
+    ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+  const counts = new Int32Array(32768);
+  for (const img of strips) {
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      counts[bucket(d[i], d[i + 1], d[i + 2])]++;
+    }
+  }
+  let best = 0;
+  let bestN = 0;
+  for (let q = 0; q < counts.length; q++) {
+    if (counts[q] > bestN) {
+      bestN = counts[q];
+      best = q;
+    }
+  }
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let a = 0;
+  let n = 0;
+  for (const img of strips) {
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (bucket(d[i], d[i + 1], d[i + 2]) === best) {
+        r += d[i];
+        g += d[i + 1];
+        b += d[i + 2];
+        a += d[i + 3];
+        n++;
+      }
+    }
+  }
+  if (n === 0 || a / n < 128) return '#ffffff'; // transparent-ish source
+  return `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`;
+}
+
+/**
+ * Return a NEW canvas with the content rotated by −angleDeg around the
+ * center (positive estimate → counter-clockwise straightening — see
+ * estimateSkewAngle for the sign convention). Bounds are expanded so rotated
+ * corners never clip and dimensions use Math.floor like every other canvas
+ * we create. Skews under 0.35° are left untouched (returning the SAME canvas
+ * — callers can rely on identity to skip re-encoding).
+ *
+ * The expansion wedges are filled with the page's own dominant border color
+ * (see edgeRingModeColor) — NOT plain white — so deskewed dark slides don't
+ * grow black corner triangles when the invert filter runs right after.
+ */
+export function deskewCanvas(canvas: AnyCanvas, angleDeg: number): AnyCanvas {
+  if (!Number.isFinite(angleDeg) || Math.abs(angleDeg) < 0.35) return canvas;
+  const w = canvas.width;
+  const h = canvas.height;
+  const rad = (angleDeg * Math.PI) / 180;
+  const c = Math.cos(rad);
+  const s = Math.sin(rad);
+  // exact rotated bounding box is |w·cos|+|h·sin| × |w·sin|+|h·cos|;
+  // floor + 1 keeps it ≥ exact so no corner is ever cut
+  const W = Math.max(1, Math.floor(Math.abs(w * c) + Math.abs(h * s)) + 1);
+  const H = Math.max(1, Math.floor(Math.abs(w * s) + Math.abs(h * c)) + 1);
+  const out = createLikeCanvas(canvas, W, H);
+  const octx = out.getContext('2d') as AnyCtx | null;
+  if (!octx) return canvas;
+  const srcCtx = canvas.getContext('2d', {
+    willReadFrequently: true,
+  }) as AnyCtx | null;
+  octx.fillStyle = srcCtx ? edgeRingModeColor(canvas, srcCtx) : '#ffffff';
+  octx.fillRect(0, 0, W, H);
+  octx.translate(W / 2, H / 2);
+  octx.rotate(-rad);
+  octx.drawImage(canvas, -w / 2, -h / 2);
+  return out;
+}
+
+/**
+ * Deskew decision for a full page — the single entry point used by the
+ * pipeline AND the Enhance preview badge.
+ *
+ * Semantic gate: deskew exists for SCANS and PHONE PHOTOS of paper notes.
+ * Dark pages (born-digital slide decks) cannot be skewed in any meaningful
+ * way — and their big photo/diagonal art reliably games any variance-based
+ * angle search — so dark pages are never rotated. Only light pages (paper)
+ * reach the angle search, which is additionally guarded by the thin-structure
+ * filter, the ±9° search cap, the ≥1.35× variance-gain gate and the
+ * row-structure check inside estimateSkewAngle.
+ */
+export function estimateDeskewForPage(canvas: AnyCanvas): number {
+  if (meanLuminance(canvas) < AUTO_INVERT_THRESHOLD) return 0; // dark page
+  return estimateSkewAngle(canvas);
+}
+
+/**
+ * The single entry point the whole pipeline uses for one page:
+ *   deskew (optional, light pages only) → applyFilters → trim (optional).
+ * `effectiveMode` passes through to applyFilters so 'auto' pages can be
+ * resolved once by the caller (and reused for stats). Runs unchanged on the
+ * main thread and inside the compose Web Worker.
+ */
+export function preparePageCanvas(
+  canvas: AnyCanvas,
+  s: FilterSettings,
+  effectiveMode?: ColorMode,
+): AnyCanvas {
+  let out = canvas;
+  if (s.deskew) {
+    const a = estimateDeskewForPage(out);
+    if (a) out = deskewCanvas(out, a);
+  }
+  applyFilters(out, s, effectiveMode);
+  if (s.trimMargins) out = trimCanvasMargins(out);
   return out;
 }
 

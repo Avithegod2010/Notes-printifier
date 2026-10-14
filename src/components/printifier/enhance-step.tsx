@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,6 +10,7 @@ import {
   Eye,
   Loader2,
   PenLine,
+  RotateCw,
   ScanText,
   Wand2,
 } from 'lucide-react';
@@ -21,9 +22,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
-  applyFilters,
   COLOR_MODE_LABELS,
+  estimateDeskewForPage,
   inkCoverage,
+  preparePageCanvas,
   resolveColorMode,
   trimCanvasMargins,
   type ColorMode,
@@ -51,6 +53,9 @@ export function EnhanceStep() {
   const [inkAfter, setInkAfter] = useState(0);
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  /** Estimated tilt (deg) of the preview page — measured once, then cached. */
+  const [skewAngle, setSkewAngle] = useState<number | null>(null);
+  const angleCache = useRef<Map<string, number>>(new Map());
 
   const previewPage = pages.find((p) => p.selected) ?? pages[0];
 
@@ -64,7 +69,7 @@ export function EnhanceStep() {
       setBusy(true);
       try {
         const doc = await loadPdfDocument(buf);
-        let canvas = await renderPageToCanvas(doc, previewPage.pageNumber, {
+        const canvas = await renderPageToCanvas(doc, previewPage.pageNumber, {
           targetWidth: 620,
           extraRotation: previewPage.rotation,
         });
@@ -73,17 +78,38 @@ export function EnhanceStep() {
         setInkBefore(inkCoverage((canvas.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, canvas.width, canvas.height).data));
         // resolve 'auto' once so the preview shows the page's actual treatment
         const effMode = resolveColorMode(canvas as AnyCanvas, filters.colorMode);
-        applyFilters(canvas as AnyCanvas, filters, effMode);
+        // Skew angle: measured on the RAW render once per page and cached, so
+        // slider tweaks never re-run the search — the badge just reads it.
+        if (filters.deskew) {
+          const angleKey = `${previewPage.docId}:${previewPage.pageNumber}:${previewPage.rotation}`;
+          const cached = angleCache.current.get(angleKey);
+          if (cached !== undefined) {
+            setSkewAngle(cached);
+          } else {
+            const a = estimateDeskewForPage(canvas as AnyCanvas);
+            angleCache.current.set(angleKey, a);
+            if (cancelled) return;
+            setSkewAngle(a);
+          }
+        }
+        // deskew → filters — the same chain the final pipeline runs (trim is
+        // applied separately below so ink can be measured pre-trim)
+        const work = preparePageCanvas(
+          canvas as AnyCanvas,
+          { ...filters, trimMargins: false },
+          effMode,
+        );
         if (cancelled) return;
         // Ink is measured BEFORE trimming: cropping white margins raises the
         // dark-pixel fraction without saving ink — trim saves paper instead.
-        setInkAfter(inkCoverage((canvas.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, canvas.width, canvas.height).data));
+        setInkAfter(inkCoverage((work.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D).getImageData(0, 0, work.width, work.height).data));
+        let final = work;
         if (filters.trimMargins) {
-          const trimmed = trimCanvasMargins(canvas as AnyCanvas);
-          if (trimmed !== canvas) canvas = trimmed as HTMLCanvasElement;
+          const trimmed = trimCanvasMargins(work);
+          if (trimmed !== work) final = trimmed;
         }
         if (cancelled) return;
-        setAfter(canvas.toDataURL('image/jpeg', 0.72));
+        setAfter((final as HTMLCanvasElement).toDataURL('image/jpeg', 0.72));
       } catch (err) {
         console.error('Preview failed', err);
       } finally {
@@ -241,6 +267,31 @@ export function EnhanceStep() {
               />
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">{t('en.trim.d')}</p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                <RotateCw className="h-4 w-4 text-violet-400" /> {t('en.deskew')}
+                {filters.deskew && skewAngle !== null && Math.abs(skewAngle) >= 1 && (
+                  <Badge
+                    className="ml-1 border-0 bg-amber-500/20 text-[10px] text-amber-200"
+                    title={t('en.deskew.badge')}
+                  >
+                    {/* shows the applied correction: positive skew (content
+                        droops clockwise) straightens with a −angle turn */}
+                    {skewAngle > 0 ? '−' : '+'}
+                    {Math.abs(skewAngle).toFixed(1)}°
+                  </Badge>
+                )}
+              </h3>
+              <Switch
+                checked={filters.deskew ?? false}
+                onCheckedChange={(v) => setFilters({ deskew: v })}
+                aria-label={t('en.deskew')}
+              />
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{t('en.deskew.d')}</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">

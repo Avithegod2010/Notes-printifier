@@ -16,6 +16,8 @@ export function LabsPopover() {
   const t = useT();
   const labsRemember = usePrintifyStore((s) => s.labsRemember);
   const setLabsRemember = usePrintifyStore((s) => s.setLabsRemember);
+  const labsTextRepaint = usePrintifyStore((s) => s.labsTextRepaint);
+  const setLabsTextRepaint = usePrintifyStore((s) => s.setLabsTextRepaint);
 
   return (
     <Popover>
@@ -54,6 +56,21 @@ export function LabsPopover() {
             checked={labsRemember}
             onCheckedChange={setLabsRemember}
             aria-label="Remember my settings"
+            className="mt-0.5 shrink-0 data-[state=checked]:bg-violet-600"
+          />
+        </label>
+
+        <label className="mt-2 flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition-colors hover:border-violet-500/40">
+          <span className="flex-1">
+            <span className="block text-xs font-semibold">{t('labs.repaint')}</span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+              {t('labs.repaintD')}
+            </span>
+          </span>
+          <Switch
+            checked={labsTextRepaint}
+            onCheckedChange={setLabsTextRepaint}
+            aria-label="Text repaint — re-typeset pages as crisp text"
             className="mt-0.5 shrink-0 data-[state=checked]:bg-violet-600"
           />
         </label>

@@ -14,6 +14,7 @@ import {
   ScanText,
   Scissors,
   Smartphone,
+  Type,
   Leaf,
 } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
@@ -187,6 +188,11 @@ export function ResultStep() {
             <ScanText className="mr-1.5 h-3.5 w-3.5" /> {t('rs.searchable')}
           </Badge>
         )}
+        {result.repainted > 0 && (
+          <Badge className="mt-3 ml-2 border-0 bg-violet-500/15 text-violet-300">
+            <Type className="mr-1.5 h-3.5 w-3.5" /> {t('rs.repainted', { n: result.repainted })}
+          </Badge>
+        )}
         {filters.colorMode === 'auto' && result.autoInverted > 0 && (
           <p className="mt-2 text-xs text-violet-300">
             {t('rs.autoInverted', { n: result.autoInverted, t: result.inputPages })}
@@ -337,7 +343,10 @@ export function ResultStep() {
         </div>
       )}
 
-      {result.outputPages >= 3 && (
+      {/* Manual-duplex split: valid for plain N-up (output page = sheet) but
+          NOT for booklet — saddle-stitch order must stay interleaved for the
+          fold, so booklet users get the print-dialog note above instead. */}
+      {result.outputPages >= 3 && !layout.booklet && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">

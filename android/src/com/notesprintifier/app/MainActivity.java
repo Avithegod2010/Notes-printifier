@@ -142,19 +142,43 @@ public class MainActivity extends Activity {
      * If a shared PDF is staged and the page is up, nudge the web receiver.
      * Called from handleIntent (share just arrived) and onPageFinished (the
      * page may have finished loading after a cold-start share).
+     *
+     * React installs the receiver hook in a post-hydration effect, which can
+     * land AFTER the page 'load' event — so the nudge is a bounded retry
+     * (≈10 s, 400 ms apart) that stops as soon as the hook answers.
      */
-    private void maybeConsumeShared() {
-        if (pendingShared && webView != null) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (pendingShared && webView != null) {
-                        webView.evaluateJavascript(
-                                "if(window.__npConsumeShared){window.__npConsumeShared();}", null);
-                    }
-                }
-            });
+    private static final int SHARE_NUDGE_MAX_TRIES = 25;
+    private static final long SHARE_NUDGE_DELAY_MS = 400;
+    private int shareNudgeTries = 0;
+
+    private final Runnable shareNudge = new Runnable() {
+        @Override
+        public void run() {
+            if (!pendingShared || webView == null) return;
+            webView.evaluateJavascript(
+                    "(function(){if(window.__npConsumeShared){window.__npConsumeShared();return 'ok';}return 'no-hook';})()",
+                    new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            if (value != null && value.contains("ok")) {
+                                pendingShared = false; // receiver took over
+                                return;
+                            }
+                            if (shareNudgeTries < SHARE_NUDGE_MAX_TRIES
+                                    && pendingShared && webView != null) {
+                                shareNudgeTries++;
+                                webView.postDelayed(shareNudge, SHARE_NUDGE_DELAY_MS);
+                            }
+                        }
+                    });
         }
+    };
+
+    private void maybeConsumeShared() {
+        if (!pendingShared || webView == null) return;
+        shareNudgeTries = 0;
+        webView.removeCallbacks(shareNudge);
+        webView.post(shareNudge);
     }
 
     /** Serves assets/www over the synthetic https origin. */
@@ -307,6 +331,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (webView != null) {
+            webView.removeCallbacks(shareNudge);
             webView.destroy();
             webView = null;
         }

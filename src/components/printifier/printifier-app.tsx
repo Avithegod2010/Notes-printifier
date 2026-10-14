@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useSharedPdf } from '@/hooks/use-shared-pdf';
 import {
   Accordion,
   AccordionContent,
@@ -699,8 +700,15 @@ export function PrintifierApp() {
   const step = usePrintifyStore((s) => s.step);
   const hydrateLabs = usePrintifyStore((s) => s.hydrateLabs);
   const refreshPresets = usePrintifyStore((s) => s.refreshPresets);
+  const addFiles = usePrintifyStore((s) => s.addFiles);
   const hydrateLang = useLangStore((s) => s.hydrate);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
+
+  // Android share-sheet: a PDF shared into the APK lands in the pipeline
+  // automatically (no-op on the plain web — the hook is never nudged there).
+  useSharedPdf((file) => {
+    void addFiles([file]);
+  });
 
   useEffect(() => {
     hydrateLabs(); // client-only, post-hydration — restores Labs prefs if enabled

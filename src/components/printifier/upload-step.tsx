@@ -28,8 +28,9 @@ import {
   removeRecentJob,
   type RecentJob,
 } from '@/lib/recent-jobs';
-import { formatRupees, treesFor } from '@/lib/ink-stats';
+import { treesFor } from '@/lib/ink-stats';
 import { loadInkStats, type InkStats } from '@/lib/ink-stats';
+import { formatRupees } from '@/lib/savings';
 import { useT } from '@/lib/i18n';
 
 function formatBytes(bytes: number): string {

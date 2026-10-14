@@ -1,9 +1,13 @@
 {
-  "version": "1.3.1-beta",
+  "version": "1.4.0-beta",
   "updated": "2026-10-14",
   "notes": [
-    "Security hardening — file names are no longer sent with anonymous usage stats",
-    "Cloud import blocks requests to private/internal network addresses",
-    "Android: safer download file names, app data excluded from device backups"
+    "Built-in presets: Economy / Balanced / Exam cram — one tap, then fine-tune",
+    "Print budget: type a sheet limit, the layout auto-fits",
+    "Lifetime impact meter: sheets, rupees, trees & CO2 saved on this device",
+    "History re-run: 'Re-printify' yesterday's files with different settings",
+    "Auto deskew: tilted scans and phone photos get straightened per page",
+    "Android: share a PDF from any app straight into Notes Printifier",
+    "Labs: OCR text repaint — pages re-typeset as crisp text (experimental)"
   ]
 }

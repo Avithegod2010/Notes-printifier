@@ -13,13 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePrintifyStore, getDocBuffer } from '@/lib/printify-store';
 import { loadPdfDocument } from '@/lib/pdf/pdfjs';
-import { applyFilters, inkCoverage, trimCanvasMargins } from '@/lib/pdf/filters';
+import { preparePageCanvas } from '@/lib/pdf/filters';
 import { useT } from '@/lib/i18n';
 
 /**
  * Full before/after preview (#6) — every SELECTED page of the user's own
  * file, navigable, rendered at high preview resolution with the exact
- * pipeline used by the final output (filters + trim).
+ * pipeline used by the final output (preparePageCanvas: deskew → filters →
+ * trim). The "before" image stays the raw render so deskew is visible.
  */
 export function PreviewDialog({
   open,
@@ -51,17 +52,13 @@ export function PreviewDialog({
     setBusy(true);
     try {
       const doc = await loadPdfDocument(buf);
-      let canvas = await (await import('@/lib/pdf/render')).renderPageToCanvas(doc, page.pageNumber, {
+      const raw = await (await import('@/lib/pdf/render')).renderPageToCanvas(doc, page.pageNumber, {
         targetWidth: 720,
         extraRotation: page.rotation,
       });
-      setBefore(canvas.toDataURL('image/jpeg', 0.75));
-      applyFilters(canvas, filters);
-      if (filters.trimMargins) {
-        const trimmed = trimCanvasMargins(canvas);
-        if (trimmed !== canvas) canvas = trimmed;
-      }
-      setAfter(canvas.toDataURL('image/jpeg', 0.75));
+      setBefore(raw.toDataURL('image/jpeg', 0.75));
+      const after = preparePageCanvas(raw, filters);
+      setAfter((after as HTMLCanvasElement).toDataURL('image/jpeg', 0.75));
     } catch (err) {
       console.error('Preview render failed', err);
     } finally {

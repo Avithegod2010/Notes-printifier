@@ -13,7 +13,7 @@
 # Channels:
 #   bash android/build-apk.sh beta   → public/printifier.apk        (rolling dev channel;
 #                                      versionCode/Name via BETA_VERSION_CODE / BETA_VERSION_NAME,
-#                                      defaults 5 / 1.3.1-beta — bump when rebuilding)
+#                                      defaults 6 / 1.4.0-beta — bump when rebuilding)
 #   bash android/build-apk.sh stable → public/printifier-stable.apk (cut from the `stable`
 #                                      branch only; keep BETA_* unset so manifest versions apply)
 set -euo pipefail
@@ -45,8 +45,8 @@ need_pass() {
 
 EXTRA_LINK=()
 if [ "$CHANNEL" = "beta" ]; then
-  BETA_VERSION_CODE="${BETA_VERSION_CODE:-5}"
-  BETA_VERSION_NAME="${BETA_VERSION_NAME:-1.3.1-beta}"
+  BETA_VERSION_CODE="${BETA_VERSION_CODE:-6}"
+  BETA_VERSION_NAME="${BETA_VERSION_NAME:-1.4.0-beta}"
   EXTRA_LINK=(--version-code "$BETA_VERSION_CODE" --version-name "$BETA_VERSION_NAME" --replace-version)
   OUT_APK="$ROOT/public/printifier.apk"
 else

@@ -137,6 +137,12 @@ const DICT: Record<string, [string, string]> = {
   'en.stains.light': ['Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes.', 'स्लाइड के बीच के हल्के नीले दाग़ और सवाल-नंबर/ऑप्शन के पीछे का सायन रंग मिटा देता है; हस्तलेखन, चित्र और टेक्स्ट सुरक्षित रहते हैं। सफ़ेद बैकग्राउंड वाले नोट्स के लिए बढ़िया।'],
   'en.trim': ['Trim margins', 'किनारे काटें'],
   'en.trim.d': ['Auto-crops empty borders so content fills each grid cell — bigger, more readable text on the same paper. Worth it when stacking 3+ slides per sheet.', 'खाली किनारे हटाकर हर बॉक्स को भर देता है — उसी कागज़ पर बड़ा, पढ़ने में आसान टेक्स्ट। 3+ स्लाइड प्रति शीट पर ज़रूर लगाएँ।'],
+  'en.deskew': ['Straighten pages (auto deskew)', 'पेज सीधे करें (ऑटो-डिस्क्यू)'],
+  'en.deskew.d': [
+    'Detects tilted scans and phone photos and rotates each page straight before the other filters run — great for photos of handwritten notes. Pairs well with Trim margins.',
+    'तिरछे स्कैन और फ़ोन-फ़ोटो पहचानकर बाकी फ़िल्टर लगने से पहले हर पेज को सीधा घुमा देता है — हाथ से लिखे नोट्स की फ़ोटो के लिए ख़ास तौर पर काम का। किनारे काटें के साथ मिलाकर लगाएँ।',
+  ],
+  'en.deskew.badge': ['Auto-rotation applied', 'ऑटो-रोटेशन लागू'],
   'en.ink': ['Ink saver', 'इंक सेवर'],
   'en.ink.d': ['Pushes light backgrounds to pure white so your printer skips them. 40–60 works great for dark slides.', 'हल्के बैकग्राउंड को बिल्कुल सफ़ेद कर देता है ताकि प्रिंटर उन्हें छोड़ दे। गहरे स्लाइड के लिए 40–60 सबसे अच्छा।'],
   'en.pen': ['Handwriting boost', 'हस्तलेखन बूस्ट'],
@@ -217,6 +223,7 @@ const DICT: Record<string, [string, string]> = {
   'rs.larger': ['{n}% larger (quality boost)', 'स्रोत से {n}% बड़ा (बेहतर क्वालिटी)'],
   'rs.layout': ['Layout', 'लेआउट'],
   'rs.searchable': ['Searchable (OCR)', 'सर्च-योग्य (OCR)'],
+  'rs.repainted': ['{n} pages re-typeset', '{n} पेज दोबारा टाइप किए'],
   'rs.autoInverted': ['Smart mode inverted {n} of {t} dark pages automatically', 'स्मार्ट मोड ने {t} में से {n} गहरे पन्ने अपने आप उलटे'],
   'rs.saved': ['You saved about {rs}', 'आपने लगभग {rs} बचाए'],
   'rs.savedDetail': ['{n} sheet(s) of paper + ink', '{n} शीट कागज़ + स्याही'],
@@ -357,6 +364,11 @@ const DICT: Record<string, [string, string]> = {
   'feat.wm.t': ['Name Stamp', 'नाम स्टैम्प'],
   'feat.wm.d': ['Print your name or roll number on every sheet.', 'हर शीट पर अपना नाम या रोल नंबर छापें।'],
   'labs.rememberD': ['Keeps your Enhance & Layout choices on this device for your next visit.', 'आपकी Enhance और Layout पसंद इसी डिवाइस पर अगली बार के लिए सेव रहती हैं।'],
+  'labs.repaint': ['Text repaint (OCR)', 'टेक्स्ट री-पेंट (OCR)'],
+  'labs.repaintD': [
+    'Experimental: OCRs each page and re-typesets recognized text as crisp black-on-white instead of a re-compressed scan. Sharp output, tiny files; handwriting and complex diagrams automatically fall back to the original image.',
+    'प्रयोगात्मक: हर पेज का OCR करके पहचाने गए टेक्स्ट को दोबारा टाइप करता है — धुंधले स्कैन की जगह साफ़ काला टेक्स्ट-ऑन-सफ़ेद। शार्प आउटपुट, छोटी फ़ाइलें; हस्तलेखन और जटिल डायग्राम अपने आप मूल इमेज पर लौट आते हैं।',
+  ],
   'labs.more': ['More experiments coming: smart per-page invert, saved presets, handwriting boost…', 'और प्रयोग आ रहे हैं: स्मार्ट प्रति-पेज इनवर्ट, सेव्ड प्रीसेट, हैंडराइटिंग बूस्ट…'],
 
   // footer
@@ -370,6 +382,42 @@ const DICT: Record<string, [string, string]> = {
   'upd.body': ['A newer version of Notes Printifier is ready. Refresh to get it.', 'Notes Printifier का नया वर्शन तैयार है। लेने के लिए रिफ़्रेश करें।'],
   'upd.reload': ['Refresh now', 'अभी रिफ़्रेश करें'],
   'upd.later': ['Later', 'बाद में'],
+
+  // ── v1.4.0 feature batch ──────────────────────────────────────────────
+  // lifetime impact meter (upload + result steps)
+  'up.impactTitle': ['Your impact so far', 'आपका अब तक का असर'],
+  'up.impactJobs': ['{n} conversions', '{n} कन्वर्ज़न'],
+  'up.impactSheets': ['{n} sheets saved', '{n} शीट बचाईं'],
+  'up.impactRupees': ['{rs} saved', '{rs} बचाए'],
+  'up.impactTrees': ['≈ {n} trees', '≈ {n} पेड़'],
+  'up.reprint': ['Re-printify', 'दोबारा प्रिंटिफ़ाई'],
+  'up.reprintHint': ['Re-run the original files with different settings', 'मूल फ़ाइलों को दूसरी सेटिंग्स से दोबारा चलाएँ'],
+  'rs.impactTitle': ['Your impact so far', 'आपका अब तक का असर'],
+  'rs.impactReset': ['Reset counter', 'काउंटर रीसेट करें'],
+  'rs.impactJobs': ['conversions', 'कन्वर्ज़न'],
+  'rs.impactSheets': ['sheets saved', 'शीट बची'],
+  'rs.impactMoney': ['saved', 'बचत'],
+  'rs.impactTrees': ['trees', 'पेड़'],
+  'rs.impactCo2': ['CO₂ saved', 'CO₂ बची'],
+  'rs.impactNote': [
+    'Counts every conversion on this device. One tree ≈ 8,333 sheets · one sheet ≈ 5 g CO₂ — friendly estimates, stored only on your phone.',
+    'इस डिवाइस के हर कन्वर्ज़न की गिनती। एक पेड़ ≈ 8,333 शीट · एक शीट ≈ 5 ग्राम CO₂ — अनुमानित, सिर्फ़ आपके डिवाइस पर सेव।',
+  ],
+  // built-in presets
+  'en.presets.builtinNote': ['Start with a built-in recipe, then fine-tune below.', 'पहले कोई बिल्ट-इन रेसिपी चुनें, फिर नीचे से अपने हिसाब से सेट करें।'],
+  'pr.builtin.economy': ['Economy', 'इकोनॉमी'],
+  'pr.builtin.economyD': ['Maximum savings — black & white, 6 slides per sheet, trimmed margins, draft quality.', 'अधिकतम बचत — ब्लैक एंड व्हाइट, 6 स्लाइड प्रति शीट, कटे किनारे, ड्राफ़्ट क्वालिटी।'],
+  'pr.builtin.balanced': ['Balanced', 'बैलेंस्ड'],
+  'pr.builtin.balancedD': ['The everyday default — smart color mode, 4 slides per sheet, medium quality.', 'रोज़मर्रा का डिफ़ॉल्ट — स्मार्ट रंग मोड, 4 स्लाइड प्रति शीट, मध्यम क्वालिटी।'],
+  'pr.builtin.exam': ['Exam cram', 'परीक्षा मोड'],
+  'pr.builtin.examD': ['Readability first — original colors, handwriting boost, 2 slides per sheet, high quality.', 'पढ़ाई में आसानी पहले — असली रंग, हस्तलेखन बूस्ट, 2 स्लाइड प्रति शीट, हाई क्वालिटी।'],
+  // print budget auto-fit
+  'ly.budget.title': ['Print budget', 'प्रिंट बजट'],
+  'ly.budget.sub': ['Xerox shop charges per sheet? Set a sheet limit and we pick the tightest layout that fits.', 'ज़ेरॉक्स शॉप हर शीट के पैसे लेता है? शीट लिमिट डालें — सबसे भीड़ लेआउट जो फ़िट हो, हम चुन लेंगे।'],
+  'ly.budget.ph': ['e.g. 25', 'जैसे 25'],
+  'ly.budget.go': ['Auto-fit', 'ऑटो-फ़िट'],
+  'ly.budget.fit': ['Fits: {n} sheets at {per} slides per sheet ✓', 'फ़िट: {per} स्लाइड प्रति शीट पर {n} शीट ✓'],
+  'ly.budget.none': ['Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway.', 'सबसे भीड़ लेआउट को भी {n} शीट चाहिए ({limit} से ज़्यादा) — फिर भी 8-अप लगा दिया।'],
 };
 
 interface LangState {
