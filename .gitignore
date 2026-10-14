@@ -1,0 +1,64 @@
+# ── dependencies ─────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.*
+
+# ── next.js build output ─────────────────────────────────────
+# /.next-static/ = static export used to package the APK
+/.next/
+/.next-static/
+/out/
+
+# ── android / packaging artifacts ────────────────────────────
+# intermediate APK build dir + signing material: NEVER commit keys
+android/build/
+*.keystore
+android/signing.local
+
+# ── secrets & env ────────────────────────────────────────────
+.env
+.env.*
+*.pem
+
+# ── databases (local runtime data) ───────────────────────────
+/db/
+*.db
+*.db-journal
+
+# ── logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── dev-only working dirs (never push personal/local files) ──
+# upload/ = user's own PDFs/photos dropped here for testing
+/upload/
+/download/
+/tool-results/
+/verify-shots/
+/worklog.md
+# one-off analysis scripts kept locally
+/scripts/dev/
+# sandbox scaffolding demos + runtime tests
+/examples/
+/tests/
+/mini-services/
+/.zscripts/
+/skills/
+# sandbox gateway config (port-forwarding)
+/Caddyfile
+/.claude
+/.z-ai-config
+/.vercel
+
+# ── misc ─────────────────────────────────────────────────────
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+# apksigner v4 incremental-install signature
+*.idsig
+local-*
+test
+prompt
