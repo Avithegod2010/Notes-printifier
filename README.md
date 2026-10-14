@@ -70,14 +70,20 @@ src/lib/pdf/             PDF.js render, compose pipeline (worker), filters, OCR
 src/lib/                 i18n, store (zustand), presets, theme, savings math
 android/                 WebView APK source + build script (no Gradle)
 scripts/                 icon generators, static-export helper
-public/                  PWA assets, local pdf.js/tesseract runtimes, release APKs
+public/                  PWA assets, local pdf.js/tesseract runtimes
 ```
+
+> APK binaries are **not stored in git** — signed APKs are attached to each
+> [GitHub Release](../../releases) (`printifier.apk` beta, `printifier-stable.apk` stable).
+> When self-hosting the static site, drop them into the web root to make the
+> footer download links work.
 
 ## Versioning & releases
 
 Two release lines from one codebase — **stable** (beginners, frozen artifacts) and
-**beta** (rolling). See [VERSIONING.md](VERSIONING.md) for the release ritual and
-[SECURITY.md](SECURITY.md) for the security model and reporting policy.
+**beta** (rolling). Tags: `v1.0.0-stable` on the `stable` branch, `v1.3.x-beta` on
+`main`. Signed APKs ship as Release assets. See [VERSIONING.md](VERSIONING.md) for the
+release ritual and [SECURITY.md](SECURITY.md) for the security model and reporting policy.
 
 ## License
 

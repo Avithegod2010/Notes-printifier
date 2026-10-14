@@ -64,7 +64,7 @@ cp -r "$ROOT/.next-static/." "$AND/build/assets/www/"
   rm -f index.txt 404.html robots.txt sw.js
   rm -rf _not-found _not-found.html
   find . -maxdepth 1 -name '*.txt' -delete
-  rm -f printifier*.apk  # never embed the APKs inside themselves
+  rm -f printifier*.apk *.idsig  # never embed the APKs (or their signatures) inside themselves
 )
 echo "   assets: $(du -sh "$AND/build/assets/www" | cut -f1)"
 
