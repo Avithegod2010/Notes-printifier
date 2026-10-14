@@ -70,6 +70,15 @@ app is 100% offline.
   uninstall/reinstall to update. For a Play Store release, generate a fresh
   upload key and never commit it publicly.
 
+## Signing-key history
+
+- **2026-10-14** — the original keystore was lost while rebuilding the git
+  history for the first public release (it had been committed to the old,
+  discarded history and was removed with it). A new key was generated with
+  the same alias (`printifier`). **Already-installed APKs cannot auto-update:
+  uninstall once, then install the new build.** The keystore now lives
+  untracked in `android/printifier.keystore` — back it up (see above).
+
 ## Sandbox note (this environment)
 
 The Android SDK (`/home/z/android-sdk`) and the Java compiler
