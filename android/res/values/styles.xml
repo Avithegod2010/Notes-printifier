@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme matching the app background (#0b0a10) — no white flash on
+         cold start, dark status/navigation bars. -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B0A10</item>
+        <item name="android:statusBarColor">#0B0A10</item>
+        <item name="android:navigationBarColor">#0B0A10</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>
