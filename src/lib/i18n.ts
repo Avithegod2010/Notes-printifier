@@ -441,6 +441,40 @@ const DICT: Record<string, [string, string]> = {
   'ly.budget.go': ['Auto-fit', 'ऑटो-फ़िट'],
   'ly.budget.fit': ['Fits: {n} sheets at {per} slides per sheet ✓', 'फ़िट: {per} स्लाइड प्रति शीट पर {n} शीट ✓'],
   'ly.budget.none': ['Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway.', 'सबसे भीड़ लेआउट को भी {n} शीट चाहिए ({limit} से ज़्यादा) — फिर भी 8-अप लगा दिया।'],
+
+  // batch cover sheet
+  'ly.cover': ['Cover page', 'कवर पेज'],
+  'ly.coverSub': ['Title page listing every merged file', 'हर जुड़ी फ़ाइल की सूची वाला शीर्षक पेज'],
+  'ly.cover.contents': ['Contents', 'सूची'],
+  'ly.cover.pages': ['{n} pages', '{n} पन्ने'],
+  'ly.cover.footnote': ['Merged print-ready PDF · notesprintifier', 'मर्ज किया प्रिंट-रेडी PDF · notesprintifier'],
+
+  // file-size target
+  'ly.sizeTarget': ['Target file size', 'फ़ाइल साइज़ लक्ष्य'],
+  'ly.sizeTargetOn': ['Under {n} MB', '{n} MB से नीचे'],
+  'ly.sizeTargetOff': ['Off', 'बंद'],
+  'ly.sizeTargetPh': ['e.g. 5', 'जैसे 5'],
+  'ly.sizeTargetHint': [
+    'Quality is lowered automatically until the PDF fits — for email limits and print-shop uploads.',
+    'PDF फ़िट होने तक क्वालिटी अपने आप घटेगी — ईमेल लिमिट और प्रिंट-शॉप अपलोड के लिए।',
+  ],
+  'ly.sizeTargetOver': ['Estimated above target — quality will be reduced while processing.', 'अनुमान लक्ष्य से ज़्यादा है — प्रोसेसिंग के समय क्वालिटी घटेगी।'],
+
+  // receipt card
+  'rs.receipt.btn': ['Save receipt card', 'रसीद कार्ड सेव करें'],
+  'rs.receipt.sub': ['Ink-saving print receipt', 'स्याही-बचत प्रिंट रसीद'],
+  'rs.receipt.pagesIn': ['Slides in → sheets out', 'स्लाइड इन → शीट आउट'],
+  'rs.receipt.money': ['Money saved', 'पैसे बचे'],
+  'rs.receipt.footnote': ['Made with Notes Printifier — free, private, in-browser', 'Notes Printifier से बना — मुफ़्त, प्राइवेट, ब्राउज़र में'],
+  'rs.receipt.shared': ['Receipt shared', 'रसीद शेयर हो गई'],
+  'rs.receipt.saved': ['Receipt saved as PNG', 'रसीद PNG सेव हो गई'],
+  'rs.receipt.fail': ['Could not build the receipt card', 'रसीद कार्ड नहीं बना'],
+
+  // PWA install
+  'nav.install': ['Install app', 'ऐप इंस्टॉल करें'],
+  // size-target result badges
+  'rs.sizeTargetFit': ['Compressed in {p} extra pass(es) to fit under {n} MB', '{p} अतिरिक्त पास में {n} MB से नीचे फ़िट किया'],
+  'rs.sizeTargetAlready': ['Already under the {n} MB target — no extra compression needed', 'पहले से {n} MB लक्ष्य के नीचे — कोई अतिरिक्त कंप्रेशन नहीं'],
 };
 
 interface LangState {

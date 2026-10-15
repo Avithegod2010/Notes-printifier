@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   BookOpen,
+  FileDown,
   Gauge,
   IndianRupee,
   Loader2,
@@ -575,6 +576,25 @@ export function LayoutStep() {
             )}
           >
             <div className="pr-2">
+              <p className="text-sm font-medium">{t('ly.cover')}</p>
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                {t('ly.coverSub')}
+              </p>
+            </div>
+            <Switch
+              checked={!!layout.coverSheet && !layout.booklet}
+              disabled={layout.booklet}
+              onCheckedChange={(v) => setLayout({ coverSheet: v })}
+              aria-label={t('ly.cover')}
+            />
+          </div>
+          <div
+            className={cn(
+              'flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-opacity',
+              layout.booklet && 'pointer-events-none opacity-40',
+            )}
+          >
+            <div className="pr-2">
               <p className="text-sm font-medium">{t('ly.duplexPad')}</p>
               <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
                 {t('ly.duplexPadSub')}
@@ -708,6 +728,40 @@ export function LayoutStep() {
               <span>{DPI_MAX}</span>
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.dpi.hint')}</p>
+          </div>
+
+          {/* File-size target — auto-recompress until the PDF fits the cap */}
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <FileDown className="h-4 w-4 text-violet-300" /> {t('ly.sizeTarget')}
+              </p>
+              {layout.sizeTargetMB ? (
+                <Badge variant="secondary" className="bg-primary/15 text-primary">
+                  {t('ly.sizeTargetOn', { n: layout.sizeTargetMB })}
+                </Badge>
+              ) : (
+                <Badge variant="secondary">{t('ly.sizeTargetOff')}</Badge>
+              )}
+            </div>
+            <Input
+              type="number"
+              min={0.5}
+              step={0.5}
+              inputMode="decimal"
+              value={layout.sizeTargetMB ?? ''}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value);
+                setLayout({ sizeTargetMB: Number.isFinite(v) && v > 0 ? v : null });
+              }}
+              placeholder={t('ly.sizeTargetPh')}
+              aria-label={t('ly.sizeTarget')}
+              className="sm:max-w-[140px]"
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.sizeTargetHint')}</p>
+            {estimate && layout.sizeTargetMB && estimate.estBytes > layout.sizeTargetMB * 1024 * 1024 && (
+              <p className="mt-1.5 text-xs font-medium text-amber-300">{t('ly.sizeTargetOver')}</p>
+            )}
           </div>
         </div>
       </div>

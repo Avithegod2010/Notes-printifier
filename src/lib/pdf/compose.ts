@@ -22,6 +22,7 @@ import { loadPdfDocument, PDF_WASM_URL, type PdfDocument } from './pdfjs';
 export type {
   ComposeItem,
   ComposeOptions,
+  CoverSheetData,
   LayoutSettings,
   PageSizeOpt,
   Placement,
@@ -176,6 +177,8 @@ export async function composePdf(o: ComposeOptions): Promise<ComposeResult> {
           filters: o.filters,
           layout: o.layout,
           repaintCanvases: o.repaintCanvases ?? null,
+          coverSheetData: o.coverSheetData ?? null,
+          jpegQualityOverride: o.jpegQualityOverride,
         },
         transfer,
         o.onProgress,

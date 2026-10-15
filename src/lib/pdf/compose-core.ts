@@ -48,6 +48,11 @@ export interface LayoutSettings {
   customDpi?: number | null;
   /** Optional small label printed bottom-left of every sheet. */
   footerLabel?: string;
+  /** Prepend a cover page listing the source documents (batch handout). */
+  coverSheet?: boolean;
+  /** Soft cap for the final PDF size (MB). 0/null = off. The store lowers
+   *  JPEG quality and re-composes until the output fits. */
+  sizeTargetMB?: number | null;
 }
 
 export const defaultLayout: LayoutSettings = {
@@ -63,6 +68,8 @@ export const defaultLayout: LayoutSettings = {
   slideNumbers: false,
   noteLines: false,
   customDpi: null,
+  coverSheet: false,
+  sizeTargetMB: null,
 };
 
 export interface ComposeItem {
@@ -99,7 +106,26 @@ export interface ComposeOptions {
    * perf win. Items without an entry render from the PDF as usual.
    */
   repaintCanvases?: Map<string, AnyCanvas> | null;
+  /** Pre-formatted strings + per-document entries for the batch cover page.
+   *  Supplied by the store (already translated); core only draws. */
+  coverSheetData?: CoverSheetData | null;
+  /** Upper bound for JPEG quality when the size target needs recompression.
+   *  Never RAISES quality above what the layout preset chose. */
+  jpegQualityOverride?: number;
   onProgress?: (done: number, total: number) => void;
+}
+
+export interface CoverSheetData {
+  /** App title, drawn big at the top. */
+  title: string;
+  /** Usually the date. */
+  subtitle: string;
+  /** Heading above the document list. */
+  contentsHeading: string;
+  /** One entry per source document, in merge order. */
+  entries: Array<{ name: string; label: string }>;
+  /** Small footer line. */
+  footnote: string;
 }
 
 export interface Placement {
@@ -169,7 +195,8 @@ export const PAGE_SIZES: Record<Exclude<PageSizeOpt, 'original'>, [number, numbe
 export function estimateOutputPages(pageCount: number, layout: LayoutSettings): number {
   if (layout.booklet) return bookletOutputPages(pageCount);
   const perPage = Math.max(1, layout.rows * layout.cols);
-  return Math.max(1, Math.ceil(pageCount / perPage));
+  const base = Math.max(1, Math.ceil(pageCount / perPage));
+  return layout.coverSheet ? base + 1 : base;
 }
 
 /** Booklet output = one landscape sheet side per 2 booklet pages, padded to 4. */
@@ -295,10 +322,77 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   const LINES_COUNT = 7;
 
   const { dpi, jpeg } = resolveQuality(o.layout);
+  // Size-target recompression: the store may re-run the compose with a lower
+  // quality ceiling — never let it RAISE the preset's choice.
+  const jpegEff =
+    typeof o.jpegQualityOverride === 'number' && o.jpegQualityOverride > 0
+      ? Math.min(jpeg, Math.max(0.28, Math.min(1, o.jpegQualityOverride)))
+      : jpeg;
+
   // Pure neutral grays — a blue-tinted separator (0.72,0.72,0.76) printed as a
   // faint blue line, which users read as a leftover "blue mark".
   const lineColor = rgb(0.75, 0.75, 0.75);
   const textColor = rgb(0.45, 0.45, 0.45);
+
+  // ---- batch cover page ----------------------------------------------------
+  // One unnumbered page before the content: app title, date and the list of
+  // merged documents. Booklet mode is excluded — a portrait cover page would
+  // break the saddle-stitch sheet order.
+  const wantCover = !!o.layout.coverSheet && !o.layout.booklet && !!o.coverSheetData;
+  if (wantCover) {
+    const cover = o.coverSheetData!;
+    const boldFont = await out.embedFont(StandardFonts.HelveticaBold);
+    const coverPage = out.addPage([pw, ph]);
+    const center = (text: string, size: number, y: number, f = font, c = textColor) => {
+      coverPage.drawText(text, {
+        x: (pw - f.widthOfTextAtSize(text, size)) / 2,
+        y,
+        size,
+        font: f,
+        color: c,
+      });
+    };
+    const ink = rgb(0.25, 0.2, 0.35);
+    center(cover.title.slice(0, 60), 26, ph - 88, boldFont, ink);
+    center(cover.subtitle.slice(0, 80), 11, ph - 108);
+    coverPage.drawLine({
+      start: { x: marginX + 40, y: ph - 122 },
+      end: { x: pw - marginX - 40, y: ph - 122 },
+      thickness: 0.8,
+      color: lineColor,
+    });
+    coverPage.drawText(cover.contentsHeading.slice(0, 40), {
+      x: marginX + 14,
+      y: ph - 152,
+      size: 12,
+      font: boldFont,
+      color: ink,
+    });
+    const rowBottom = 64;
+    let y = ph - 186;
+    let shown = 0;
+    for (const entry of cover.entries) {
+      if (y < rowBottom + 14) break;
+      const name = entry.name.length > 52 ? entry.name.slice(0, 49) + '…' : entry.name;
+      coverPage.drawText(name, { x: marginX + 14, y, size: 10.5, font, color: ink });
+      const label = entry.label.slice(0, 24);
+      coverPage.drawText(label, {
+        x: pw - marginX - 14 - font.widthOfTextAtSize(label, 9),
+        y,
+        size: 9,
+        font,
+        color: textColor,
+      });
+      y -= 20;
+      shown++;
+    }
+    if (shown < cover.entries.length) {
+      const more = `+ ${cover.entries.length - shown}`;
+      coverPage.drawText(more, { x: marginX + 14, y, size: 10.5, font, color: textColor });
+    }
+    center(cover.footnote.slice(0, 90), 8.5, 30);
+  }
+  const pageOffset = wantCover ? 1 : 0;
 
   // ---- decorations (separators + page number) ------------------------------
   const finishPage = (page: PDFPage, occupied: boolean[], pageNumber: number) => {
@@ -478,7 +572,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
         inkSamples++;
       }
 
-      const bytes = await canvasToJpegBytes(finalCanvas, jpeg);
+      const bytes = await canvasToJpegBytes(finalCanvas, jpegEff);
       const img = await out.embedJpg(bytes);
 
       const s = Math.min(slideBoxW / img.width, cellH / img.height);
@@ -490,7 +584,9 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       const y =
         ph - marginTop - row * (cellH + gap) - cellH + (cellH - h) / 2;
       page.drawImage(img, { x, y, width: w, height: h });
-      placements.push({ itemIndex, outPage: ci + 1, x, y, w, h });
+      // outPage is the PHYSICAL output page (cover shifts everything by 1) —
+      // the OCR text-layer pass indexes pages with it.
+      placements.push({ itemIndex, outPage: ci + 1 + pageOffset, x, y, w, h });
 
       // 3-up note lines — ruled guides in the space right of the slide
       if (noteLinesOn) {
@@ -540,7 +636,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
 
   return {
     pdfBytes,
-    outputPages: chunks.length,
+    outputPages: chunks.length + pageOffset,
     inkSavedPct,
     beforeInkPct,
     placements,
@@ -696,7 +792,12 @@ export async function estimateCore(
   const perPageCap = rows * cols;
   // slides count after booklet padding (booklet pads to multiple of 4)
   const slideCount = layout.booklet ? Math.ceil(items.length / 4) * 4 : items.length;
-  const estBytes = Math.round(avgJpeg * slideCount + outputPages * 2600 + (layout.pageNumbers || layout.footerLabel ? outputPages * 400 : 0));
+  const estBytes = Math.round(
+    avgJpeg * slideCount +
+      outputPages * 2600 +
+      (layout.pageNumbers || layout.footerLabel ? outputPages * 400 : 0) +
+      (layout.coverSheet && !layout.booklet ? 4000 : 0),
+  );
 
   return {
     outputPages,

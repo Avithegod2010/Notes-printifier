@@ -11,7 +11,9 @@ import {
   composePdf,
   defaultLayout,
   estimateOutputPages,
+  resolveQuality,
   type ComposeItem,
+  type CoverSheetData,
   type LayoutSettings,
 } from './pdf/compose';
 import {
@@ -39,6 +41,7 @@ import {
   saveRememberFlag,
   saveTextRepaintFlag,
 } from './labs';
+import { translateStatic, useLangStore } from './i18n';
 
 export interface DocInfo {
   id: number;
@@ -76,6 +79,10 @@ export interface ProcessResult {
   repainted: number;
   /** Set when OCR was requested but failed (PDF itself is still fine). */
   ocrWarning: string | null;
+  /** Soft file-size cap the user asked for (MB), null = no cap. */
+  sizeTargetMB: number | null;
+  /** How many extra recompress passes were needed to (try to) fit the cap. */
+  sizeAttempts: number;
 }
 
 /** Raw PDF bytes — kept outside zustand (not serializable, potentially large). */
@@ -563,17 +570,64 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
 
       // Runs in the processing Web Worker when available (UI stays fluid);
       // falls back to the identical main-thread pipeline otherwise.
-      const composed = await composePdf({
+      // Batch cover page: one translated listing page ahead of the content.
+      let coverSheetData: CoverSheetData | null = null;
+      if (layout.coverSheet && !useBooklet) {
+        const lang = useLangStore.getState().lang;
+        const perDoc = new Map<number, number>();
+        for (const p of selected) perDoc.set(p.docId, (perDoc.get(p.docId) ?? 0) + 1);
+        coverSheetData = {
+          title: 'Notes Printifier',
+          subtitle: new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }),
+          contentsHeading: translateStatic('ly.cover.contents', lang),
+          entries: docs.map((d) => ({
+            name: d.name.replace(/\.pdf$/i, ''),
+            label: translateStatic('ly.cover.pages', lang, { n: perDoc.get(d.id) ?? 0 }),
+          })),
+          footnote: translateStatic('ly.cover.footnote', lang),
+        };
+      }
+
+      let composed = await composePdf({
         buffers,
         items,
         filters,
         layout: effLayout,
         repaintCanvases,
+        coverSheetData,
         onProgress: (done, total) => set({ progress: { done, total } }),
       });
       // Repaint canvases were consumed by compose (and possibly transferred
       // to the worker) — let the map go out of scope, no manual dispose.
       repaintCanvases = null;
+
+      // File-size target: if the user set a soft cap (e.g. 5 MB for a print
+      // shop's upload form), re-compose with progressively lower JPEG quality
+      // until the output fits (max 3 extra passes, floor 0.28).
+      const targetMB =
+        layout.sizeTargetMB && layout.sizeTargetMB > 0 ? layout.sizeTargetMB : null;
+      let sizeAttempts = 0;
+      if (targetMB) {
+        const cap = targetMB * 1024 * 1024;
+        let q = resolveQuality(effLayout).jpeg;
+        while (composed.blob.size > cap && sizeAttempts < 3) {
+          q = Math.max(0.28, Math.round(q * 72) / 100);
+          sizeAttempts++;
+          composed = await composePdf({
+            buffers,
+            items,
+            filters,
+            layout: effLayout,
+            coverSheetData,
+            jpegQualityOverride: q,
+            onProgress: (done, total) => set({ progress: { done, total } }),
+          });
+        }
+      }
 
       // Optional OCR pass — adds an invisible searchable text layer.
       let finalBlob = composed.blob;
@@ -622,6 +676,8 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         searchable,
         repainted: composed.repainted,
         ocrWarning,
+        sizeTargetMB: targetMB,
+        sizeAttempts,
       };
       // Impact meter BEFORE the step switch — ResultStep reads the totals on
       // mount, and recordJob is a cheap synchronous localStorage write while

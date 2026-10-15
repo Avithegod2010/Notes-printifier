@@ -1,0 +1,179 @@
+name: Release APK
+
+# Packages the static web export into a signed APK (android/build-apk.sh) and
+# publishes it as a GitHub Release asset on the tag.
+#
+# Required repository SECRETS (Settings → Secrets and variables → Actions):
+#   KEYSTORE_BASE64 — base64 of android/printifier.keystore
+#                     (create locally with:  base64 -w0 android/printifier.keystore)
+#   KS_PASS         — the keystore password (same value as the local
+#                     android/signing.local line:  KS_PASS=…). Keep it
+#                     shell-safe (no quotes/backslashes) — the workflow writes
+#                     it to signing.local, which build-apk.sh sources.
+#
+# Optional repository VARIABLES (fall back to build-apk.sh defaults):
+#   BETA_VERSION_CODE / BETA_VERSION_NAME — bump when rebuilding the beta
+#   channel so installed devices can upgrade (defaults: 6 / 1.4.0-beta).
+#
+# Channels:
+#   * tag push v*-beta*   → beta   (public/printifier.apk, published as prerelease)
+#   * tag push v* (other) → stable (public/printifier-stable.apk; the APK is cut
+#                            from the `stable` branch, as the script requires,
+#                            but attached to the pushed tag's release)
+#   * workflow_dispatch   → pick the channel (and optionally the tag to
+#                            publish on) from the UI
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Release channel to build
+        type: choice
+        options: [beta, stable]
+        default: beta
+        required: true
+      tag:
+        description: "Tag to publish the release on (manual runs only, e.g. v1.4.0-beta.1)"
+        type: string
+        required: false
+
+# Least privilege: creating/updating releases needs contents:write only;
+# every other scope stays at none.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve channel and release ref
+        id: meta
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            echo "channel=${INPUT_CHANNEL:-beta}" >> "$GITHUB_OUTPUT"
+            echo "tag=${INPUT_TAG:-$GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_REF_NAME" == *beta* ]]; then
+            echo "channel=beta" >> "$GITHUB_OUTPUT"
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"   # build the pushed tag itself
+          else
+            # stable channel: build-apk.sh cuts stable APKs from the `stable` branch
+            echo "channel=stable" >> "$GITHUB_OUTPUT"
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "ref=stable" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ steps.meta.outputs.ref }}
+
+      # java/keytool on PATH: ecj, d8 and apksigner all run under the JDK
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # build-apk.sh needs exactly:
+      #   $ANDROID_SDK/build-tools/34.0.0  (aapt2, aapt, zipalign, lib/d8.jar, lib/apksigner.jar)
+      #   $ANDROID_SDK/platforms/android-34/android.jar
+      #   $ECJ_JAR (Eclipse compiler for java)
+      # curl/unzip/zip/rg used by the script are preinstalled on the runner.
+      - name: Install Android build-tools 34.0.0 + platform android-34
+        env:
+          SDK: ${{ runner.temp }}/android-sdk
+        run: |
+          set -euo pipefail
+          mkdir -p "$SDK/cmdline-tools" "$SDK/licenses"
+          # pre-accepted SDK licences → sdkmanager stays non-interactive
+          printf '8933bad161af4178b1185d1a37fbf41ea5269c55\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n' \
+            > "$SDK/licenses/android-sdk-license"
+          curl -fsSL -o "$RUNNER_TEMP/clt.zip" \
+            https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q "$RUNNER_TEMP/clt.zip" -d "$SDK/cmdline-tools"
+          mv "$SDK/cmdline-tools/cmdline-tools" "$SDK/cmdline-tools/latest"
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" \
+            "build-tools;34.0.0" "platforms;android-34"
+          # build-apk.sh honours ANDROID_SDK (default /home/z/android-sdk)
+          echo "ANDROID_SDK=$SDK" >> "$GITHUB_ENV"
+
+      - name: Install ECJ (Eclipse compiler for java)
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/ecj.jar" \
+            https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.33.0/ecj-3.33.0.jar
+          # build-apk.sh honours ECJ_JAR (default /home/z/tools/ecj.jar)
+          echo "ECJ_JAR=$RUNNER_TEMP/ecj.jar" >> "$GITHUB_ENV"
+
+      # The APK packages the static export (.next-static), so build it first
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Static web export
+        run: bun run build:static
+
+      # Signing material is NOT in git (gitignored) — reconstruct from secrets.
+      - name: Restore signing material from secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KS_PASS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KS_PASS" ]; then
+            echo "::error::Required secrets missing — set KEYSTORE_BASE64 (base64 of android/printifier.keystore) and KS_PASS (keystore password)." >&2
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/printifier.keystore
+          printf 'KS_PASS=%s\n' "$KS_PASS" > android/signing.local
+          chmod 600 android/printifier.keystore android/signing.local
+
+      - name: Build signed APK
+        env:
+          CHANNEL: ${{ steps.meta.outputs.channel }}
+          # empty variables fall back to the script defaults (6 / 1.4.0-beta)
+          BETA_VERSION_CODE: ${{ vars.BETA_VERSION_CODE }}
+          BETA_VERSION_NAME: ${{ vars.BETA_VERSION_NAME }}
+        run: bash android/build-apk.sh "$CHANNEL"
+
+      - name: Checksum the APK
+        id: apk
+        env:
+          CHANNEL: ${{ steps.meta.outputs.channel }}
+        run: |
+          set -euo pipefail
+          if [ "$CHANNEL" = "stable" ]; then
+            apk=public/printifier-stable.apk
+          else
+            apk=public/printifier.apk
+          fi
+          echo "path=$apk" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$apk" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # Creates the release if missing, updates it on re-runs; beta → prerelease
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          body: |
+            Signed APK built by `android/build-apk.sh` (${{ steps.meta.outputs.channel }} channel)
+            from commit ${{ github.sha }}.
+
+            SHA-256: `${{ steps.apk.outputs.sha256 }}`
+          prerelease: ${{ steps.meta.outputs.channel == 'beta' }}
+          make_latest: ${{ steps.meta.outputs.channel == 'stable' }}
+          files: ${{ steps.apk.outputs.path }}
+          fail_on_unmatched_files: true

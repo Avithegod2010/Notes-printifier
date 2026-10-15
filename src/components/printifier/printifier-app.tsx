@@ -56,6 +56,7 @@ import { PagesStep } from './pages-step';
 import { EnhanceStep } from './enhance-step';
 import { LayoutStep } from './layout-step';
 import { ResultStep } from './result-step';
+import { InstallButton } from '@/components/install-prompt';
 import { StatsStrip } from './stats-strip';
 import { LabsPopover } from './labs-popover';
 import { Reveal } from './reveal';
@@ -235,6 +236,7 @@ function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <InstallButton />
           <ThemeToggle />
           <LangToggle />
           <LabsPopover />

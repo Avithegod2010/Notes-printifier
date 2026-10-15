@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
+  ImageDown,
   IndianRupee,
   Loader2,
   Printer,
@@ -24,7 +25,9 @@ import { usePrintifyStore } from '@/lib/printify-store';
 import { COLOR_MODE_LABELS } from '@/lib/pdf/filters';
 import { estimateSavings, formatRupees } from '@/lib/savings';
 import { co2GramsFor, loadInkStats, resetInkStats, treesFor, type InkStats } from '@/lib/ink-stats';
-import { listRecentJobs, type RecentJob } from '@/lib/recent-jobs';
+import { listRecentJobs, downloadBlob, type RecentJob } from '@/lib/recent-jobs';
+import { buildReceiptCanvas, receiptCanvasToBlob } from '@/lib/receipt';
+import { toast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
 
 function formatMB(bytes: number): string {
@@ -102,6 +105,68 @@ export function ResultStep() {
     },
     [duplex],
   );
+
+  // ---- shareable ink-savings receipt (PNG card) ----------------------------
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const makeReceipt = async () => {
+    if (!result || receiptBusy) return;
+    setReceiptBusy(true);
+    try {
+      const canvas = buildReceiptCanvas(
+        {
+          inputPages: result.inputPages,
+          outputPages: result.outputPages,
+          inkSavedPct: result.inkSavedPct,
+          paperSavedPct: paperSavedPct,
+          rupees: savings.rupees > 0 ? formatRupees(savings.rupees) : '₹0',
+          fileSize: formatMB(result.outputBytes),
+        },
+        {
+          title: 'Notes Printifier',
+          subtitle: t('rs.receipt.sub'),
+          inkSaved: t('rs.inkSaved'),
+          pagesIn: t('rs.receipt.pagesIn'),
+          paperSaved: t('ly.paperSaved'),
+          moneySaved: t('rs.receipt.money'),
+          fileSize: t('rs.size'),
+          footnote: t('rs.receipt.footnote'),
+        },
+      );
+      const blob = await receiptCanvasToBlob(canvas);
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      let shared = false;
+      if (typeof nav.share === 'function' && nav.canShare) {
+        try {
+          const file = new File([blob], 'printifier-receipt.png', { type: 'image/png' });
+          if (nav.canShare({ files: [file] })) {
+            await nav.share({
+              files: [file],
+              title: 'Notes Printifier',
+            });
+            shared = true;
+            toast({ description: t('rs.receipt.shared') });
+          }
+        } catch (shareErr) {
+          // user cancelled the share sheet — not an error, just save instead
+          if (!(shareErr instanceof DOMException && shareErr.name === 'AbortError')) {
+            console.debug('Web Share failed, falling back to download', shareErr);
+          } else {
+            setReceiptBusy(false);
+            return;
+          }
+        }
+      }
+      if (!shared) {
+        downloadBlob(blob, 'printifier-receipt.png');
+        toast({ description: t('rs.receipt.saved') });
+      }
+    } catch (err) {
+      console.error('Receipt build failed', err);
+      toast({ description: t('rs.receipt.fail') });
+    } finally {
+      setReceiptBusy(false);
+    }
+  };
 
   // ---- personal savings history (local, on-device) -------------------------
   const [history, setHistory] = useState<RecentJob[] | null>(null);
@@ -198,6 +263,13 @@ export function ResultStep() {
             {t('rs.autoInverted', { n: result.autoInverted, t: result.inputPages })}
           </p>
         )}
+        {result.sizeTargetMB && (
+          <p className="mt-2 text-xs text-violet-300">
+            {result.sizeAttempts > 0
+              ? t('rs.sizeTargetFit', { n: result.sizeTargetMB, p: result.sizeAttempts })
+              : t('rs.sizeTargetAlready', { n: result.sizeTargetMB })}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -224,6 +296,25 @@ export function ResultStep() {
           </span>
         </div>
       )}
+
+      {/* Shareable receipt card — stats for the class group, 100% on-device */}
+      <div className="flex justify-center">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void makeReceipt()}
+          disabled={receiptBusy}
+          className="h-9 border-violet-400/40 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20"
+        >
+          {receiptBusy ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <ImageDown className="mr-2 h-4 w-4 text-violet-300" />
+          )}
+          {t('rs.receipt.btn')}
+        </Button>
+      </div>
 
       {/* Lifetime impact meter — pure local data, one tap to clear */}
       {impact && (
