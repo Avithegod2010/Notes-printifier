@@ -64,6 +64,7 @@ import { ExampleDialog } from './example-dialog';
 import { UpdateBanner } from './update-banner';
 import { ScrollProgress, BackToTop } from './site-chrome';
 import { SectionHead } from './section-head';
+import { DynamicBackground } from './dynamic-background';
 import { SavingsCalculator } from './savings-calculator';
 import { UseCases } from './use-cases';
 import { usePrintifyStore } from '@/lib/printify-store';
@@ -768,7 +769,9 @@ export function PrintifierApp() {
   }, [hydrateLabs, hydrateLang, hydrateTheme, refreshPresets]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col text-foreground">
+      {/* ambient animated backdrop (fixed, -z-10, aria-hidden) */}
+      <DynamicBackground />
       <a
         href="#app"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"

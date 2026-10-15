@@ -274,4 +274,190 @@ html.theme-light .text-emerald-400 {
   background: oklch(0.606 0.25 292.7 / 0.65);
 }
 
+/*
+ * DYNAMIC BACKGROUND — ambient animated backdrop behind the whole app.
+ * Layers (bottom → top): aurora orbs → drifting grid → light sweep →
+ * rising particles → vignette → film grain.
+ * Performance contract: every animation is transform/opacity only
+ * (compositor-friendly, no filter:blur on animated elements, gradients
+ * baked into static radial-gradients). Palette is plain rgba() so old
+ * Android WebViews (our APK audience) render it correctly.
+ */
+.dyn-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  /* dark theme palette (default) */
+  --dyn-o1: rgba(124, 58, 237, 0.3);
+  --dyn-o2: rgba(192, 38, 211, 0.16);
+  --dyn-o3: rgba(20, 184, 166, 0.11);
+  --dyn-o4: rgba(99, 102, 241, 0.15);
+  --dyn-grid-line: rgba(255, 255, 255, 0.045);
+  --dyn-dot: rgba(196, 181, 253, 0.55);
+  --dyn-dot-glow: rgba(139, 92, 246, 0.5);
+  --dyn-vignette: rgba(3, 2, 8, 0.5);
+  --dyn-sweep: rgba(255, 255, 255, 0.045);
+  --dyn-noise-opacity: 0.04;
+}
+html.theme-light .dyn-bg {
+  --dyn-o1: rgba(124, 58, 237, 0.12);
+  --dyn-o2: rgba(192, 38, 211, 0.07);
+  --dyn-o3: rgba(13, 148, 136, 0.07);
+  --dyn-o4: rgba(99, 102, 241, 0.08);
+  --dyn-grid-line: rgba(76, 29, 149, 0.055);
+  --dyn-dot: rgba(124, 58, 237, 0.4);
+  --dyn-dot-glow: rgba(124, 58, 237, 0.25);
+  --dyn-vignette: rgba(255, 255, 255, 0);
+  --dyn-sweep: rgba(124, 58, 237, 0.035);
+  --dyn-noise-opacity: 0.025;
+}
+.dyn-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* Aurora orbs — huge soft radial gradients drifting slowly */
+.dyn-orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+.dyn-orb-1 {
+  width: 60vmax;
+  height: 60vmax;
+  top: -22vmax;
+  left: -14vmax;
+  background: radial-gradient(circle at 50% 50%, var(--dyn-o1) 0%, transparent 62%);
+  animation: dyn-drift-1 26s ease-in-out infinite alternate;
+}
+.dyn-orb-2 {
+  width: 46vmax;
+  height: 46vmax;
+  top: -6vmax;
+  right: -18vmax;
+  background: radial-gradient(circle at 50% 50%, var(--dyn-o2) 0%, transparent 62%);
+  animation: dyn-drift-2 32s ease-in-out infinite alternate;
+}
+.dyn-orb-3 {
+  width: 50vmax;
+  height: 50vmax;
+  bottom: -24vmax;
+  left: -8vmax;
+  background: radial-gradient(circle at 50% 50%, var(--dyn-o3) 0%, transparent 62%);
+  animation: dyn-drift-3 38s ease-in-out infinite alternate;
+}
+.dyn-orb-4 {
+  width: 42vmax;
+  height: 42vmax;
+  bottom: -10vmax;
+  right: -6vmax;
+  background: radial-gradient(circle at 50% 50%, var(--dyn-o4) 0%, transparent 62%);
+  animation: dyn-drift-4 29s ease-in-out infinite alternate;
+}
+@keyframes dyn-drift-1 {
+  to { transform: translate3d(10vmax, 8vmax, 0) scale(1.18); }
+}
+@keyframes dyn-drift-2 {
+  to { transform: translate3d(-9vmax, 11vmax, 0) scale(1.12); }
+}
+@keyframes dyn-drift-3 {
+  to { transform: translate3d(12vmax, -9vmax, 0) scale(1.22); }
+}
+@keyframes dyn-drift-4 {
+  to { transform: translate3d(-11vmax, -7vmax, 0) scale(1.1); }
+}
+
+/* Blueprint grid — oversized layer panned exactly 2 cells (88px) per loop
+   so the wrap is seamless; radial mask fades it toward the edges. */
+.dyn-gridlayer {
+  position: absolute;
+  inset: -30%;
+  background-image:
+    linear-gradient(var(--dyn-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dyn-grid-line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+  animation: dyn-pan 36s linear infinite;
+  will-change: transform;
+}
+@keyframes dyn-pan {
+  to { transform: translate3d(88px, 88px, 0); }
+}
+
+/* Light sweep — a skewed beam glides across every ~15s, then idles */
+.dyn-sweep {
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 34vw;
+  height: 140%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    var(--dyn-sweep) 45%,
+    var(--dyn-sweep) 55%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-14deg);
+  animation: dyn-sweep 15s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes dyn-sweep {
+  0% { transform: translateX(-160%) skewX(-14deg); }
+  62% { transform: translateX(420%) skewX(-14deg); }
+  100% { transform: translateX(420%) skewX(-14deg); }
+}
+
+/* Rising particles — tiny glowing motes floating upward like paper dust.
+   Position/size/speed/drift come from per-element custom properties set
+   in the component (deterministic values, safe for SSR hydration). */
+.dyn-dot {
+  position: absolute;
+  top: 102%;
+  left: var(--dot-x);
+  width: var(--dot-s);
+  height: var(--dot-s);
+  border-radius: 9999px;
+  background: var(--dyn-dot);
+  box-shadow: 0 0 6px 1px var(--dyn-dot-glow);
+  animation: dyn-rise var(--dot-d) linear infinite;
+  animation-delay: var(--dot-delay);
+}
+@keyframes dyn-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  8% { opacity: var(--dot-o); }
+  88% { opacity: var(--dot-o); }
+  100% { transform: translate3d(var(--dot-drift), -116vh, 0); opacity: 0; }
+}
+
+/* Vignette — darkened edges pull focus to the centre content */
+.dyn-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(130% 100% at 50% 30%, transparent 55%, var(--dyn-vignette));
+}
+
+/* Film grain — static SVG turbulence tile; adds texture at zero runtime cost */
+.dyn-noise {
+  position: absolute;
+  inset: 0;
+  opacity: var(--dyn-noise-opacity);
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* Accessibility: freeze all motion for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .dyn-orb,
+  .dyn-gridlayer,
+  .dyn-sweep,
+  .dyn-dot {
+    animation: none !important;
+  }
+}
+
 /* bump */
