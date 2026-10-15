@@ -40,6 +40,12 @@ export interface LayoutSettings {
   booklet: boolean;
   /** Duplex helper: append one blank page when the sheet count is odd. */
   duplexPad: boolean;
+  /** Stamp the SOURCE page number (e.g. "p.12") on every placed slide. */
+  slideNumbers?: boolean;
+  /** 3-up handout: slide on the left, ruled note lines on the right. */
+  noteLines?: boolean;
+  /** Custom render DPI (72–300). null/undefined = follow the quality preset. */
+  customDpi?: number | null;
   /** Optional small label printed bottom-left of every sheet. */
   footerLabel?: string;
 }
@@ -54,6 +60,9 @@ export const defaultLayout: LayoutSettings = {
   quality: 'medium',
   booklet: false,
   duplexPad: false,
+  slideNumbers: false,
+  noteLines: false,
+  customDpi: null,
 };
 
 export interface ComposeItem {
@@ -124,6 +133,33 @@ export const QUALITY: Record<QualityOpt, { dpi: number; jpeg: number }> = {
   medium: { dpi: 150, jpeg: 0.68 },
   high: { dpi: 210, jpeg: 0.85 },
 };
+
+export const DPI_MIN = 72;
+export const DPI_MAX = 300;
+
+/** JPEG quality that tracks the DPI — sharper render, slightly richer encode. */
+export function jpegForDpi(dpi: number): number {
+  const t = (Math.min(DPI_MAX, Math.max(DPI_MIN, dpi)) - QUALITY.low.dpi) /
+    (QUALITY.high.dpi - QUALITY.low.dpi);
+  return Math.round((0.5 + t * 0.38) * 100) / 100;
+}
+
+/**
+ * Effective render dpi + JPEG quality for a layout: the custom DPI slider
+ * wins when set, otherwise the quality preset decides.
+ */
+export function resolveQuality(layout: Pick<LayoutSettings, 'quality' | 'customDpi'>): {
+  dpi: number;
+  jpeg: number;
+  custom: boolean;
+} {
+  if (layout.customDpi && layout.customDpi >= DPI_MIN) {
+    const dpi = Math.min(DPI_MAX, Math.round(layout.customDpi));
+    return { dpi, jpeg: jpegForDpi(dpi), custom: true };
+  }
+  const q = QUALITY[layout.quality];
+  return { dpi: q.dpi, jpeg: q.jpeg, custom: false };
+}
 
 export const PAGE_SIZES: Record<Exclude<PageSizeOpt, 'original'>, [number, number]> = {
   a4: [595.28, 841.89],
@@ -251,8 +287,14 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   const gap = 10;
   const cellW = (pw - marginX * 2 - gap * (cols - 1)) / cols;
   const cellH = (ph - marginTop - marginBottom - gap * (rows - 1)) / rows;
+  // 3-up handout mode: each slide shrinks to the left 62% of its cell and the
+  // freed right side carries ruled note lines (classic PowerPoint handout).
+  const noteLinesOn = !!o.layout.noteLines && rows === 3 && cols === 1 && !o.layout.booklet;
+  const slideBoxW = noteLinesOn ? cellW * 0.62 : cellW;
+  const linesX = marginX + slideBoxW + 8;
+  const LINES_COUNT = 7;
 
-  const { dpi, jpeg } = QUALITY[o.layout.quality];
+  const { dpi, jpeg } = resolveQuality(o.layout);
   // Pure neutral grays — a blue-tinted separator (0.72,0.72,0.76) printed as a
   // faint blue line, which users read as a leftover "blue mark".
   const lineColor = rgb(0.75, 0.75, 0.75);
@@ -439,16 +481,43 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       const bytes = await canvasToJpegBytes(finalCanvas, jpeg);
       const img = await out.embedJpg(bytes);
 
-      const s = Math.min(cellW / img.width, cellH / img.height);
+      const s = Math.min(slideBoxW / img.width, cellH / img.height);
       const w = img.width * s;
       const h = img.height * s;
       const col = local % cols;
       const row = Math.floor(local / cols);
-      const x = marginX + col * (cellW + gap) + (cellW - w) / 2;
+      const x = marginX + col * (cellW + gap) + (slideBoxW - w) / 2;
       const y =
         ph - marginTop - row * (cellH + gap) - cellH + (cellH - h) / 2;
       page.drawImage(img, { x, y, width: w, height: h });
       placements.push({ itemIndex, outPage: ci + 1, x, y, w, h });
+
+      // 3-up note lines — ruled guides in the space right of the slide
+      if (noteLinesOn) {
+        const lineTop = y + h - 2;
+        const lineBot = y + 2;
+        for (let li = 0; li < LINES_COUNT; li++) {
+          const ly = lineTop - ((lineTop - lineBot) * li) / (LINES_COUNT - 1);
+          page.drawLine({
+            start: { x: linesX, y: ly },
+            end: { x: pw - marginX, y: ly },
+            thickness: 0.5,
+            color: lineColor,
+          });
+        }
+      }
+
+      // source page number stamped on the slide (bottom-right, small)
+      if (o.layout.slideNumbers) {
+        const label = `p.${item.pageNumber}`;
+        page.drawText(label, {
+          x: x + w - font.widthOfTextAtSize(label, 7) - 3,
+          y: y + 2,
+          size: 7,
+          font,
+          color: textColor,
+        });
+      }
 
       pdfPage?.cleanup();
 
@@ -568,7 +637,7 @@ export async function estimateCore(
   const gap = 10;
   const cellW = (pw - marginX * 2 - gap * (cols - 1)) / cols;
   const cellH = (ph - marginTop - marginBottom - gap * (rows - 1)) / rows;
-  const { dpi, jpeg } = QUALITY[layout.quality];
+  const { dpi, jpeg } = resolveQuality(layout);
 
   // spread samples evenly across the selection
   const step = Math.max(1, Math.floor(items.length / Math.min(sampleCount, items.length)));

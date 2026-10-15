@@ -21,11 +21,10 @@ import {
   estimateCore,
   type ComposeEnv,
   type ComposeItem,
-  type FilterSettings,
   type LayoutSettings,
   type PdfDocLike,
 } from './compose-core';
-import type { AnyCanvas } from './filters';
+import type { AnyCanvas, FilterSettings } from './filters';
 import { PDF_WASM_URL } from './pdfjs';
 
 // pdf.js normally spawns its own worker for parsing. Inside this worker we

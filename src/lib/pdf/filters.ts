@@ -73,6 +73,14 @@ export interface FilterSettings {
    * `deskew: false`.
    */
   deskew?: boolean;
+  /**
+   * Logo / header strip removal — white out the top N% of every page
+   * (0 = off, 1–25 = band height as % of page height). Kills college logos,
+   * deck titles and watermarks that sit in a predictable header zone.
+   * Optional for the same reason as `deskew`: preset recipes hardcode
+   * FilterSettings literals and must keep type-checking unchanged.
+   */
+  headerTrim?: number;
 }
 
 export const defaultFilters: FilterSettings = {
@@ -83,6 +91,7 @@ export const defaultFilters: FilterSettings = {
   penBoost: 0,
   searchable: false,
   deskew: false,
+  headerTrim: 0,
 };
 
 /** Bright-cyan cut (QUESTION pills, option keys, cyan wash cores). */
@@ -716,6 +725,24 @@ export function estimateDeskewForPage(canvas: AnyCanvas): number {
 }
 
 /**
+ * Logo / header strip removal — paint pure white over the top `pct`% of the
+ * canvas. Runs AFTER the color filters (so invert can never turn the band
+ * into a solid black bar) and BEFORE margin trim (so "trim margins" can pull
+ * the content up into the freed space instead of leaving a dead gap).
+ */
+export function whiteoutHeaderBand(canvas: AnyCanvas, pct: number): AnyCanvas {
+  const band = Math.round(canvas.height * (Math.min(25, Math.max(0, pct)) / 100));
+  if (band <= 0) return canvas;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }) as AnyCtx | null;
+  if (!ctx) return canvas;
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, band);
+  ctx.restore();
+  return canvas;
+}
+
+/**
  * The single entry point the whole pipeline uses for one page:
  *   deskew (optional, light pages only) → applyFilters → trim (optional).
  * `effectiveMode` passes through to applyFilters so 'auto' pages can be
@@ -733,6 +760,7 @@ export function preparePageCanvas(
     if (a) out = deskewCanvas(out, a);
   }
   applyFilters(out, s, effectiveMode);
+  if (s.headerTrim && s.headerTrim > 0) out = whiteoutHeaderBand(out, s.headerTrim);
   if (s.trimMargins) out = trimCanvasMargins(out);
   return out;
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   BookOpen,
+  Gauge,
   IndianRupee,
   Loader2,
   Printer,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -31,22 +33,53 @@ import {
   bookletOutputPages,
   estimateOutputPages,
   estimateOutput,
+  resolveQuality,
+  DPI_MIN,
+  DPI_MAX,
   type PageSizeOpt,
   type QualityOpt,
 } from '@/lib/pdf/compose';
+import { preparePageCanvas, resolveColorMode, type AnyCanvas } from '@/lib/pdf/filters';
+import { loadPdfDocument } from '@/lib/pdf/pdfjs';
+import { renderPageToCanvas } from '@/lib/pdf/render';
 import { getDocBuffer, usePrintifyStore } from '@/lib/printify-store';
 import { estimateSavings, formatRupees } from '@/lib/savings';
 import { useT } from '@/lib/i18n';
 
 const ROWS = ['1', '2', '3', '4'];
-const PRESETS: Array<{ label: string; rows: number; cols: number }> = [
-  { label: '1 × 1', rows: 1, cols: 1 },
-  { label: '2 × 1', rows: 2, cols: 1 },
-  { label: '3 × 1', rows: 3, cols: 1 },
-  { label: '2 × 2', rows: 2, cols: 2 },
-  { label: '3 × 2', rows: 3, cols: 2 },
-  { label: '4 × 2', rows: 4, cols: 2 },
+/** Quick "slides per sheet" chips — tap one, get the right grid instantly. */
+const PER_SHEET: Array<{ n: number; rows: number; cols: number }> = [
+  { n: 1, rows: 1, cols: 1 },
+  { n: 2, rows: 2, cols: 1 },
+  { n: 3, rows: 3, cols: 1 },
+  { n: 4, rows: 2, cols: 2 },
+  { n: 6, rows: 3, cols: 2 },
+  { n: 9, rows: 3, cols: 3 },
 ];
+
+/** Tiny rows×cols glyph shown inside each per-sheet chip. */
+function GridGlyph({ rows, cols, active }: { rows: number; cols: number; active: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className="grid h-5 w-5 shrink-0 gap-[1.5px]"
+      style={{
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gridTemplateRows: `repeat(${rows}, 1fr)`,
+      }}
+    >
+      {Array.from({ length: rows * cols }).map((_, i) => (
+        <span
+          key={i}
+          className={cn(
+            'rounded-[1px]',
+            active ? 'bg-primary/70' : 'bg-muted-foreground/40',
+          )}
+        />
+      ))}
+    </span>
+  );
+}
 
 const PAGE_ASPECT: Record<Exclude<PageSizeOpt, 'original'>, number> = {
   a4: 595.28 / 841.89,
@@ -165,6 +198,56 @@ export function LayoutStep() {
   const previewAspect = layout.orientation === 'landscape' ? 1 / aspect : aspect;
 
   const previewThumbs = selected.slice(0, perPage);
+
+  // ---- live output preview -------------------------------------------------
+  // The preview shows what will ACTUALLY print: the first sheet's slides are
+  // rendered through the real filter chain (preparePageCanvas — smart invert,
+  // stains, logo strip, pen boost, margin trim), then re-rendered live every
+  // time filters or layout change. Raw upload thumbs are the placeholder
+  // while the filtered render is in flight.
+  const sheetKey = previewThumbs.map((p) => `${p.id}:${p.rotation}`).join('|');
+  const [live, setLive] = useState<Record<string, string>>({});
+  const liveSeq = useRef(0);
+
+  useEffect(() => {
+    if (previewThumbs.length === 0) {
+      setLive({});
+      return;
+    }
+    const seq = ++liveSeq.current;
+    const timer = setTimeout(async () => {
+      try {
+        const docCache = new Map<number, Awaited<ReturnType<typeof loadPdfDocument>>>();
+        const out: Record<string, string> = {};
+        for (const p of previewThumbs) {
+          const buf = getDocBuffer(p.docId);
+          if (!buf) continue;
+          let doc = docCache.get(p.docId);
+          if (!doc) {
+            doc = await loadPdfDocument(buf);
+            docCache.set(p.docId, doc);
+          }
+          const raw = await renderPageToCanvas(doc, p.pageNumber, {
+            targetWidth: 170,
+            extraRotation: p.rotation,
+          });
+          if (liveSeq.current !== seq) return; // superseded — stop quietly
+          const effMode = resolveColorMode(raw as AnyCanvas, filters.colorMode);
+          const done = preparePageCanvas(raw as AnyCanvas, filters, effMode);
+          out[p.id] = (done as HTMLCanvasElement).toDataURL('image/jpeg', 0.72);
+        }
+        if (liveSeq.current === seq) setLive(out);
+      } catch (err) {
+        console.error('Live layout preview failed', err);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- previewThumbs tracked via sheetKey
+  }, [sheetKey, filters]);
+
+  const noteLinesAvailable = !layout.booklet && layout.rows === 3 && layout.cols === 1;
+  const noteLinesPreview = noteLinesAvailable && !!layout.noteLines;
+  const effQuality = resolveQuality(layout);
 
   // ---- print-shop budget auto-fit (#2) ------------------------------------
   // Xerox shops charge by the sheet. Type the number of sheets you can
@@ -357,24 +440,32 @@ export function LayoutStep() {
               {layout.booklet ? t('ly.perPageN', { n: 2 }) : t('ly.perPageN', { n: perPage })}
             </Badge>
           </div>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {PRESETS.map((p) => (
-              <Button
-                key={p.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setLayout({ rows: p.rows, cols: p.cols })}
-                className={cn(
-                  'h-8',
-                  layout.rows === p.rows && layout.cols === p.cols
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'text-muted-foreground',
-                )}
-              >
-                {p.label}
-              </Button>
-            ))}
+          <div className="mb-4">
+            <p className="mb-1.5 text-xs text-muted-foreground">{t('ly.perSheet')}</p>
+            <div className="flex flex-wrap gap-2">
+              {PER_SHEET.map((p) => {
+                const active =
+                  !layout.booklet && layout.rows === p.rows && layout.cols === p.cols;
+                return (
+                  <Button
+                    key={p.n}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLayout({ rows: p.rows, cols: p.cols })}
+                    className={cn(
+                      'h-9 gap-1.5',
+                      active
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'text-muted-foreground',
+                    )}
+                  >
+                    <GridGlyph rows={p.rows} cols={p.cols} active={active} />
+                    {p.n}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -414,6 +505,26 @@ export function LayoutStep() {
               </Select>
             </div>
           </div>
+
+          <div
+            className={cn(
+              'flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-3 transition-opacity',
+              !noteLinesAvailable && 'opacity-50',
+            )}
+          >
+            <div className="pr-3">
+              <p className="text-sm font-medium">{t('ly.noteLines')}</p>
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                {noteLinesAvailable ? t('ly.noteLinesSub') : t('ly.noteLinesHint')}
+              </p>
+            </div>
+            <Switch
+              checked={noteLinesAvailable && !!layout.noteLines}
+              disabled={!noteLinesAvailable}
+              onCheckedChange={(v) => setLayout({ noteLines: v })}
+              aria-label={t('ly.noteLines')}
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -442,6 +553,19 @@ export function LayoutStep() {
               checked={layout.pageNumbers}
               onCheckedChange={(v) => setLayout({ pageNumbers: v })}
               aria-label={t('ly.pageNums')}
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="pr-2">
+              <p className="text-sm font-medium">{t('ly.slideNums')}</p>
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                {t('ly.slideNumsSub')}
+              </p>
+            </div>
+            <Switch
+              checked={!!layout.slideNumbers}
+              onCheckedChange={(v) => setLayout({ slideNumbers: v })}
+              aria-label={t('ly.slideNums')}
             />
           </div>
           <div
@@ -543,15 +667,69 @@ export function LayoutStep() {
               </Label>
             ))}
           </RadioGroup>
+
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Gauge className="h-4 w-4 text-violet-300" /> {t('ly.dpi.aria')}
+              </p>
+              <div className="flex items-center gap-1.5">
+                {effQuality.custom && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-muted-foreground"
+                    onClick={() => setLayout({ customDpi: null })}
+                  >
+                    {t('ly.dpi.reset')}
+                  </Button>
+                )}
+                <Badge
+                  variant="secondary"
+                  className={cn(effQuality.custom && 'bg-primary/15 text-primary')}
+                >
+                  {t('ly.dpi.value', { n: effQuality.dpi })}
+                  {effQuality.custom ? ` · ${t('ly.dpi.custom')}` : ''}
+                </Badge>
+              </div>
+            </div>
+            <Slider
+              value={[effQuality.dpi]}
+              onValueChange={(v) => setLayout({ customDpi: v[0] ?? 150 })}
+              min={DPI_MIN}
+              max={DPI_MAX}
+              step={6}
+              aria-label={t('ly.dpi.aria')}
+            />
+            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+              <span>{DPI_MIN}</span>
+              <span>150</span>
+              <span>{DPI_MAX}</span>
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.dpi.hint')}</p>
+          </div>
         </div>
       </div>
 
       {/* Preview + actions */}
       <div className="space-y-4">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('ly.preview')}
-          </p>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('ly.preview')}
+            </p>
+            <Badge
+              variant="secondary"
+              className="gap-1.5 border-0 bg-emerald-500/15 text-[10px] text-emerald-300"
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </span>
+              {t('ly.liveBadge')}
+            </Badge>
+          </div>
           <div className="flex justify-center">
             <div
               className="w-full max-w-[240px] rounded-lg bg-white p-[4%] shadow-2xl"
@@ -567,6 +745,7 @@ export function LayoutStep() {
               >
                 {Array.from({ length: perPage }).map((_, i) => {
                   const th = previewThumbs[i];
+                  const src = (th && live[th.id]) || th?.thumb;
                   const hasRight = i % layout.cols < layout.cols - 1 && !!previewThumbs[i + 1];
                   const hasBottom =
                     i + layout.cols < perPage && !!previewThumbs[i + layout.cols];
@@ -574,19 +753,41 @@ export function LayoutStep() {
                     <div
                       key={i}
                       className={cn(
-                        'flex items-center justify-center overflow-hidden rounded-[2px] bg-zinc-100',
+                        'relative flex items-center justify-center overflow-hidden rounded-[2px] bg-zinc-100',
                         layout.separators && hasRight && 'border-r border-zinc-300',
                         layout.separators && hasBottom && 'border-b border-zinc-300',
                       )}
                     >
                       {th ? (
-                        <img
-                          src={th.thumb}
-                          alt={`Slide ${i + 1} in layout preview`}
-                          className="max-h-full max-w-full object-contain"
-                        />
+                        <div
+                          className={cn(
+                            'flex h-full w-full items-center justify-center',
+                            noteLinesPreview && 'w-[60%]',
+                          )}
+                        >
+                          <img
+                            src={src}
+                            alt={`Slide ${i + 1} in layout preview`}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
                       ) : (
                         <div className="h-full w-full rounded-[2px] bg-zinc-50" />
+                      )}
+                      {noteLinesPreview && (
+                        <div
+                          aria-hidden
+                          className="absolute inset-y-[4%] right-[3%] flex w-[33%] flex-col justify-between"
+                        >
+                          {Array.from({ length: 7 }).map((_, li) => (
+                            <span key={li} className="border-t border-zinc-300" />
+                          ))}
+                        </div>
+                      )}
+                      {layout.slideNumbers && th && (
+                        <span className="absolute bottom-0 right-0.5 text-[6px] font-medium leading-none text-zinc-400">
+                          p.{th.pageNumber}
+                        </span>
                       )}
                     </div>
                   );
@@ -599,6 +800,7 @@ export function LayoutStep() {
               )}
             </div>
           </div>
+          <p className="mt-2 text-center text-[10px] text-muted-foreground">{t('ly.liveSub')}</p>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-lg bg-white/5 p-2">
               <p className="text-lg font-bold">{selected.length}</p>

@@ -16,6 +16,7 @@ import {
   type EstimateResult,
 } from './compose-core';
 import type { FilterSettings, AnyCanvas, AnyCtx } from './filters';
+import { applyFilters, trimCanvasMargins } from './filters';
 import { loadPdfDocument, PDF_WASM_URL, type PdfDocument } from './pdfjs';
 
 export type {
@@ -31,6 +32,11 @@ export {
   buildBookletItems,
   defaultLayout,
   estimateOutputPages,
+  jpegForDpi,
+  resolveQuality,
+  DPI_MIN,
+  DPI_MAX,
+  QUALITY,
 } from './compose-core';
 
 export interface ComposeResult extends ComposeCoreResult {

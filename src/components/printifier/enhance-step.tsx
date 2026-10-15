@@ -12,6 +12,7 @@ import {
   PenLine,
   RotateCw,
   ScanText,
+  Scissors,
   Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -267,6 +268,29 @@ export function EnhanceStep() {
               />
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">{t('en.trim.d')}</p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="mb-1 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                <Scissors className="h-4 w-4 text-violet-400" /> {t('en.logo')}
+              </h3>
+              <Badge variant="secondary">
+                {(filters.headerTrim ?? 0) > 0
+                  ? `${filters.headerTrim}%`
+                  : t('en.logo.off')}
+              </Badge>
+            </div>
+            <Slider
+              value={[filters.headerTrim ?? 0]}
+              onValueChange={(v) => setFilters({ headerTrim: v[0] ?? 0 })}
+              min={0}
+              max={25}
+              step={1}
+              className="mt-3"
+              aria-label={t('en.logo.aria')}
+            />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t('en.logo.d')}</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
