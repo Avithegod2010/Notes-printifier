@@ -72,3 +72,10 @@ Last full audit: 2026-10-14 (`bun audit`).
   `zustand`, `framer-motion`) is current and advisory-free. Self-hosters running the
   API routes should re-run `bun audit` after `bun install` and keep dependencies
   updated. Dependabot (`.github/dependabot.yml`) opens weekly update PRs.
+- **About the Dependabot banner over-reporting:** Dependabot alerts are computed from
+  `package.json` ranges because Dependabot's Bun support cannot fully honour the
+  `overrides` block. Re-verified on 2026-10-14 by querying the GitHub Advisory DB
+  directly for every resolved `name@version` in `bun.lock` (682 packages): only the
+  accepted `braces` finding above is real. Any additional "high" alerts shown on the
+  Security tab correspond to versions that the `overrides` block has already patched
+  away and can be dismissed.
