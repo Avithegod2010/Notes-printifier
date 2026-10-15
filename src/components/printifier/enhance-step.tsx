@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
+  ChevronDown,
   Crop,
   Droplets,
   Eraser,
@@ -13,6 +15,7 @@ import {
   RotateCw,
   ScanText,
   Scissors,
+  SlidersHorizontal,
   Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,9 +24,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
-  COLOR_MODE_LABELS,
   estimateDeskewForPage,
   inkCoverage,
   preparePageCanvas,
@@ -41,6 +48,53 @@ import { PreviewDialog } from './preview-dialog';
 
 const MODES: ColorMode[] = ['auto', 'invert', 'original', 'grayscale', 'bw'];
 
+const MODE_TITLE_KEY: Record<ColorMode, string> = {
+  auto: 'en.mode.auto',
+  invert: 'en.mode.invert',
+  original: 'en.mode.original',
+  grayscale: 'en.mode.grayscale',
+  bw: 'en.mode.bw',
+};
+
+const MODE_HINT_KEY: Record<ColorMode, string> = {
+  auto: 'en.mode.auto.h',
+  invert: 'en.mode.invert.h',
+  original: 'en.mode.original.h',
+  grayscale: 'en.mode.grayscale.h',
+  bw: 'en.mode.bw.h',
+};
+
+/**
+ * Tiny visual glyph for each color-mode tile. Pure CSS swatches keep the
+ * picker square + compact; the "invert" tile gets a light "A" on a dark
+ * chip so it reads as "dark slide becomes light page" at a glance.
+ */
+function ModeSwatch({ mode }: { mode: ColorMode }) {
+  if (mode === 'invert') {
+    return (
+      <span
+        aria-hidden
+        className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-zinc-900"
+      >
+        <span className="text-[10px] font-bold leading-none text-zinc-100">A</span>
+      </span>
+    );
+  }
+  const bg: Record<Exclude<ColorMode, 'invert'>, React.CSSProperties> = {
+    auto: { background: 'linear-gradient(135deg, #27272a 50%, #fafafa 50%)' },
+    original: { background: 'linear-gradient(135deg, #8b5cf6, #d946ef 55%, #f59e0b)' },
+    grayscale: { background: 'linear-gradient(135deg, #52525b, #d4d4d8)' },
+    bw: { background: 'linear-gradient(90deg, #000 50%, #fff 50%)' },
+  };
+  return (
+    <span
+      aria-hidden
+      className="block h-7 w-full rounded-md border border-white/10"
+      style={bg[mode]}
+    />
+  );
+}
+
 export function EnhanceStep() {
   const t = useT();
   const pages = usePrintifyStore((s) => s.pages);
@@ -54,6 +108,7 @@ export function EnhanceStep() {
   const [inkAfter, setInkAfter] = useState(0);
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [advOpen, setAdvOpen] = useState(false);
   /** Estimated tilt (deg) of the preview page — measured once, then cached. */
   const [skewAngle, setSkewAngle] = useState<number | null>(null);
   const angleCache = useRef<Map<string, number>>(new Map());
@@ -126,10 +181,16 @@ export function EnhanceStep() {
   const savedPct =
     inkBefore > 0.05 ? Math.max(0, Math.round(((inkBefore - inkAfter) / inkBefore) * 100)) : 0;
 
+  // how many of the advanced toggles are active — surfaced on the collapsed header
+  const activeAdv =
+    (filters.cleanStains ? 1 : 0) +
+    (filters.trimMargins ? 1 : 0) +
+    (filters.penBoost > 0 ? 1 : 0);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        {/* Preview */}
+        {/* Preview + compact color-mode picker */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <figure className="space-y-2">
@@ -182,6 +243,53 @@ export function EnhanceStep() {
               {t('en.preview.saves', { n: savedPct })}
             </p>
           )}
+
+          {/* Compact square-tile color-mode picker — sits right under the
+              preview so mode changes are immediately visible above. */}
+          <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                <Wand2 className="h-4 w-4 text-violet-400" /> {t('en.title')}
+              </h3>
+              <span className="text-[11px] leading-tight text-muted-foreground">
+                {t(MODE_HINT_KEY[filters.colorMode])}
+              </span>
+            </div>
+            <RadioGroup
+              value={filters.colorMode}
+              onValueChange={(v) => setFilters({ colorMode: v as ColorMode })}
+              className="grid grid-cols-3 gap-2 min-[560px]:grid-cols-5"
+            >
+              {MODES.map((mode) => (
+                <Label
+                  key={mode}
+                  htmlFor={`mode-${mode}`}
+                  title={t(MODE_HINT_KEY[mode])}
+                  className={cn(
+                    'relative flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-2 transition-all',
+                    filters.colorMode === mode
+                      ? 'border-primary bg-primary/10 shadow-sm shadow-primary/20'
+                      : 'border-white/10 hover:border-white/25 hover:bg-white/5',
+                  )}
+                >
+                  <RadioGroupItem value={mode} id={`mode-${mode}`} className="sr-only" />
+                  <ModeSwatch mode={mode} />
+                  <span className="text-center text-[11px] font-medium leading-tight">
+                    {t(MODE_TITLE_KEY[mode])}
+                  </span>
+                  {mode === 'auto' && (
+                    <span
+                      title={t('en.recommended')}
+                      className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-white shadow shadow-violet-600/40"
+                    >
+                      <Check className="h-2.5 w-2.5" strokeWidth={3.5} />
+                    </span>
+                  )}
+                </Label>
+              ))}
+            </RadioGroup>
+          </div>
+
           <div className="mt-3 flex flex-col items-center gap-2">
             <p className="text-center text-xs text-muted-foreground">{t('en.preview.note')}</p>
             <Button
@@ -200,97 +308,22 @@ export function EnhanceStep() {
         {/* Controls */}
         <div className="space-y-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              <Wand2 className="h-4 w-4 text-violet-400" /> {t('en.title')}
-            </h3>
-            <RadioGroup
-              value={filters.colorMode}
-              onValueChange={(v) => setFilters({ colorMode: v as ColorMode })}
-              className="grid grid-cols-1 gap-2"
-            >
-              {MODES.map((mode) => (
-                <Label
-                  key={mode}
-                  htmlFor={`mode-${mode}`}
-                  className={cn(
-                    'flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors',
-                    filters.colorMode === mode
-                      ? 'border-primary bg-primary/10'
-                      : 'border-white/10 hover:border-white/25',
-                  )}
-                >
-                  <RadioGroupItem value={mode} id={`mode-${mode}`} />
-                  <span className="flex-1">
-                    <span className="block text-sm font-medium">
-                      {COLOR_MODE_LABELS[mode].title}
-                      {mode === 'auto' && (
-                        <Badge className="ml-2 border-0 bg-violet-500/20 text-[10px] text-violet-200">
-                          {t('en.recommended')}
-                        </Badge>
-                      )}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {COLOR_MODE_LABELS[mode].hint}
-                    </span>
-                  </span>
-                </Label>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <Eraser className="h-4 w-4 text-violet-400" /> {t('en.stains')}
-              </h3>
-              <Switch
-                checked={filters.cleanStains}
-                onCheckedChange={(v) => setFilters({ cleanStains: v })}
-                aria-label={t('en.stains')}
-              />
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {filters.colorMode === 'invert'
-                ? t('en.stains.inv')
-                : t('en.stains.light')}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-1 flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <Crop className="h-4 w-4 text-violet-400" /> {t('en.trim')}
-              </h3>
-              <Switch
-                checked={filters.trimMargins}
-                onCheckedChange={(v) => setFilters({ trimMargins: v })}
-                aria-label={t('en.trim')}
-              />
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">{t('en.trim.d')}</p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <div className="mb-1 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <Scissors className="h-4 w-4 text-violet-400" /> {t('en.logo')}
+                <Droplets className="h-4 w-4 text-violet-400" /> {t('en.ink')}
               </h3>
-              <Badge variant="secondary">
-                {(filters.headerTrim ?? 0) > 0
-                  ? `${filters.headerTrim}%`
-                  : t('en.logo.off')}
-              </Badge>
+              <Badge variant="secondary">{filters.inkSaver}%</Badge>
             </div>
             <Slider
-              value={[filters.headerTrim ?? 0]}
-              onValueChange={(v) => setFilters({ headerTrim: v[0] ?? 0 })}
+              value={[filters.inkSaver]}
+              onValueChange={(v) => setFilters({ inkSaver: v[0] ?? 0 })}
               min={0}
-              max={25}
-              step={1}
+              max={90}
+              step={5}
               className="mt-3"
-              aria-label={t('en.logo.aria')}
+              aria-label={t('en.ink')}
             />
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t('en.logo.d')}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{t('en.ink.d')}</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -321,23 +354,24 @@ export function EnhanceStep() {
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <div className="mb-1 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <PenLine className="h-4 w-4 text-violet-400" /> {t('en.pen')}
-                <Badge className="ml-1 border-0 bg-fuchsia-500/20 text-[10px] text-fuchsia-200">
-                  {t('en.badge.new')}
-                </Badge>
+                <Scissors className="h-4 w-4 text-violet-400" /> {t('en.logo')}
               </h3>
-              <Badge variant="secondary">{filters.penBoost}%</Badge>
+              <Badge variant="secondary">
+                {(filters.headerTrim ?? 0) > 0
+                  ? `${filters.headerTrim}%`
+                  : t('en.logo.off')}
+              </Badge>
             </div>
             <Slider
-              value={[filters.penBoost]}
-              onValueChange={(v) => setFilters({ penBoost: v[0] ?? 0 })}
+              value={[filters.headerTrim ?? 0]}
+              onValueChange={(v) => setFilters({ headerTrim: v[0] ?? 0 })}
               min={0}
-              max={100}
-              step={10}
+              max={25}
+              step={1}
               className="mt-3"
-              aria-label={t('en.pen')}
+              aria-label={t('en.logo.aria')}
             />
-            <p className="mt-2 text-xs text-muted-foreground">{t('en.pen.d')}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t('en.logo.d')}</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -357,24 +391,91 @@ export function EnhanceStep() {
             <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-1 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <Droplets className="h-4 w-4 text-violet-400" /> {t('en.ink')}
-              </h3>
-              <Badge variant="secondary">{filters.inkSaver}%</Badge>
-            </div>
-            <Slider
-              value={[filters.inkSaver]}
-              onValueChange={(v) => setFilters({ inkSaver: v[0] ?? 0 })}
-              min={0}
-              max={90}
-              step={5}
-              className="mt-3"
-              aria-label={t('en.ink')}
-            />
-            <p className="mt-2 text-xs text-muted-foreground">{t('en.ink.d')}</p>
-          </div>
+          {/* Advanced — stain cleanup, trim margins & handwriting boost tucked
+              away so the main column stays focused on the big-impact controls. */}
+          <Collapsible
+            open={advOpen}
+            onOpenChange={setAdvOpen}
+            className="rounded-2xl border border-white/10 bg-white/[0.03]"
+          >
+            <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 rounded-2xl p-5 text-left transition-colors hover:bg-white/[0.02]">
+              <span>
+                <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  <SlidersHorizontal className="h-4 w-4 text-violet-400" /> {t('en.adv')}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">{t('en.adv.sub')}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-2">
+                {activeAdv > 0 && (
+                  <Badge variant="secondary">{t('en.adv.on', { n: activeAdv })}</Badge>
+                )}
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                    advOpen && 'rotate-180',
+                  )}
+                />
+              </span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="overflow-hidden data-[state=closed]:hidden">
+              <div className="space-y-4 px-5 pb-5">
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                      <Eraser className="h-4 w-4 text-violet-400" /> {t('en.stains')}
+                    </h4>
+                    <Switch
+                      checked={filters.cleanStains}
+                      onCheckedChange={(v) => setFilters({ cleanStains: v })}
+                      aria-label={t('en.stains')}
+                    />
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {filters.colorMode === 'invert'
+                      ? t('en.stains.inv')
+                      : t('en.stains.light')}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                      <Crop className="h-4 w-4 text-violet-400" /> {t('en.trim')}
+                    </h4>
+                    <Switch
+                      checked={filters.trimMargins}
+                      onCheckedChange={(v) => setFilters({ trimMargins: v })}
+                      aria-label={t('en.trim')}
+                    />
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{t('en.trim.d')}</p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                      <PenLine className="h-4 w-4 text-violet-400" /> {t('en.pen')}
+                      <Badge className="ml-1 border-0 bg-fuchsia-500/20 text-[10px] text-fuchsia-200">
+                        {t('en.badge.new')}
+                      </Badge>
+                    </h4>
+                    <Badge variant="secondary">{filters.penBoost}%</Badge>
+                  </div>
+                  <Slider
+                    value={[filters.penBoost]}
+                    onValueChange={(v) => setFilters({ penBoost: v[0] ?? 0 })}
+                    min={0}
+                    max={100}
+                    step={10}
+                    className="mt-1"
+                    aria-label={t('en.pen')}
+                  />
+                  <p className="mt-2 text-xs text-muted-foreground">{t('en.pen.d')}</p>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <PresetsCard />
         </div>

@@ -174,6 +174,23 @@ const DICT: Record<string, [string, string]> = {
   'en.recommended': ['Recommended', 'सुझावित'],
   'en.badge.new': ['New', 'नया'],
 
+  // color modes (compact square picker)
+  'en.mode.auto': ['Smart', 'स्मार्ट'],
+  'en.mode.auto.h': ['Dark slides inverted, light pages kept light', 'गहरे स्लाइड उलटे, हल्के पेज वैसे ही'],
+  'en.mode.invert': ['Invert', 'उलटें'],
+  'en.mode.invert.h': ['Dark slides → white pages', 'गहरे स्लाइड → सफ़ेद पेज'],
+  'en.mode.original': ['Original', 'मूल'],
+  'en.mode.original.h': ['Keep colors, clean background stains', 'रंग रखें, बैकग्राउंड दाग़ साफ़'],
+  'en.mode.grayscale': ['Grayscale', 'ग्रेस्केल'],
+  'en.mode.grayscale.h': ['Remove all color', 'सारा रंग हटाएँ'],
+  'en.mode.bw': ['B&W', 'काला-सफ़ेद'],
+  'en.mode.bw.h': ['Maximum ink saving', 'अधिकतम स्याही बचत'],
+
+  // advanced collapsible
+  'en.adv': ['Advanced', 'उन्नत सेटिंग्स'],
+  'en.adv.sub': ['Stains · Trim · Handwriting', 'दाग़ · किनारे · लिखावट'],
+  'en.adv.on': ['{n}/3 on', '{n}/3 चालू'],
+
   // layout step
   'ly.paper': ['Paper size', 'कागज़ साइज़'],
   'ly.orientation': ['Orientation', 'दिशा'],

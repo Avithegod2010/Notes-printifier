@@ -22,7 +22,7 @@ import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePrintifyStore } from '@/lib/printify-store';
-import { COLOR_MODE_LABELS } from '@/lib/pdf/filters';
+import { type ColorMode } from '@/lib/pdf/filters';
 import { estimateSavings, formatRupees } from '@/lib/savings';
 import { co2GramsFor, loadInkStats, resetInkStats, treesFor, type InkStats } from '@/lib/ink-stats';
 import { listRecentJobs, downloadBlob, type RecentJob } from '@/lib/recent-jobs';
@@ -33,6 +33,15 @@ import { useT } from '@/lib/i18n';
 function formatMB(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
+
+/** colorMode → i18n key, so the result stat shows the mode in the active language. */
+const MODE_I18N_KEY: Record<ColorMode, string> = {
+  auto: 'en.mode.auto',
+  invert: 'en.mode.invert',
+  original: 'en.mode.original',
+  grayscale: 'en.mode.grayscale',
+  bw: 'en.mode.bw',
+};
 
 export function ResultStep() {
   const t = useT();
@@ -220,7 +229,7 @@ export function ResultStep() {
     {
       label: t('rs.inkSaved'),
       value: `${result.inkSavedPct}%`,
-      sub: t('rs.mode', { m: COLOR_MODE_LABELS[filters.colorMode].title }),
+      sub: t('rs.mode', { m: t(MODE_I18N_KEY[filters.colorMode]) }),
       tone: 'text-emerald-400',
     },
     {
