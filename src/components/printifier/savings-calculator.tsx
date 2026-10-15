@@ -9,6 +9,11 @@ import {
 } from 'framer-motion';
 import { Calculator, FileStack, PiggyBank } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import {
+  costProfileIsDefault,
+  loadCostProfile,
+  type CostProfile,
+} from '@/lib/savings';
 import { Reveal } from './reveal';
 import { SectionHead } from './section-head';
 import { useT } from '@/lib/i18n';
@@ -67,6 +72,14 @@ export function SavingsCalculator() {
   const t = useT();
   const [pages, setPages] = useState(120);
   const [styleId, setStyleId] = useState<StyleId>('dark');
+  // F5 — honour the user's print cost profile (₹/sheet, ₹/full-ink page)
+  const [cost, setCost] = useState<CostProfile | null>(null);
+  useEffect(() => {
+    setCost(loadCostProfile());
+  }, []);
+  const paperRs = cost?.paperRsPerSheet ?? 1;
+  const inkRs = cost?.inkRsPerFullPage ?? 1.3;
+  const customCost = cost !== null && !costProfileIsDefault(cost);
 
   const style = STYLES.find((s) => s.id === styleId) ?? STYLES[0];
 
@@ -76,7 +89,8 @@ export function SavingsCalculator() {
     const sheetsWith = pagesYear / PRINTIFIER_PER_SHEET;
     const sheetsSaved = Math.max(0, sheetsToday - sheetsWith);
     const money =
-      sheetsSaved * 1 + pagesYear * 1.3 * Math.max(0, style.coverage - PRINTIFIER_COVERAGE);
+      sheetsSaved * paperRs +
+      pagesYear * inkRs * Math.max(0, style.coverage - PRINTIFIER_COVERAGE);
     // round money to the nearest ₹10 — cleaner for an estimate
     return {
       sheetsToday: Math.round(sheetsToday),
@@ -84,7 +98,7 @@ export function SavingsCalculator() {
       sheetsSaved: Math.round(sheetsSaved),
       money: Math.max(0, Math.round(money / 10) * 10),
     };
-  }, [pages, style]);
+  }, [pages, style, paperRs, inkRs]);
 
   // bar widths (today is always the full reference)
   const withPct = result.sheetsToday > 0 ? (result.sheetsWith / result.sheetsToday) * 100 : 100;
@@ -235,6 +249,11 @@ export function SavingsCalculator() {
 
             <p className="relative mt-auto pt-6 text-[11px] leading-relaxed text-muted-foreground/80">
               {t('calc.note')}
+              {customCost && (
+                <span className="mt-1 block text-emerald-300/90">
+                  {t('rs.assume2', { p: paperRs, i: inkRs })}
+                </span>
+              )}
             </p>
           </div>
         </Reveal>

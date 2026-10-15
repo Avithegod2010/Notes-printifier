@@ -191,6 +191,81 @@ const DICT: Record<string, [string, string]> = {
   'en.adv.sub': ['Stains · Trim · Handwriting', 'दाग़ · किनारे · लिखावट'],
   'en.adv.on': ['{n}/3 on', '{n}/3 चालू'],
 
+  // preview: compare wipe · zoom · page picker · erased overlay (F1/F4/F8)
+  'en.cmp.side': ['Side by side', 'साथ-साथ'],
+  'en.cmp.wipe': ['Compare', 'तुलना'],
+  'en.cmp.aria': ['Drag to compare before and after', 'पहले-बाद की तुलना के लिए खींचें'],
+  'en.zoom.in': ['Zoom in', 'ज़ूम इन'],
+  'en.zoom.out': ['Zoom out', 'ज़ूम आउट'],
+  'en.zoom.fit': ['Reset zoom', 'ज़ूम रीसेट'],
+  'en.zoom.pct': ['{n}×', '{n}×'],
+  'en.overlay': ['Erased', 'मिटाए गए'],
+  'en.overlay.aria': ['Highlight the pixels the filters erase (red)', 'जो पिक्सेल फ़िल्टर मिटाते हैं उन्हें लाल दिखाएँ'],
+  'en.overlay.hint': ['Red = removed by your filters', 'लाल = फ़िल्टर ने हटाया'],
+  'en.preview.pick': ['Preview page {n} of {t}', 'प्रीव्यू पेज {n}/{t}'],
+
+  // batch queue (F3)
+  'up.batch': ['Batch queue', 'बैच क़तार'],
+  'up.batch.sub': ['Pick a preset per file — each file becomes its own PDF.', 'हर फ़ाइल के लिए प्रीसेट चुनें — हर फ़ाइल का अपना PDF बनेगा।'],
+  'up.batch.preset': ['Preset', 'प्रीसेट'],
+  'up.batch.current': ['Current settings', 'मौजूदा सेटिंग'],
+  'up.batch.run': ['Process {n} files', '{n} फ़ाइलें प्रोसेस करें'],
+  'up.batch.job': ['File {i} of {n}', '{n} में से फ़ाइल {i}'],
+  'up.batch.page': ['page {d}/{t}', 'पेज {d}/{t}'],
+  'up.batch.done': ['All {n} files ready 🎉', 'सभी {n} फ़ाइलें तैयार 🎉'],
+  'up.batch.dl': ['Download', 'डाउनलोड'],
+  'up.batch.dlAll': ['Download all', 'सभी डाउनलोड करें'],
+  'up.batch.cancel': ['Cancel', 'रद्द करें'],
+  'up.batch.failed': ['Failed', 'असफल'],
+  'up.batch.pages': ['{n} pages', '{n} पेज'],
+  'up.batch.saved': ['{rs} saved on this queue', 'इस क़तार में {rs} बचे'],
+
+  // preset share links (F2)
+  'pr.shareLink': ['Copy share link', 'शेयर लिंक कॉपी करें'],
+  'pr.shareLink.copied': ['Share link copied — anyone with it can apply this preset', 'शेयर लिंक कॉपी हो गया — लिंक रखने वाला प्रीसेट लगा सकता है'],
+  'pr.shareLink.fail': ['Could not create the share link (offline?)', 'शेयर लिंक नहीं बना (ऑफ़लाइन?)'],
+  'pr.shareLink.busy': ['Creating link…', 'लिंक बन रहा है…'],
+  'pr.incomingTitle': ['Shared preset', 'शेयर किया प्रीसेट'],
+  'pr.incomingBody': ['“{n}” was shared with you. Apply it now? You can save it to your presets afterwards.', '“{n}” आपके साथ शेयर किया गया। अभी लगाएँ? बाद में प्रीसेट में सेव भी कर सकते हैं।'],
+  'pr.incoming.apply': ['Apply preset', 'प्रीसेट लगाएँ'],
+  'pr.incoming.later': ['Not now', 'अभी नहीं'],
+  'pr.incoming.applied': ['Preset “{n}” applied', 'प्रीसेट “{n}” लग गया'],
+  'pr.incoming.bad': ['That preset link is broken or expired', 'प्रीसेट लिंक ग़लत या समाप्त है'],
+
+  // print cost profile (F5)
+  'rs.cost.edit': ['Edit ₹ rates', '₹ रेट बदलें'],
+  'rs.cost.title': ['Your print costs', 'आपकी प्रिंट लागत'],
+  'rs.cost.paper': ['Paper cost per sheet (₹)', 'प्रति शीट कागज़ लागत (₹)'],
+  'rs.cost.ink': ['Ink cost per full-coverage page (₹)', 'पूरी स्याही वाले पेज की लागत (₹)'],
+  'rs.cost.save': ['Save rates', 'रेट सेव करें'],
+  'rs.cost.reset': ['Reset to defaults', 'डिफ़ॉल्ट पर रीसेट'],
+  'rs.cost.hint': ['Ask your print shop once — every ₹ number becomes exact.', 'प्रिंट शॉप से एक बार पूछ लें — हर ₹ आँकड़ा एकदम सही हो जाएगा।'],
+  'rs.cost.saved': ['Print rates saved', 'प्रिंट रेट सेव हो गए'],
+  'rs.assume2': ['At your rates: ₹{p}/sheet paper · ₹{i}/full-ink page', 'आपके रेट पर: ₹{p}/शीट कागज़ · ₹{i}/पूरी-स्याही पेज'],
+
+  // WhatsApp share (F6)
+  'rs.wa': ['WhatsApp', 'WhatsApp'],
+  'rs.wa.aria': ['Send the PDF + a savings summary to WhatsApp', 'PDF + बचत सारांश WhatsApp पर भेजें'],
+  'rs.wa.text': [
+    '{inp} slides → {out} pages · {p}% less paper · {rs} saved — made with Notes Printifier',
+    '{inp} स्लाइड → {out} पेज · {p}% कम कागज़ · {rs} बचत — Notes Printifier से',
+  ],
+  'rs.wa.shared': ['Shared!', 'शेयर हो गया!'],
+
+  // streaks + milestones (F7)
+  'im.streak.title': ['Streak & milestones', 'स्ट्रीक और मील-पत्थर'],
+  'im.streak.weeks': ['{n}-week streak', '{n} सप्ताह की स्ट्रीक'],
+  'im.streak.thisweek': ['{n} this week', 'इस सप्ताह {n}'],
+  'im.streak.next': ['{n} sheets to {tier}', '{tier} से {n} शीट दूर'],
+  'im.streak.max': ['Top tier reached — legend!', 'सबसे ऊँचा दरजा — लीजेंड!'],
+  'im.streak.none': ['Convert once a week to keep the streak alive', 'स्ट्रीक बनाए रखने के लिए हर सप्ताह एक बार चलाएँ'],
+  'im.tier.bronze': ['Bronze', 'कांसा'],
+  'im.tier.silver': ['Silver', 'चाँदी'],
+  'im.tier.gold': ['Gold', 'सोना'],
+  'im.tier.platinum': ['Platinum', 'प्लैटिनम'],
+  'im.tier.diamond': ['Diamond', 'हीरा'],
+  'im.tier.legend': ['Legend', 'लीजेंड'],
+
   // layout step
   'ly.paper': ['Paper size', 'कागज़ साइज़'],
   'ly.orientation': ['Orientation', 'दिशा'],

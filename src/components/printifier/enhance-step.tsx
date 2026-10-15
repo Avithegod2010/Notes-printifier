@@ -6,12 +6,16 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Crop,
   Droplets,
   Eraser,
   Eye,
   Loader2,
+  Minus,
   PenLine,
+  Plus,
   RotateCw,
   ScanText,
   Scissors,
@@ -31,13 +35,14 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
+  buildErasedOverlay,
   estimateDeskewForPage,
   inkCoverage,
   preparePageCanvas,
   resolveColorMode,
   trimCanvasMargins,
-  type ColorMode,
   type AnyCanvas,
+  type ColorMode,
 } from '@/lib/pdf/filters';
 import { loadPdfDocument } from '@/lib/pdf/pdfjs';
 import { renderPageToCanvas } from '@/lib/pdf/render';
@@ -63,6 +68,8 @@ const MODE_HINT_KEY: Record<ColorMode, string> = {
   grayscale: 'en.mode.grayscale.h',
   bw: 'en.mode.bw.h',
 };
+
+const ZOOM_STEPS = [1, 1.5, 2, 2.5, 3] as const;
 
 /**
  * Tiny visual glyph for each color-mode tile. Pure CSS swatches keep the
@@ -104,16 +111,35 @@ export function EnhanceStep() {
 
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
+  /** F8 — rose-tinted overlay showing exactly which pixels the filters erase. */
+  const [overlay, setOverlay] = useState<string | null>(null);
   const [inkBefore, setInkBefore] = useState(0);
   const [inkAfter, setInkAfter] = useState(0);
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [advOpen, setAdvOpen] = useState(false);
+
+  // F1 — compare wipe vs side-by-side
+  const [view, setView] = useState<'side' | 'wipe'>('side');
+  const [wipePos, setWipePos] = useState(50);
+  const draggingRef = useRef(false);
+  const wipeRef = useRef<HTMLDivElement>(null);
+
+  // F4 — preview page picker + zoom
+  const [previewIdx, setPreviewIdx] = useState(0);
+  const [zoomIdx, setZoomIdx] = useState(0);
+  const zoom = ZOOM_STEPS[zoomIdx];
+
   /** Estimated tilt (deg) of the preview page — measured once, then cached. */
   const [skewAngle, setSkewAngle] = useState<number | null>(null);
   const angleCache = useRef<Map<string, number>>(new Map());
 
-  const previewPage = pages.find((p) => p.selected) ?? pages[0];
+  // F8 toggle — render the erased-pixels view instead of the clean result
+  const [showErased, setShowErased] = useState(false);
+
+  const selectedPages = pages.filter((p) => p.selected);
+  const selIdx = Math.min(previewIdx, Math.max(0, selectedPages.length - 1));
+  const previewPage = selectedPages[selIdx] ?? pages[0];
 
   useEffect(() => {
     let cancelled = false;
@@ -166,6 +192,21 @@ export function EnhanceStep() {
         }
         if (cancelled) return;
         setAfter((final as HTMLCanvasElement).toDataURL('image/jpeg', 0.72));
+
+        // F8 overlay: normalize the raw render onto the displayed result's
+        // box (trim may have changed the aspect), then diff pixel-by-pixel.
+        try {
+          const norm = document.createElement('canvas');
+          norm.width = final.width;
+          norm.height = final.height;
+          const nctx = norm.getContext('2d');
+          if (nctx) {
+            nctx.drawImage(canvas as CanvasImageSource, 0, 0, final.width, final.height);
+            setOverlay(buildErasedOverlay(norm as AnyCanvas, final as AnyCanvas));
+          }
+        } catch {
+          setOverlay(null);
+        }
       } catch (err) {
         console.error('Preview failed', err);
       } finally {
@@ -178,6 +219,28 @@ export function EnhanceStep() {
     };
   }, [previewPage?.id, previewPage?.rotation, filters]);
 
+  // F1 — window-level pointer tracking while the wipe handle is dragged
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      if (!draggingRef.current) return;
+      const el = wipeRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setWipePos(Math.max(2, Math.min(98, ((e.clientX - r.left) / r.width) * 100)));
+    };
+    const up = () => {
+      draggingRef.current = false;
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+  }, []);
+
   const savedPct =
     inkBefore > 0.05 ? Math.max(0, Math.round(((inkBefore - inkAfter) / inkBefore) * 100)) : 0;
 
@@ -187,43 +250,241 @@ export function EnhanceStep() {
     (filters.trimMargins ? 1 : 0) +
     (filters.penBoost > 0 ? 1 : 0);
 
+  const shownAfter = showErased && overlay ? overlay : after;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         {/* Preview + compact color-mode picker */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <figure className="space-y-2">
-              <figcaption className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('en.preview.before')}
-                <Badge variant="outline" className="border-red-400/40 text-red-300">
-                  {t('en.preview.ink', { n: Math.round(inkBefore * 100) })}
-                </Badge>
-              </figcaption>
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
-                {before ? (
-                  <img src={before} alt="Original page" className="w-full" />
-                ) : (
-                  <div className="flex aspect-[4/3] items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                )}
+          {/* Toolbar: page picker (F4) · zoom (F4) · erased overlay (F8) · compare (F1) */}
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 border-white/15 bg-white/5"
+                disabled={selIdx <= 0}
+                onClick={() => setPreviewIdx(Math.max(0, selIdx - 1))}
+                aria-label={t('pg.moveEarlier')}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Badge variant="outline" className="border-white/15 bg-white/5 text-[11px] font-medium">
+                {t('en.preview.page', { n: selIdx + 1, t: Math.max(1, selectedPages.length) })}
+              </Badge>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 border-white/15 bg-white/5"
+                disabled={selIdx >= selectedPages.length - 1}
+                onClick={() => setPreviewIdx(Math.min(selectedPages.length - 1, selIdx + 1))}
+                aria-label={t('pg.moveLater')}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <div className="flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-1 py-0.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={zoomIdx === 0}
+                  onClick={() => setZoomIdx((z) => Math.max(0, z - 1))}
+                  aria-label={t('en.zoom.out')}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </Button>
+                <span className="min-w-9 text-center text-[11px] font-semibold tabular-nums">
+                  {t('en.zoom.pct', { n: zoom })}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={zoomIdx === ZOOM_STEPS.length - 1}
+                  onClick={() => setZoomIdx((z) => Math.min(ZOOM_STEPS.length - 1, z + 1))}
+                  aria-label={t('en.zoom.in')}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
               </div>
-            </figure>
+              <Button
+                type="button"
+                variant={showErased ? 'default' : 'outline'}
+                size="sm"
+                className={cn(
+                  'h-7 px-2 text-[11px]',
+                  showErased
+                    ? 'bg-rose-500/80 text-white hover:bg-rose-500'
+                    : 'border-white/15 bg-white/5 hover:bg-white/10',
+                )}
+                onClick={() => setShowErased((v) => !v)}
+                aria-pressed={showErased}
+                title={t('en.overlay.aria')}
+              >
+                <Eraser className="mr-1 h-3.5 w-3.5" /> {t('en.overlay')}
+              </Button>
+              <div className="flex overflow-hidden rounded-lg border border-white/15" role="group" aria-label={t('en.cmp.aria')}>
+                <button
+                  type="button"
+                  aria-pressed={view === 'side'}
+                  onClick={() => setView('side')}
+                  className={cn(
+                    'px-2 py-1 text-[11px] font-semibold transition-colors',
+                    view === 'side' ? 'bg-primary/20 text-primary' : 'bg-white/5 text-muted-foreground hover:bg-white/10',
+                  )}
+                >
+                  {t('en.cmp.side')}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={view === 'wipe'}
+                  onClick={() => setView('wipe')}
+                  className={cn(
+                    'px-2 py-1 text-[11px] font-semibold transition-colors',
+                    view === 'wipe' ? 'bg-primary/20 text-primary' : 'bg-white/5 text-muted-foreground hover:bg-white/10',
+                  )}
+                >
+                  {t('en.cmp.wipe')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {view === 'side' ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <figure className="space-y-2">
+                <figcaption className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('en.preview.before')}
+                  <Badge variant="outline" className="border-red-400/40 text-red-300">
+                    {t('en.preview.ink', { n: Math.round(inkBefore * 100) })}
+                  </Badge>
+                </figcaption>
+                <div className="pretty-scroll overflow-auto rounded-xl border border-white/10 bg-zinc-950">
+                  {before ? (
+                    <img
+                      src={before}
+                      alt="Original page"
+                      className="block max-w-none"
+                      style={{ width: `${zoom * 100}%` }}
+                    />
+                  ) : (
+                    <div className="flex aspect-[4/3] items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+              </figure>
+              <figure className="space-y-2">
+                <figcaption className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {showErased ? (
+                    <span className="text-rose-300">{t('en.overlay.hint')}</span>
+                  ) : (
+                    t('en.preview.after')
+                  )}
+                  {savedPct > 0 ? (
+                    <Badge className="border border-emerald-400/40 bg-emerald-500/15 text-emerald-300">
+                      {t('en.preview.ink', { n: Math.round(inkAfter * 100) })}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">—</Badge>
+                  )}
+                </figcaption>
+                <div className="pretty-scroll relative overflow-auto rounded-xl border border-primary/30 bg-zinc-950">
+                  {shownAfter ? (
+                    <img
+                      src={shownAfter}
+                      alt={showErased ? 'Erased pixels highlighted' : 'Enhanced page'}
+                      className="block max-w-none"
+                      style={{ width: `${zoom * 100}%` }}
+                    />
+                  ) : (
+                    <div className="flex aspect-[4/3] items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {busy && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <Loader2 className="h-6 w-6 animate-spin text-white" />
+                    </div>
+                  )}
+                </div>
+              </figure>
+            </div>
+          ) : (
             <figure className="space-y-2">
               <figcaption className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('en.preview.after')}
-                {savedPct > 0 ? (
-                  <Badge className="border border-emerald-400/40 bg-emerald-500/15 text-emerald-300">
-                    {t('en.preview.ink', { n: Math.round(inkAfter * 100) })}
-                  </Badge>
+                {showErased ? (
+                  <span className="text-rose-300">{t('en.overlay.hint')}</span>
                 ) : (
-                  <Badge variant="outline">—</Badge>
+                  <span>
+                    {t('en.preview.before')} ← → {t('en.preview.after')}
+                  </span>
+                )}
+                {savedPct > 0 && (
+                  <Badge className="border border-emerald-400/40 bg-emerald-500/15 text-emerald-300">
+                    −{savedPct}% {t('en.ink').toLowerCase()}
+                  </Badge>
                 )}
               </figcaption>
-              <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-zinc-950">
-                {after ? (
-                  <img src={after} alt="Enhanced page" className="w-full" />
+              <div
+                ref={wipeRef}
+                className="pretty-scroll relative select-none overflow-auto rounded-xl border border-primary/30 bg-zinc-950"
+              >
+                {shownAfter && before ? (
+                  <>
+                    <img
+                      src={shownAfter}
+                      alt="Enhanced page"
+                      className="block max-w-none"
+                      style={{ width: `${zoom * 100}%` }}
+                      draggable={false}
+                    />
+                    <img
+                      src={before}
+                      alt="Original page"
+                      className="absolute inset-0 h-full w-full object-contain"
+                      style={{ clipPath: `inset(0 ${100 - wipePos}% 0 0)` }}
+                      draggable={false}
+                    />
+                    {/* handle */}
+                    <div
+                      role="slider"
+                      tabIndex={0}
+                      aria-label={t('en.cmp.aria')}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(wipePos)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowLeft') {
+                          e.preventDefault();
+                          setWipePos((p) => Math.max(2, p - 3));
+                        }
+                        if (e.key === 'ArrowRight') {
+                          e.preventDefault();
+                          setWipePos((p) => Math.min(98, p + 3));
+                        }
+                      }}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        draggingRef.current = true;
+                      }}
+                      className="absolute inset-y-0 z-10 w-6 -translate-x-1/2 cursor-ew-resize"
+                      style={{ left: `${wipePos}%` }}
+                    >
+                      <span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-white/90 shadow-[0_0_6px_rgba(0,0,0,0.6)]" />
+                      <span className="absolute left-1/2 top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/95 shadow-lg">
+                        <ChevronLeft className="h-3.5 w-3.5 text-zinc-800" />
+                        <ChevronRight className="h-3.5 w-3.5 text-zinc-800" />
+                      </span>
+                    </div>
+                  </>
                 ) : (
                   <div className="flex aspect-[4/3] items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -236,7 +497,8 @@ export function EnhanceStep() {
                 )}
               </div>
             </figure>
-          </div>
+          )}
+
           {savedPct > 0 && (
             <p className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-300">
               <Droplets className="h-4 w-4" />

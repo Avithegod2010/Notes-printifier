@@ -25,3 +25,12 @@ model PrintJob {
   layout      String
   createdAt   DateTime @default(now())
 }
+
+/// Preset share links (F2): a short id → {name, filters, layout} JSON blob.
+/// No accounts, no file data — only the recipe a user explicitly shared.
+model PresetShare {
+  id        String   @id
+  name      String
+  data      String
+  createdAt DateTime @default(now())
+}

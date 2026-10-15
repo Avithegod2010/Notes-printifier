@@ -5,6 +5,7 @@ import {
   BookmarkPlus,
   Check,
   Leaf,
+  Link2,
   Scale,
   Share2,
   Timer,
@@ -21,6 +22,7 @@ import {
   serializePresets,
 } from '@/lib/presets';
 import { downloadBlob } from '@/lib/recent-jobs';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
@@ -93,6 +95,59 @@ export function PresetsCard() {
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 1600);
   };
+
+  // F2 — create a short share link (?p=<id>) for one preset
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const onShareLink = useCallback(
+    async (presetId: string) => {
+      const p = presets.find((x) => x.id === presetId);
+      if (!p || sharingId) return;
+      setSharingId(presetId);
+      let url = '';
+      try {
+        const res = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: p.name, filters: p.filters, layout: p.layout }),
+        });
+        if (!res.ok) throw new Error('share failed');
+        const data = (await res.json()) as { id?: string };
+        if (!data.id) throw new Error('no id');
+        url = `${window.location.origin}/?p=${data.id}`;
+      } catch {
+        setImportMsg(t('pr.shareLink.fail'));
+        setSharingId(null);
+        return;
+      }
+      // clipboard write can fail (permissions / insecure context) — fall back
+      // to execCommand, and as a last resort show the link itself.
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(url);
+          setImportMsg(t('pr.shareLink.copied'));
+        } else {
+          throw new Error('no clipboard api');
+        }
+      } catch {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          setImportMsg(ok ? t('pr.shareLink.copied') : url);
+        } catch {
+          setImportMsg(url);
+        }
+      } finally {
+        setSharingId(null);
+      }
+    },
+    [presets, sharingId, t],
+  );
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -202,6 +257,22 @@ export function PresetsCard() {
                 onClick={() => applyPreset(p.id)}
               >
                 {t('en.presets.apply')}
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label={`${t('pr.shareLink')} — ${p.name}`}
+                title={t('pr.shareLink')}
+                disabled={sharingId === p.id}
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-violet-300"
+                onClick={() => void onShareLink(p.id)}
+              >
+                {sharingId === p.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5" />
+                )}
               </Button>
               <Button
                 type="button"

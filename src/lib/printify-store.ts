@@ -167,6 +167,297 @@ function canvasLooksLikeFailedRender(canvas: HTMLCanvasElement): boolean {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Compose pipeline core — shared by the single-run wizard AND the batch
+// queue (F3). Runs the exact same steps: booklet order → optional LABS
+// repaint OCR → cover sheet → compose (worker) → size-target recompress →
+// optional searchable OCR layer.
+// ---------------------------------------------------------------------------
+
+/** Thrown when the job was cancelled (user reset / batch stop). */
+export class JobCancelled extends Error {
+  constructor() {
+    super('Job cancelled');
+  }
+}
+
+export interface JobProgress {
+  done: number;
+  total: number;
+  ocr?: boolean;
+}
+
+export interface ComposeJobInput {
+  docs: DocInfo[];
+  /** Page pool for this job — only the selected ones are composed. */
+  pages: PageItem[];
+  filters: FilterSettings;
+  layout: LayoutSettings;
+  /** LABS text-repaint flag. */
+  repaint: boolean;
+  lang: 'en' | 'hi';
+  onProgress: (p: JobProgress) => void;
+  /** Return false to abort (user cancel / batch stop). */
+  isActive: () => boolean;
+}
+
+export interface ComposeJobOutput {
+  blob: Blob;
+  /** Everything except `url` — the caller owns the object-URL lifecycle. */
+  result: Omit<ProcessResult, 'url'>;
+  fileName: string;
+  selectedCount: number;
+}
+
+export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutput> {
+  const { docs, pages, filters, layout, repaint, lang, onProgress, isActive } = o;
+  const selected = pages.filter((p) => p.selected);
+  if (selected.length === 0) throw new Error('No pages are selected.');
+
+  const buffers = docs.map((d) => {
+    const buf = docBuffers.get(d.id);
+    if (!buf) throw new Error('Source file is no longer available — please re-upload.');
+    return { id: d.id, data: buf };
+  });
+
+  // Booklet mode: 2-up landscape with saddle-stitch page order (padded
+  // with blank cells to a multiple of 4).
+  const useBooklet = layout.booklet;
+  const effLayout: LayoutSettings = useBooklet
+    ? { ...layout, rows: 1, cols: 2, orientation: 'landscape' }
+    : layout;
+  const baseItems: ComposeItem[] = selected.map((p) => ({
+    docId: p.docId,
+    pageNumber: p.pageNumber,
+    rotation: p.rotation,
+  }));
+  const items: ComposeItem[] = useBooklet
+    ? buildBookletItems(baseItems)
+    : baseItems;
+
+  // LABS text repaint — OCR must run BEFORE compose so recognized words
+  // can be re-typeset into canvases that replace the pdf page renders.
+  // When "searchable" is also on, this ONE OCR pass feeds both consumers
+  // (Tesseract never runs twice); repaint-only mode runs it just once too.
+  let sharedOcrWords: Map<string, OcrWord[]> | null = null;
+  let sharedOcrError: Error | null = null;
+  let sharedOcrRan = false;
+  if (repaint) {
+    sharedOcrRan = true;
+    const total = countOcrSlides(items);
+    onProgress({ done: 0, total, ocr: true });
+    try {
+      sharedOcrWords = await ocrComposeItems(
+        buffers,
+        items,
+        (done, t) => onProgress({ done, total: t, ocr: true }),
+        isActive,
+      );
+    } catch (err) {
+      if (!isActive()) throw new JobCancelled();
+      console.error('OCR pass (repaint) failed:', err);
+      sharedOcrError = err instanceof Error ? err : new Error('OCR pass failed');
+    }
+  }
+
+  let repaintCanvases: Map<string, AnyCanvas> | null = null;
+  if (repaint && sharedOcrWords) {
+    try {
+      repaintCanvases = await buildRepaintCanvases(
+        buffers,
+        items,
+        sharedOcrWords,
+        (done, t) => onProgress({ done, total: t, ocr: true }),
+      );
+    } catch (err) {
+      if (!isActive()) throw new JobCancelled();
+      console.error('Repaint canvas build failed:', err);
+    }
+  }
+
+  // Batch cover page: one translated listing page ahead of the content.
+  let coverSheetData: CoverSheetData | null = null;
+  if (layout.coverSheet && !useBooklet) {
+    const perDoc = new Map<number, number>();
+    for (const p of selected) perDoc.set(p.docId, (perDoc.get(p.docId) ?? 0) + 1);
+    coverSheetData = {
+      title: 'Notes Printifier',
+      subtitle: new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+      contentsHeading: translateStatic('ly.cover.contents', lang),
+      entries: docs.map((d) => ({
+        name: d.name.replace(/\.pdf$/i, ''),
+        label: translateStatic('ly.cover.pages', lang, { n: perDoc.get(d.id) ?? 0 }),
+      })),
+      footnote: translateStatic('ly.cover.footnote', lang),
+    };
+  }
+
+  let composed = await composePdf({
+    buffers,
+    items,
+    filters,
+    layout: effLayout,
+    repaintCanvases,
+    coverSheetData,
+    onProgress: (done, total) => onProgress({ done, total }),
+  });
+  // Repaint canvases were consumed by compose (and possibly transferred
+  // to the worker) — let the map go out of scope, no manual dispose.
+  repaintCanvases = null;
+
+  // File-size target: if the user set a soft cap (e.g. 5 MB for a print
+  // shop's upload form), re-compose with progressively lower JPEG quality
+  // until the output fits (max 3 extra passes, floor 0.28).
+  const targetMB =
+    layout.sizeTargetMB && layout.sizeTargetMB > 0 ? layout.sizeTargetMB : null;
+  let sizeAttempts = 0;
+  if (targetMB) {
+    const cap = targetMB * 1024 * 1024;
+    let q = resolveQuality(effLayout).jpeg;
+    while (composed.blob.size > cap && sizeAttempts < 3) {
+      q = Math.max(0.28, Math.round(q * 72) / 100);
+      sizeAttempts++;
+      composed = await composePdf({
+        buffers,
+        items,
+        filters,
+        layout: effLayout,
+        coverSheetData,
+        jpegQualityOverride: q,
+        onProgress: (done, total) => onProgress({ done, total }),
+      });
+    }
+  }
+
+  // Optional OCR pass — adds an invisible searchable text layer.
+  let finalBlob = composed.blob;
+  let searchable = false;
+  let ocrWarning: string | null = null;
+  if (filters.searchable) {
+    try {
+      // With repaint on, the pre-compose OCR pass already produced the
+      // words — reuse them instead of running Tesseract again.
+      let words: Map<string, OcrWord[]>;
+      if (sharedOcrRan) {
+        if (!sharedOcrWords) throw sharedOcrError ?? new Error('OCR pass failed');
+        words = sharedOcrWords;
+      } else {
+        const total = countOcrSlides(items);
+        onProgress({ done: 0, total, ocr: true });
+        words = await ocrComposeItems(
+          buffers,
+          items,
+          (done, t) => onProgress({ done, total: t, ocr: true }),
+          isActive,
+        );
+      }
+      const withText = await addOcrTextLayer(composed.pdfBytes, items, composed.placements, words);
+      finalBlob = new Blob([withText as BlobPart], { type: 'application/pdf' });
+      searchable = true;
+    } catch (err) {
+      if (!isActive()) throw new JobCancelled();
+      console.error('OCR pass failed:', err);
+      ocrWarning =
+        'Could not add the searchable text layer — your PDF was saved without it.';
+    }
+  }
+
+  const inputBytes = docs.reduce((sum, d) => sum + d.size, 0);
+  const result: Omit<ProcessResult, 'url'> = {
+    outputBytes: finalBlob.size,
+    outputPages: composed.outputPages,
+    inputPages: selected.length,
+    inputBytes,
+    inkSavedPct: composed.inkSavedPct,
+    beforeInkPct: composed.beforeInkPct,
+    autoInverted: composed.autoInverted,
+    searchable,
+    repainted: composed.repainted,
+    ocrWarning,
+    sizeTargetMB: targetMB,
+    sizeAttempts,
+  };
+  const fileName =
+    docs.map((d) => d.name).join(', ').slice(0, 300) || 'untitled.pdf';
+  return { blob: finalBlob, result, fileName, selectedCount: selected.length };
+}
+
+/**
+ * Fire-and-forget side effects shared by single & batch runs: anonymous
+ * aggregate stats (truncated SHA-256 of the name — titles never leave the
+ * device) + the private IndexedDB history for re-download / re-printify.
+ */
+export async function saveJobSideEffects(
+  out: ComposeJobOutput,
+  layoutLabel: string,
+  colorMode: string,
+  docs: DocInfo[],
+): Promise<void> {
+  try {
+    // Fire-and-forget anonymous stats. File names never leave the device —
+    // only a truncated SHA-256 of the joined name is sent, so the server can
+    // still count unique documents but cannot read the titles.
+    const digestBuf = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(out.fileName),
+    );
+    const anonName = Array.from(new Uint8Array(digestBuf).slice(0, 8))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    void fetch('/api/prints', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: anonName,
+        inputPages: out.result.inputPages,
+        outputPages: out.result.outputPages,
+        inputBytes: out.result.inputBytes,
+        outputBytes: out.result.outputBytes,
+        colorMode,
+        layout: layoutLabel,
+        inkSavedPct: out.result.inkSavedPct,
+      }),
+    }).catch(() => undefined);
+  } catch {
+    // stats are optional — never let them break processing
+  }
+
+  // Private on-device history (IndexedDB) for quick re-download + re-run.
+  // Originals (≤15 MB total) are kept too, so "Re-printify" can start a
+  // fresh conversion from history without re-uploading anything.
+  try {
+    const jobId = await saveRecentJob({
+      name: out.fileName,
+      inputPages: out.result.inputPages,
+      outputPages: out.result.outputPages,
+      outputBytes: out.result.outputBytes,
+      inkSavedPct: out.result.inkSavedPct,
+      colorMode,
+      layout: layoutLabel,
+      blob: out.blob,
+    });
+    const sourceFiles: RecentSourceFile[] = docs
+      .map((d) => {
+        const buf = docBuffers.get(d.id);
+        if (!buf || buf.byteLength === 0) return null;
+        return {
+          name: d.name || 'document.pdf',
+          blob: new Blob([buf], { type: 'application/pdf' }),
+        };
+      })
+      .filter((f): f is RecentSourceFile => f !== null);
+    if (sourceFiles.length > 0) {
+      void saveRecentSource(jobId, sourceFiles, out.result.inputBytes);
+    }
+  } catch (err) {
+    console.error('History save failed:', err);
+  }
+}
+
 interface PrintifyState {
   step: number; // 0 upload · 1 arrange · 2 enhance · 3 layout · 4 done
   docs: DocInfo[];
@@ -193,6 +484,8 @@ interface PrintifyState {
   refreshPresets: () => void;
   savePreset: (name: string) => void;
   applyPreset: (id: string) => void;
+  /** Apply an externally shared preset (share link ?p=…) without saving it. */
+  applyPresetData: (filters: Partial<FilterSettings>, layout: Partial<LayoutSettings>) => void;
   deletePreset: (id: string) => void;
 
   addFiles: (files: File[]) => Promise<void>;
@@ -256,6 +549,15 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
     set({
       filters: { ...defaultFilters, ...p.filters },
       layout: { ...defaultLayout, ...p.layout },
+      filtersTouched: true,
+    });
+    if (get().labsRemember) savePrefs(get().filters, get().layout);
+  },
+
+  applyPresetData: (filters, layout) => {
+    set({
+      filters: { ...defaultFilters, ...filters },
+      layout: { ...defaultLayout, ...layout },
       filtersTouched: true,
     });
     if (get().labsRemember) savePrefs(get().filters, get().layout);
@@ -497,7 +799,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   },
 
   process: async () => {
-    const { docs, pages, filters, layout } = get();
+    const { docs, pages, filters, layout, labsTextRepaint } = get();
     const selected = pages.filter((p) => p.selected);
     if (selected.length === 0 || docs.length === 0) return;
 
@@ -506,248 +808,38 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
       // Force a paint so the progress bar appears before heavy work starts.
       await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 30)));
 
-      const buffers = docs.map((d) => {
-        const buf = docBuffers.get(d.id);
-        if (!buf) throw new Error('Source file is no longer available — please re-upload.');
-        return { id: d.id, data: buf };
-      });
-
-      // Booklet mode: 2-up landscape with saddle-stitch page order (padded
-      // with blank cells to a multiple of 4).
-      const useBooklet = layout.booklet;
-      const effLayout: LayoutSettings = useBooklet
-        ? { ...layout, rows: 1, cols: 2, orientation: 'landscape' }
-        : layout;
-      const baseItems: ComposeItem[] = selected.map((p) => ({
-        docId: p.docId,
-        pageNumber: p.pageNumber,
-        rotation: p.rotation,
-      }));
-      const items: ComposeItem[] = useBooklet
-        ? buildBookletItems(baseItems)
-        : baseItems;
-
-      // LABS text repaint — OCR must run BEFORE compose so recognized words
-      // can be re-typeset into canvases that replace the pdf page renders.
-      // When "searchable" is also on, this ONE OCR pass feeds both consumers
-      // (Tesseract never runs twice); repaint-only mode runs it just once too.
-      const useRepaint = get().labsTextRepaint;
-      let sharedOcrWords: Map<string, OcrWord[]> | null = null;
-      let sharedOcrError: Error | null = null;
-      let sharedOcrRan = false;
-      if (useRepaint) {
-        sharedOcrRan = true;
-        const total = countOcrSlides(items);
-        set({ progress: { done: 0, total, ocr: true } });
-        try {
-          sharedOcrWords = await ocrComposeItems(
-            buffers,
-            items,
-            (done, t) => set({ progress: { done, total: t, ocr: true } }),
-            () => !get().processing,
-          );
-        } catch (err) {
-          if (!get().processing) return; // user reset mid-OCR — stop quietly
-          console.error('OCR pass (repaint) failed:', err);
-          sharedOcrError = err instanceof Error ? err : new Error('OCR pass failed');
-        }
-      }
-
-      let repaintCanvases: Map<string, AnyCanvas> | null = null;
-      if (useRepaint && sharedOcrWords) {
-        try {
-          repaintCanvases = await buildRepaintCanvases(
-            buffers,
-            items,
-            sharedOcrWords,
-            (done, t) => set({ progress: { done, total: t, ocr: true } }),
-          );
-        } catch (err) {
-          if (!get().processing) return; // user reset — stop quietly
-          console.error('Repaint canvas build failed:', err);
-        }
-      }
-
-      // Runs in the processing Web Worker when available (UI stays fluid);
-      // falls back to the identical main-thread pipeline otherwise.
-      // Batch cover page: one translated listing page ahead of the content.
-      let coverSheetData: CoverSheetData | null = null;
-      if (layout.coverSheet && !useBooklet) {
-        const lang = useLangStore.getState().lang;
-        const perDoc = new Map<number, number>();
-        for (const p of selected) perDoc.set(p.docId, (perDoc.get(p.docId) ?? 0) + 1);
-        coverSheetData = {
-          title: 'Notes Printifier',
-          subtitle: new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          }),
-          contentsHeading: translateStatic('ly.cover.contents', lang),
-          entries: docs.map((d) => ({
-            name: d.name.replace(/\.pdf$/i, ''),
-            label: translateStatic('ly.cover.pages', lang, { n: perDoc.get(d.id) ?? 0 }),
-          })),
-          footnote: translateStatic('ly.cover.footnote', lang),
-        };
-      }
-
-      let composed = await composePdf({
-        buffers,
-        items,
+      const out = await runComposeJob({
+        docs,
+        pages,
         filters,
-        layout: effLayout,
-        repaintCanvases,
-        coverSheetData,
-        onProgress: (done, total) => set({ progress: { done, total } }),
+        layout,
+        repaint: labsTextRepaint,
+        lang: useLangStore.getState().lang,
+        onProgress: (p) => set({ progress: p }),
+        isActive: () => get().processing,
       });
-      // Repaint canvases were consumed by compose (and possibly transferred
-      // to the worker) — let the map go out of scope, no manual dispose.
-      repaintCanvases = null;
+      if (!get().processing) return; // cancelled mid-run
 
-      // File-size target: if the user set a soft cap (e.g. 5 MB for a print
-      // shop's upload form), re-compose with progressively lower JPEG quality
-      // until the output fits (max 3 extra passes, floor 0.28).
-      const targetMB =
-        layout.sizeTargetMB && layout.sizeTargetMB > 0 ? layout.sizeTargetMB : null;
-      let sizeAttempts = 0;
-      if (targetMB) {
-        const cap = targetMB * 1024 * 1024;
-        let q = resolveQuality(effLayout).jpeg;
-        while (composed.blob.size > cap && sizeAttempts < 3) {
-          q = Math.max(0.28, Math.round(q * 72) / 100);
-          sizeAttempts++;
-          composed = await composePdf({
-            buffers,
-            items,
-            filters,
-            layout: effLayout,
-            coverSheetData,
-            jpegQualityOverride: q,
-            onProgress: (done, total) => set({ progress: { done, total } }),
-          });
-        }
-      }
-
-      // Optional OCR pass — adds an invisible searchable text layer.
-      let finalBlob = composed.blob;
-      let searchable = false;
-      let ocrWarning: string | null = null;
-      if (filters.searchable) {
-        try {
-          // With repaint on, the pre-compose OCR pass already produced the
-          // words — reuse them instead of running Tesseract again.
-          let words: Map<string, OcrWord[]>;
-          if (sharedOcrRan) {
-            if (!sharedOcrWords) throw sharedOcrError ?? new Error('OCR pass failed');
-            words = sharedOcrWords;
-          } else {
-            const total = countOcrSlides(items);
-            set({ progress: { done: 0, total, ocr: true } });
-            words = await ocrComposeItems(
-              buffers,
-              items,
-              (done, t) => set({ progress: { done, total: t, ocr: true } }),
-              () => !get().processing,
-            );
-          }
-          const withText = await addOcrTextLayer(composed.pdfBytes, items, composed.placements, words);
-          finalBlob = new Blob([withText as BlobPart], { type: 'application/pdf' });
-          searchable = true;
-        } catch (err) {
-          if (!get().processing) return; // user reset mid-OCR — stop quietly
-          console.error('OCR pass failed:', err);
-          ocrWarning =
-            'Could not add the searchable text layer — your PDF was saved without it.';
-        }
-      }
-
-      const url = URL.createObjectURL(finalBlob);
-      const inputBytes = docs.reduce((sum, d) => sum + d.size, 0);
-      const result: ProcessResult = {
-        url,
-        outputBytes: finalBlob.size,
-        outputPages: composed.outputPages,
-        inputPages: selected.length,
-        inputBytes,
-        inkSavedPct: composed.inkSavedPct,
-        beforeInkPct: composed.beforeInkPct,
-        autoInverted: composed.autoInverted,
-        searchable,
-        repainted: composed.repainted,
-        ocrWarning,
-        sizeTargetMB: targetMB,
-        sizeAttempts,
-      };
+      const url = URL.createObjectURL(out.blob);
+      const result: ProcessResult = { ...out.result, url };
       // Impact meter BEFORE the step switch — ResultStep reads the totals on
       // mount, and recordJob is a cheap synchronous localStorage write while
       // the IndexedDB history saves below are async.
       recordJob({
-        inputPages: selected.length,
-        outputPages: composed.outputPages,
-        inkSavedPct: composed.inkSavedPct,
-        beforeInkPct: composed.beforeInkPct,
+        inputPages: out.selectedCount,
+        outputPages: out.result.outputPages,
+        inkSavedPct: out.result.inkSavedPct,
+        beforeInkPct: out.result.beforeInkPct,
       });
       set({ processing: false, progress: null, result, step: 4 });
 
-      const layoutLabel = useBooklet
+      // Fire-and-forget: anonymous stats + private on-device history.
+      const layoutLabel = layout.booklet
         ? 'booklet'
-        : `${effLayout.rows}x${effLayout.cols}`;
-      const fileName =
-        docs.map((d) => d.name).join(', ').slice(0, 300) || 'untitled.pdf';
-
-      // Fire-and-forget anonymous stats. File names never leave the device —
-      // only a truncated SHA-256 of the joined name is sent, so the server can
-      // still count unique documents but cannot read the titles.
-      try {
-        const digestBuf = await crypto.subtle.digest(
-          'SHA-256',
-          new TextEncoder().encode(fileName),
-        );
-        const anonName = Array.from(new Uint8Array(digestBuf).slice(0, 8))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('');
-        void fetch('/api/prints', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileName: anonName,
-            inputPages: selected.length,
-            outputPages: composed.outputPages,
-            inputBytes,
-            outputBytes: finalBlob.size,
-            colorMode: filters.colorMode,
-            layout: layoutLabel,
-            inkSavedPct: composed.inkSavedPct,
-          }),
-        }).catch(() => undefined);
-      } catch {
-        // stats are optional — never let them break processing
-      }
-
-      // Private on-device history (IndexedDB) for quick re-download + re-run.
-      // Originals (≤15 MB total) are kept too, so "Re-printify" can start a
-      // fresh conversion from history without re-uploading anything.
-      const jobId = await saveRecentJob({
-        name: fileName,
-        inputPages: selected.length,
-        outputPages: composed.outputPages,
-        outputBytes: finalBlob.size,
-        inkSavedPct: composed.inkSavedPct,
-        colorMode: filters.colorMode,
-        layout: layoutLabel,
-        blob: finalBlob,
-      });
-      const sourceFiles: RecentSourceFile[] = buffers
-        .map((b) => {
-          const name = docs.find((d) => d.id === b.id)?.name ?? 'document.pdf';
-          return { name, blob: new Blob([b.data], { type: 'application/pdf' }) };
-        })
-        .filter((f) => f.blob.size > 0);
-      void saveRecentSource(jobId, sourceFiles, inputBytes);
-
+        : `${layout.rows}x${layout.cols}`;
+      void saveJobSideEffects(out, layoutLabel, filters.colorMode, docs);
     } catch (err) {
-      if (!get().processing) return; // reset mid-run — nothing to report
+      if (err instanceof JobCancelled || !get().processing) return; // reset mid-run
       console.error('Processing failed:', err);
       set({
         processing: false,

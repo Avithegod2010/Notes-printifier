@@ -16,6 +16,8 @@ export interface ReceiptData {
   rupees: string;
   /** Final PDF size, formatted (e.g. "3.4 MB"). */
   fileSize: string;
+  /** F7 streak/milestone chip, e.g. "3-week streak 🔥 · 120 sheets". Optional. */
+  badgeText?: string;
 }
 
 export interface ReceiptLabels {
@@ -156,6 +158,28 @@ export function buildReceiptCanvas(data: ReceiptData, labels: ReceiptLabels): HT
     ctx.fillText(cell.l, x + gw / 2, y + gh / 2 + 34);
     ctx.textAlign = 'left';
   });
+
+  // F7 streak / milestone chip (optional) — a violet pill between the grid
+  // and the footnote.
+  if (data.badgeText) {
+    const text = data.badgeText.slice(0, 48);
+    ctx.textAlign = 'center';
+    ctx.font = `700 30px system-ui, sans-serif`;
+    const tw = Math.min(cw - 80, ctx.measureText(text).width + 96);
+    const by = gy + 2 * (gh + 22) + 44;
+    const bx = (W - tw) / 2;
+    ctx.fillStyle = '#f5f3ff';
+    roundRect(ctx, bx, by, tw, 64, 32);
+    ctx.fill();
+    ctx.strokeStyle = '#ddd6fe';
+    ctx.lineWidth = 2;
+    roundRect(ctx, bx, by, tw, 64, 32);
+    ctx.stroke();
+    ctx.fillStyle = '#6d28d9';
+    ctx.font = `700 30px system-ui, sans-serif`;
+    ctx.fillText(text, W / 2, by + 42);
+    ctx.textAlign = 'left';
+  }
 
   // footnote inside the card
   ctx.textAlign = 'center';

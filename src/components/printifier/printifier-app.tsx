@@ -71,6 +71,14 @@ import { useLangStore, useT } from '@/lib/i18n';
 import { useThemeStore } from '@/lib/theme';
 import { APP_VERSION } from '@/lib/version';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from '@/hooks/use-toast';
 
 const FAQ_KEYS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
@@ -702,9 +710,18 @@ export function PrintifierApp() {
   const step = usePrintifyStore((s) => s.step);
   const hydrateLabs = usePrintifyStore((s) => s.hydrateLabs);
   const refreshPresets = usePrintifyStore((s) => s.refreshPresets);
+  const applyPresetData = usePrintifyStore((s) => s.applyPresetData);
   const addFiles = usePrintifyStore((s) => s.addFiles);
   const hydrateLang = useLangStore((s) => s.hydrate);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
+
+  // F2 — shared preset arrived via ?p=<id>
+  const [sharedPreset, setSharedPreset] = useState<{
+    name: string;
+    filters: Record<string, unknown>;
+    layout: Record<string, unknown>;
+  } | null>(null);
+  const [sharedBad, setSharedBad] = useState(false);
 
   // Android share-sheet: a PDF shared into the APK lands in the pipeline
   // automatically (no-op on the plain web — the hook is never nudged there).
@@ -717,6 +734,37 @@ export function PrintifierApp() {
     hydrateLang(); // restores English/हिन्दी choice
     hydrateTheme(); // restores light/dark choice
     refreshPresets(); // hydrate saved presets from localStorage
+
+    // F2 — incoming preset share link (?p=<id>): fetch the recipe, strip the
+    // param from the URL, and offer a one-tap apply dialog.
+    try {
+      const url = new URL(window.location.href);
+      const pid = url.searchParams.get('p');
+      if (pid && /^[A-HJ-NP-Z2-9]{8}$/i.test(pid)) {
+        url.searchParams.delete('p');
+        window.history.replaceState({}, '', url.toString());
+        void fetch(`/api/presets/${encodeURIComponent(pid.toUpperCase())}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data: { name?: string; filters?: unknown; layout?: unknown } | null) => {
+            if (
+              data &&
+              typeof data.filters === 'object' && data.filters !== null &&
+              typeof data.layout === 'object' && data.layout !== null
+            ) {
+              setSharedPreset({
+                name: typeof data.name === 'string' ? data.name : 'Preset',
+                filters: data.filters as Record<string, unknown>,
+                layout: data.layout as Record<string, unknown>,
+              });
+            } else if (data === null) {
+              setSharedBad(true);
+            }
+          })
+          .catch(() => undefined);
+      }
+    } catch {
+      // URL parsing is best-effort
+    }
   }, [hydrateLabs, hydrateLang, hydrateTheme, refreshPresets]);
 
   return (
@@ -755,6 +803,56 @@ export function PrintifierApp() {
       <Footer />
       <BackToTop />
       <UpdateBanner />
+
+      {/* F2 — one-tap apply for an incoming shared preset */}
+      <Dialog
+        open={sharedPreset !== null || sharedBad}
+        onOpenChange={(v) => {
+          if (!v) {
+            setSharedPreset(null);
+            setSharedBad(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md rounded-2xl border-white/10 bg-popover">
+          <DialogHeader>
+            <DialogTitle className="text-left">
+              {sharedBad ? t('pr.incoming.bad') : t('pr.incomingTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              {sharedPreset && t('pr.incomingBody', { n: sharedPreset.name })}
+            </DialogDescription>
+          </DialogHeader>
+          {sharedPreset && (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
+                onClick={() => {
+                  applyPresetData(
+                    sharedPreset.filters as Parameters<typeof applyPresetData>[0],
+                    sharedPreset.layout as Parameters<typeof applyPresetData>[1],
+                  );
+                  toast({ description: t('pr.incoming.applied', { n: sharedPreset.name }) });
+                  setSharedPreset(null);
+                }}
+              >
+                {t('pr.incoming.apply')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setSharedPreset(null);
+                }}
+              >
+                {t('pr.incoming.later')}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

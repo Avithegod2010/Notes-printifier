@@ -20,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { usePrintifyStore } from '@/lib/printify-store';
+import { BatchQueue } from './batch-queue';
 import {
   downloadBlob,
   getRecentSource,
@@ -442,6 +443,9 @@ export function UploadStep() {
           </div>
         </div>
       )}
+
+      {/* F3 — batch queue: one preset per file, each file its own PDF */}
+      {docs.length > 0 && <BatchQueue />}
 
       <div className="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
         <div className="flex flex-wrap items-center justify-center gap-1">

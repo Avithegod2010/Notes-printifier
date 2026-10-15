@@ -772,3 +772,72 @@ export const COLOR_MODE_LABELS: Record<ColorMode, { title: string; hint: string 
   grayscale: { title: 'Grayscale', hint: 'Remove all color' },
   bw: { title: 'Black & White', hint: 'Maximum ink saving' },
 };
+
+/**
+ * F8 — "erased pixels" preview overlay.
+ *
+ * Compares the raw render with the filtered result pixel-by-pixel and tints
+ * every pixel the filter chain turned white (ink-saver levels, stain cleanup,
+ * invert background) in rose. This shows the user EXACTLY which content the
+ * filters are dropping — e.g. whether light handwriting survived.
+ *
+ * Both canvases must have identical dimensions (the enhance preview renders
+ * them from the same source). Returns the overlay as a data URL so it can be
+ * dropped straight into an <img>.
+ */
+export function buildErasedOverlay(
+  before: AnyCanvas,
+  after: AnyCanvas,
+): string | null {
+  const w = Math.min(before.width, after.width);
+  const h = Math.min(before.height, after.height);
+  if (w === 0 || h === 0) return null;
+
+  const bctx = before.getContext('2d', { willReadFrequently: true }) as
+    | CanvasRenderingContext2D
+    | null;
+  const actx = after.getContext('2d', { willReadFrequently: true }) as
+    | CanvasRenderingContext2D
+    | null;
+  if (!bctx || !actx) return null;
+
+  let b: Uint8ClampedArray;
+  let aimg: ImageData;
+  try {
+    b = bctx.getImageData(0, 0, w, h).data;
+    aimg = actx.getImageData(0, 0, w, h);
+  } catch {
+    return null;
+  }
+  const a = aimg.data;
+
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  const octx = out.getContext('2d');
+  if (!octx) return null;
+  octx.drawImage(after as CanvasImageSource, 0, 0);
+  let oimg: ImageData;
+  try {
+    oimg = octx.getImageData(0, 0, w, h);
+  } catch {
+    return null;
+  }
+  const o = oimg.data;
+
+  // rose tint (244,63,94) blended at 55% over erased pixels
+  const R = 244;
+  const G = 63;
+  const B = 94;
+  for (let i = 0; i < o.length; i += 4) {
+    const lumBefore = 0.299 * b[i] + 0.587 * b[i + 1] + 0.114 * b[i + 2];
+    const whiteAfter = a[i] >= 250 && a[i + 1] >= 250 && a[i + 2] >= 250;
+    if (whiteAfter && lumBefore < 235) {
+      o[i] = Math.round(o[i] * 0.45 + R * 0.55);
+      o[i + 1] = Math.round(o[i + 1] * 0.45 + G * 0.55);
+      o[i + 2] = Math.round(o[i + 2] * 0.45 + B * 0.55);
+    }
+  }
+  octx.putImageData(oimg, 0, 0);
+  return out.toDataURL('image/png');
+}

@@ -10,11 +10,16 @@
  * numbers never drift apart. Ecological factors (industry-standard estimates):
  *   - 1 A4 sheet ≈ 5 g CO₂e (production + transport)
  *   - 1 tree    ≈ 8,333 A4 sheets
+ *
+ * F7 adds a lightweight per-job timestamp log that powers the weekly streak
+ * and sheet-milestone tiers shown on the result screen + receipt.
  */
 
-import { estimateSavings } from './savings';
+import { estimateSavings, loadCostProfile } from './savings';
 
 const LS_KEY = 'printifier.inkstats.v1';
+const LS_LOG_KEY = 'printifier.impactlog.v1';
+const LOG_CAP = 400; // ~2 jobs/week for 4 years — tiny and bounded
 
 export interface InkStats {
   /** Finished conversions counted. */
@@ -70,6 +75,139 @@ export function loadInkStats(): InkStats {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Job log + streak + milestones (F7)
+// ---------------------------------------------------------------------------
+
+/** Timestamp of Monday 00:00 local time for the week containing `ts`. */
+function weekStart(ts: number): number {
+  const d = new Date(ts);
+  const dow = (d.getDay() + 6) % 7; // Mon = 0 … Sun = 6
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - dow);
+  return d.getTime();
+}
+
+export function loadJobLog(): number[] {
+  const s = ls();
+  if (!s) return [];
+  try {
+    const raw = s.getItem(LS_LOG_KEY);
+    if (!raw) return [];
+    const p = JSON.parse(raw) as unknown;
+    if (!Array.isArray(p)) return [];
+    return p
+      .map(Number)
+      .filter((n) => Number.isFinite(n) && n > 0)
+      .slice(-LOG_CAP);
+  } catch {
+    return [];
+  }
+}
+
+function appendJobLog(ts: number): void {
+  const s = ls();
+  if (!s) return;
+  try {
+    const log = [...loadJobLog(), ts].slice(-LOG_CAP);
+    s.setItem(LS_LOG_KEY, JSON.stringify(log));
+  } catch {
+    // quota — non-fatal
+  }
+}
+
+export interface StreakInfo {
+  /** Jobs finished in the current Mon–Sun week. */
+  weekCount: number;
+  /** Sheets saved in the current week. */
+  weekSheets: number;
+  /**
+   * Consecutive Mon–Sun weeks (ending this week — or last week, so a streak
+   * doesn't snap to zero on Monday morning before the first conversion).
+   */
+  streakWeeks: number;
+  /** Total logged jobs. */
+  totalJobs: number;
+}
+
+export function computeStreak(log: number[], sheetsPerJob?: Map<number, number>): StreakInfo {
+  const now = Date.now();
+  const curWeek = weekStart(now);
+  const prevWeek = curWeek - 7 * 24 * 60 * 60 * 1000;
+
+  let weekCount = 0;
+  let weekSheets = 0;
+  const activeWeeks = new Set<number>();
+  for (const ts of log) {
+    activeWeeks.add(weekStart(ts));
+    if (weekStart(ts) === curWeek) {
+      weekCount++;
+      weekSheets += sheetsPerJob?.get(ts) ?? 0;
+    }
+  }
+
+  let streakWeeks = 0;
+  if (activeWeeks.has(curWeek)) {
+    streakWeeks = 1;
+    let w = curWeek;
+    while (activeWeeks.has((w -= 7 * 24 * 60 * 60 * 1000))) streakWeeks++;
+  } else if (activeWeeks.has(prevWeek)) {
+    streakWeeks = 1;
+    let w = prevWeek;
+    while (activeWeeks.has((w -= 7 * 24 * 60 * 60 * 1000))) streakWeeks++;
+  }
+
+  return { weekCount, weekSheets, streakWeeks, totalJobs: log.length };
+}
+
+/** Milestone tiers for lifetime sheets saved. */
+export const SHEET_TIERS: Array<{ sheets: number; key: string }> = [
+  { sheets: 10, key: 'im.tier.bronze' },
+  { sheets: 50, key: 'im.tier.silver' },
+  { sheets: 100, key: 'im.tier.gold' },
+  { sheets: 250, key: 'im.tier.platinum' },
+  { sheets: 500, key: 'im.tier.diamond' },
+  { sheets: 1000, key: 'im.tier.legend' },
+];
+
+export interface MilestoneInfo {
+  /** Lifetime sheets that define the current tier (0 = none yet). */
+  currentTierSheets: number;
+  /** i18n key of the current tier, or null when below Bronze. */
+  tierKey: string | null;
+  /** i18n key of the next tier, or null when Legend reached. */
+  nextKey: string | null;
+  /** Sheets still needed for the next tier (0 at Legend). */
+  sheetsToNext: number;
+  /** 0–100 progress toward the next tier (100 at Legend). */
+  progressPct: number;
+}
+
+export function milestoneFor(lifetimeSheets: number): MilestoneInfo {
+  const idx = SHEET_TIERS.findIndex((t) => lifetimeSheets < t.sheets);
+  if (idx === -1) {
+    return {
+      currentTierSheets: SHEET_TIERS[SHEET_TIERS.length - 1].sheets,
+      tierKey: SHEET_TIERS[SHEET_TIERS.length - 1].key,
+      nextKey: null,
+      sheetsToNext: 0,
+      progressPct: 100,
+    };
+  }
+  const next = SHEET_TIERS[idx];
+  const prev = idx > 0 ? SHEET_TIERS[idx - 1].sheets : 0;
+  return {
+    currentTierSheets: prev,
+    tierKey: idx > 0 ? SHEET_TIERS[idx - 1].key : null,
+    nextKey: next.key,
+    sheetsToNext: next.sheets - lifetimeSheets,
+    progressPct: Math.max(
+      3,
+      Math.min(100, Math.round(((lifetimeSheets - prev) / (next.sheets - prev)) * 100)),
+    ),
+  };
+}
+
 /** Add one finished job to the lifetime totals. */
 export function recordJob(i: {
   inputPages: number;
@@ -78,7 +216,7 @@ export function recordJob(i: {
   beforeInkPct?: number;
 }): InkStats {
   const cur = loadInkStats();
-  const job = estimateSavings(i);
+  const job = estimateSavings(i, loadCostProfile());
   const next: InkStats = {
     jobs: cur.jobs + 1,
     inputPages: cur.inputPages + Math.max(0, i.inputPages),
@@ -95,12 +233,15 @@ export function recordJob(i: {
       // quota — non-fatal
     }
   }
+  appendJobLog(next.ts);
   return next;
 }
 
 /** Wipe the lifetime totals (used by the little reset link). */
 export function resetInkStats(): void {
-  ls()?.removeItem(LS_KEY);
+  const s = ls();
+  s?.removeItem(LS_KEY);
+  s?.removeItem(LS_LOG_KEY);
 }
 
 /** Trees equivalent for a number of saved sheets (2 decimals). */

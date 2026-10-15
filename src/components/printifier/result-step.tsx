@@ -7,9 +7,12 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
+  Flame,
   ImageDown,
   IndianRupee,
   Loader2,
+  MessageCircle,
+  Pencil,
   Printer,
   RotateCcw,
   ScanText,
@@ -21,10 +24,36 @@ import {
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { type ColorMode } from '@/lib/pdf/filters';
-import { estimateSavings, formatRupees } from '@/lib/savings';
-import { co2GramsFor, loadInkStats, resetInkStats, treesFor, type InkStats } from '@/lib/ink-stats';
+import {
+  costProfileIsDefault,
+  estimateSavings,
+  formatRupees,
+  loadCostProfile,
+  saveCostProfile,
+  DEFAULT_COST,
+  type CostProfile,
+} from '@/lib/savings';
+import {
+  co2GramsFor,
+  computeStreak,
+  loadInkStats,
+  loadJobLog,
+  milestoneFor,
+  resetInkStats,
+  treesFor,
+  type InkStats,
+} from '@/lib/ink-stats';
 import { listRecentJobs, downloadBlob, type RecentJob } from '@/lib/recent-jobs';
 import { buildReceiptCanvas, receiptCanvasToBlob } from '@/lib/receipt';
 import { toast } from '@/hooks/use-toast';
@@ -129,6 +158,7 @@ export function ResultStep() {
           paperSavedPct: paperSavedPct,
           rupees: savings.rupees > 0 ? formatRupees(savings.rupees) : '₹0',
           fileSize: formatMB(result.outputBytes),
+          badgeText: receiptBadge,
         },
         {
           title: 'Notes Printifier',
@@ -195,6 +225,61 @@ export function ResultStep() {
     setImpact(loadInkStats().jobs > 0 ? loadInkStats() : null);
   }, []);
 
+  // F5 — print cost profile (₹/sheet, ₹/full-ink page)
+  const [profile, setProfile] = useState<CostProfile>(() => loadCostProfile());
+  const [costOpen, setCostOpen] = useState(false);
+  const [costPaper, setCostPaper] = useState('1');
+  const [costInk, setCostInk] = useState('1.3');
+  const openCostDialog = () => {
+    setCostPaper(String(profile.paperRsPerSheet));
+    setCostInk(String(profile.inkRsPerFullPage));
+    setCostOpen(true);
+  };
+  const saveCostDialog = () => {
+    const next: CostProfile = {
+      paperRsPerSheet: Math.max(0, Number(costPaper) || 0),
+      inkRsPerFullPage: Math.max(0, Number(costInk) || 0),
+    };
+    saveCostProfile(next);
+    setProfile(next);
+    setCostOpen(false);
+    toast({ description: t('rs.cost.saved') });
+  };
+
+  // F6 — WhatsApp: share the PDF + summary through the OS share sheet when
+  // file sharing is supported, else open wa.me with the text only.
+  const [waBusy, setWaBusy] = useState(false);
+  const shareWhatsApp = async () => {
+    if (!result || waBusy) return;
+    setWaBusy(true);
+    const text = t('rs.wa.text', {
+      inp: result.inputPages,
+      out: result.outputPages,
+      p: paperSavedPct,
+      rs: formatRupees(savings.rupees),
+    });
+    try {
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (typeof nav.share === 'function' && nav.canShare) {
+        try {
+          const blob = await fetch(result.url).then((r) => r.blob());
+          const file = new File([blob], 'notes-printifier.pdf', { type: 'application/pdf' });
+          if (nav.canShare({ files: [file] })) {
+            await nav.share({ files: [file], text, title: 'Notes Printifier' });
+            toast({ description: t('rs.wa.shared') });
+            return;
+          }
+        } catch (shareErr) {
+          if (shareErr instanceof DOMException && shareErr.name === 'AbortError') return;
+          console.debug('Web Share failed, falling back to wa.me', shareErr);
+        }
+      }
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    } finally {
+      setWaBusy(false);
+    }
+  };
+
   if (!result) {
     return (
       <div className="py-16 text-center text-muted-foreground">
@@ -212,12 +297,31 @@ export function ResultStep() {
       ? Math.round(((result.inputBytes - result.outputBytes) / result.inputBytes) * 100)
       : 0;
 
-  const savings = estimateSavings({
-    inputPages: result.inputPages,
-    outputPages: result.outputPages,
-    inkSavedPct: result.inkSavedPct,
-    beforeInkPct: result.beforeInkPct,
-  });
+  const savings = estimateSavings(
+    {
+      inputPages: result.inputPages,
+      outputPages: result.outputPages,
+      inkSavedPct: result.inkSavedPct,
+      beforeInkPct: result.beforeInkPct,
+    },
+    profile,
+  );
+
+  // F7 — weekly streak + milestone tier for the lifetime sheets saved
+  const streak = computeStreak(loadJobLog());
+  const milestone = milestoneFor(impact?.sheetsSaved ?? 0);
+  /** Receipt chip: e.g. "3-week streak · Gold" (omitted when nothing to show). */
+  const receiptBadge =
+    streak.streakWeeks >= 1 || milestone.tierKey
+      ? [
+          streak.streakWeeks >= 1
+            ? `${t('im.streak.weeks', { n: streak.streakWeeks })} 🔥`
+            : null,
+          milestone.tierKey ? t(milestone.tierKey) : null,
+        ]
+          .filter(Boolean)
+          .join(' · ') || undefined
+      : undefined;
 
   const stats = [
     {
@@ -301,8 +405,20 @@ export function ResultStep() {
           <IndianRupee className="h-4 w-4 shrink-0 text-emerald-300" />
           <span>
             {t('rs.saved', { rs: formatRupees(savings.rupees) })} — {t('rs.savedDetail', { n: savings.sheetsSaved })}
-            <span className="block text-xs text-emerald-300/70">{t('rs.assume')}</span>
+            <span className="block text-xs text-emerald-300/70">
+              {t('rs.assume2', { p: profile.paperRsPerSheet, i: profile.inkRsPerFullPage })}
+              {!costProfileIsDefault(profile) && ` · ${t('rs.cost.hint')}`}
+            </span>
           </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={openCostDialog}
+            className="h-7 shrink-0 border-emerald-400/40 bg-emerald-500/10 text-[11px] text-emerald-200 hover:bg-emerald-500/20"
+          >
+            <Pencil className="mr-1 h-3 w-3" /> {t('rs.cost.edit')}
+          </Button>
         </div>
       )}
 
@@ -364,6 +480,55 @@ export function ResultStep() {
             </div>
           </div>
           <p className="mt-2 text-[11px] leading-snug text-muted-foreground/80">{t('rs.impactNote')}</p>
+
+          {/* F7 — weekly streak + milestone progress */}
+          {streak.totalJobs > 0 && (
+            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="flex items-center gap-2 text-xs font-semibold text-emerald-200">
+                  <Flame className="h-3.5 w-3.5 text-amber-300" />
+                  {t('im.streak.title')}
+                </p>
+                <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  {streak.streakWeeks > 0 ? (
+                    <Badge className="border-0 bg-amber-500/15 text-amber-200">
+                      🔥 {t('im.streak.weeks', { n: streak.streakWeeks })}
+                    </Badge>
+                  ) : (
+                    <span className="italic">{t('im.streak.none')}</span>
+                  )}
+                  <Badge variant="secondary" className="text-[10px]">
+                    {t('im.streak.thisweek', { n: streak.weekCount })}
+                  </Badge>
+                </span>
+              </div>
+              {milestone.nextKey ? (
+                <div className="mt-2">
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>
+                      {milestone.tierKey ? t(milestone.tierKey) : '—'}
+                    </span>
+                    <span className="font-semibold text-emerald-300">
+                      {t('im.streak.next', {
+                        n: milestone.sheetsToNext,
+                        tier: t(milestone.nextKey),
+                      })}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-[width] duration-500"
+                      style={{ width: `${milestone.progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-1.5 text-[11px] font-semibold text-amber-300">
+                  {t('im.streak.max')}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -428,6 +593,17 @@ export function ResultStep() {
         >
           <ExternalLink className="h-4 w-4" /> {t('rs.open')}
         </a>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => void shareWhatsApp()}
+          disabled={waBusy}
+          aria-label={t('rs.wa.aria')}
+          className="w-full border border-emerald-400/40 bg-emerald-500/15 text-emerald-200 shadow-none hover:bg-emerald-500/25 sm:w-auto"
+        >
+          {waBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
+          {t('rs.wa')}
+        </Button>
         <Button type="button" variant="outline" size="lg" onClick={reset} className="w-full sm:w-auto">
           <RotateCcw className="mr-2 h-4 w-4" /> {t('rs.another')}
         </Button>
@@ -515,6 +691,63 @@ export function ResultStep() {
           />
         )}
       </div>
+
+      {/* F5 — print cost profile dialog */}
+      <Dialog open={costOpen} onOpenChange={setCostOpen}>
+        <DialogContent className="max-w-md rounded-2xl border-white/10 bg-popover">
+          <DialogHeader>
+            <DialogTitle className="text-left">{t('rs.cost.title')}</DialogTitle>
+            <DialogDescription className="text-left">{t('rs.cost.hint')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="cost-paper">{t('rs.cost.paper')}</Label>
+              <Input
+                id="cost-paper"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.1}
+                value={costPaper}
+                onChange={(e) => setCostPaper(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cost-ink">{t('rs.cost.ink')}</Label>
+              <Input
+                id="cost-ink"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.1}
+                value={costInk}
+                onChange={(e) => setCostInk(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
+                onClick={saveCostDialog}
+              >
+                {t('rs.cost.save')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  saveCostProfile(DEFAULT_COST);
+                  setProfile(DEFAULT_COST);
+                  setCostOpen(false);
+                }}
+              >
+                {t('rs.cost.reset')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
