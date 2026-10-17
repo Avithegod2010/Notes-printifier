@@ -67,6 +67,7 @@ import { SectionHead } from './section-head';
 import { DynamicBackground } from './dynamic-background';
 import { ThemePicker } from './theme-picker';
 import { CommandPalette, PaletteButton, PaletteSheetRow } from './command-palette';
+import { WelcomeTour } from './welcome-tour';
 import { VoiceBar } from './voice-bar';
 import { ImpactDashboard } from './impact-dashboard';
 import { animatedThemeFlip } from '@/lib/theme-flip';
@@ -808,6 +809,7 @@ export function PrintifierApp() {
       <BackToTop />
       <UpdateBanner />
       <CommandPalette />
+      <WelcomeTour />
 
       {/* F2 — one-tap apply for an incoming shared preset */}
       <Dialog

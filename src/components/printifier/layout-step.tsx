@@ -714,7 +714,9 @@ export function LayoutStep() {
           </p>
           <RadioGroup
             value={layout.quality}
-            onValueChange={(v) => setLayout({ quality: v as QualityOpt })}
+            // Picking a preset always hands control back to it — a stale
+            // customDpi used to keep the badge "Custom" and ignore the radio.
+            onValueChange={(v) => setLayout({ quality: v as QualityOpt, customDpi: null })}
             className="flex flex-col gap-2 sm:flex-row"
           >
             {(
@@ -727,6 +729,10 @@ export function LayoutStep() {
               <Label
                 key={q.v}
                 htmlFor={`q-${q.v}`}
+                // onClick (not just RadioGroup onValueChange): re-clicking the
+                // already-checked preset fires no change event, yet it must
+                // still clear a stale custom DPI override.
+                onClick={() => setLayout({ quality: q.v, customDpi: null })}
                 className={cn(
                   'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors',
                   layout.quality === q.v
@@ -777,10 +783,27 @@ export function LayoutStep() {
               step={6}
               aria-label={t('ly.dpi.aria')}
             />
-            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-              <span>{DPI_MIN}</span>
-              <span>150</span>
-              <span>{DPI_MAX}</span>
+            {/* Live value pill glued to the thumb — a static midpoint label
+                used to read as "the slider is at 150" while the thumb (and
+                badge) were somewhere else entirely. */}
+            <div className="relative mt-1 h-5 text-[10px] text-muted-foreground">
+              <span className="absolute left-0 top-1">{DPI_MIN}</span>
+              <span className="absolute right-0 top-1">{DPI_MAX}</span>
+              <span
+                aria-hidden
+                className="absolute top-0 -translate-x-1/2 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary transition-[left] duration-200 ease-out"
+                style={{
+                  left: `${Math.min(
+                    95,
+                    Math.max(
+                      5,
+                      ((effQuality.dpi - DPI_MIN) / (DPI_MAX - DPI_MIN)) * 100,
+                    ),
+                  )}%`,
+                }}
+              >
+                {effQuality.dpi}
+              </span>
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.dpi.hint')}</p>
           </div>

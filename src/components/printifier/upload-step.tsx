@@ -174,6 +174,13 @@ export function UploadStep() {
     }
   }, [addFiles]);
 
+  // Welcome tour (and other surfaces) can load the sample remotely
+  useEffect(() => {
+    const onLoad = () => void loadSample();
+    window.addEventListener('printifier:load-sample', onLoad);
+    return () => window.removeEventListener('printifier:load-sample', onLoad);
+  }, [loadSample]);
+
   const loadPct = loadProgress
     ? Math.round((loadProgress.done / loadProgress.total) * 100)
     : 0;
@@ -197,6 +204,7 @@ export function UploadStep() {
       <div
         role="button"
         tabIndex={0}
+        data-dropzone
         aria-label={t('up.aria')}
         onClick={() => !loadingDocs && inputRef.current?.click()}
         onKeyDown={(e) => {

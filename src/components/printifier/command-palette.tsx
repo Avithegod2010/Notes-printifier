@@ -342,6 +342,15 @@ export function CommandPalette() {
               <span>{t('cp.shortcuts')}</span>
               <kbd className="ml-auto rounded border border-white/15 bg-white/5 px-1.5 font-mono text-[10px]">?</kbd>
             </CommandItem>
+            <CommandItem
+              value={t('cp.tour')}
+              onSelect={() =>
+                run(() => window.dispatchEvent(new CustomEvent('printifier:tour')))
+              }
+            >
+              <Sparkles className="mr-2 h-4 w-4 text-fuchsia-300" />
+              <span>{t('cp.tour')}</span>
+            </CommandItem>
           </CommandGroup>
         </CommandList>
       </CommandDialog>

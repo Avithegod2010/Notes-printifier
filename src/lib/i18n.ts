@@ -736,6 +736,50 @@ const DICT: Record<string, [string, string]> = {
   'kb.q': ['This help', 'यह मदद'],
   'kb.esc': ['Close dialogs', 'डायलॉग बंद करें'],
   'kb.open': ['Shortcuts', 'शॉर्टकट'],
+
+  // welcome tour
+  'tour.aria': ['Welcome tour', 'स्वागत टूर'],
+  'tour.skip': ['Skip', 'छोड़ें'],
+  'tour.back': ['Back', 'पीछे'],
+  'tour.next': ['Next', 'आगे'],
+  'tour.stepN': ['Step {n} of {m}', 'चरण {n} / {m}'],
+  'tour.s1.t': ['Welcome to Printifier', 'Printifier में आपका स्वागत है'],
+  'tour.s1.b': [
+    'Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device.',
+    'भारी लेक्चर PDF को प्रिंटर-फ्रेंडली शीट में बदलें — एक पेज पर ज़्यादा स्लाइड, कम स्याही, चमकदार प्रिंट। सब कुछ यहीं आपके ब्राउज़र में चलता है; आपकी फ़ाइलें डिवाइस से बाहर नहीं जातीं।',
+  ],
+  'tour.s1.c1': ['N-up layouts', 'N-up लेआउट'],
+  'tour.s1.c2': ['Ink saver', 'स्याही बचाना'],
+  'tour.s1.c3': ['Booklet mode', 'बुकलेट मोड'],
+  'tour.s1.c4': ['100% private', '100% निजी'],
+  'tour.s2.t': ['Make it yours', 'इसे अपना बनाएँ'],
+  'tour.s2.b': [
+    'Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime.',
+    'एक रूप चुनें — पूरा ऐप तुरंत बदल जाएगा। 12 थीम और 10 बैकड्रॉप पैटर्न ऊपर पैलेट बटन में हैं, या कभी भी ⌘K / Ctrl+K दबाएँ।',
+  ],
+  'tour.s2.hint': ['Tap a swatch to try it right now', 'अभी आज़माने के लिए रंग दबाएँ'],
+  'tour.s3.t': ['A real example', 'असली उदाहरण'],
+  'tour.s3.b': [
+    'This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged.',
+    'यह असली 41-पेज की गहरी लेक्चर PDF है — डिफ़ॉल्ट रेसिपी से प्रोसेस की गई (इनवर्ट, स्याही-बचत, प्रति शीट 3 स्लाइड)। कुछ भी दिखावा नहीं।',
+  ],
+  'tour.s3.before': ['Before · {n} sheets', 'पहले · {n} शीट'],
+  'tour.s3.after': ['After · {n} pages', 'बाद · {n} पेज'],
+  'tour.s3.pages': ['−{n}% pages', '−{n}% पेज'],
+  'tour.s3.ink': ['−~87% ink', '−~87% स्याही'],
+  'tour.s3.load': ['Load this PDF & try it', 'यह PDF लोड करें और आज़माएँ'],
+  'tour.s3.full': ['Browse the full before & after', 'पूरा पहले/बाद देखें'],
+  'tour.s4.t': ['Your turn', 'अब आपकी बारी'],
+  'tour.s4.b': [
+    'Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print.',
+    'कोई भी लेक्चर PDF डालें, स्लाइडर सेट करें और प्रिंट-रेडी फ़ाइल डाउनलोड करें। तीन चरण: अपलोड → सुधार → प्रिंट।',
+  ],
+  'tour.s4.s1': ['Upload your PDF', 'अपनी PDF अपलोड करें'],
+  'tour.s4.s2': ['Enhance & lay out', 'सुधारें और लेआउट बनाएँ'],
+  'tour.s4.s3': ['Print or share it', 'प्रिंट करें या शेयर करें'],
+  'tour.s4.cta': ['Try it yourself', 'खुद आज़माएँ'],
+  'tour.s4.sample': ['Load the sample PDF', 'सैंपल PDF लोड करें'],
+  'cp.tour': ['Replay the intro tour', 'इंट्रो टूर दोबारा देखें'],
 };
 
 interface LangState {

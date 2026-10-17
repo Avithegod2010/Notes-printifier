@@ -23,9 +23,27 @@ function Slider({
     [value, defaultValue, min, max]
   )
 
+  // While the pointer is down the thumb must track it 1:1 (no left-glide);
+  // programmatic jumps (presets, keyboard) animate via globals.css instead.
+  const [dragging, setDragging] = React.useState(false)
+  React.useEffect(() => {
+    if (!dragging) return
+    const end = () => setDragging(false)
+    window.addEventListener("pointerup", end)
+    window.addEventListener("pointercancel", end)
+    window.addEventListener("blur", end)
+    return () => {
+      window.removeEventListener("pointerup", end)
+      window.removeEventListener("pointercancel", end)
+      window.removeEventListener("blur", end)
+    }
+  }, [dragging])
+
   return (
     <SliderPrimitive.Root
       data-slot="slider"
+      data-dragging={dragging ? "" : undefined}
+      onPointerDown={() => setDragging(true)}
       defaultValue={defaultValue}
       value={value}
       min={min}
@@ -53,7 +71,7 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+          className="border-primary bg-background ring-ring/50 block size-4 shrink-0 cursor-grab rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden active:cursor-grabbing disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>
