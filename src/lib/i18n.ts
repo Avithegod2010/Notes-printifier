@@ -472,6 +472,20 @@ const DICT: Record<string, [string, string]> = {
 
   // theme
   'th.toggle': ['Light / dark theme', 'लाइट / डार्क थीम'],
+  'th.pick': ['Theme', 'थीम'],
+  'th.pickSub': ['Pick a look — saved on this device.', 'रूप चुनें — इस डिवाइस पर सेव रहेगा।'],
+  'th.violet': ['Midnight Violet', 'मिडनाइट वायलेट'],
+  'th.paper': ['Paper Light', 'पेपर लाइट'],
+  'th.cyber': ['Cyber Neon', 'साइबर नियॉन'],
+  'th.matrix': ['Emerald Terminal', 'एमराल्ड टर्मिनल'],
+  'th.ember': ['Solar Ember', 'सोलर एम्बर'],
+  'th.rose': ['Rose Quartz', 'रोज़ क्वार्ट्ज़'],
+  'pat.pick': ['Backdrop pattern', 'बैकड्रॉप पैटर्न'],
+  'pat.grid': ['Grid', 'ग्रिड'],
+  'pat.dots': ['Dots', 'डॉट्स'],
+  'pat.hex': ['Hex', 'हेक्स'],
+  'pat.weave': ['Weave', 'वीव'],
+  'pat.none': ['Plain', 'सादा'],
 
   // feature grid additions
   'feat.booklet.t': ['Booklet Mode', 'बुकलेट मोड'],

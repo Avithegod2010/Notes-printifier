@@ -1,55 +1,157 @@
 /**
- * theme.ts — light/dark theme toggle.
+ * theme.ts — 6 selectable themes + 5 backdrop patterns.
  *
- * The app is dark by default (a violet-tinted near-black). Choosing "light"
- * adds the `theme-light` class to <html>; globals.css then remaps the shadcn
- * tokens and the hardcoded glass utilities to a warm paper look. The choice
- * is persisted in localStorage and restored post-hydration, so SSR always
- * renders dark and there is never a hydration mismatch.
+ * A theme is an id that maps to CSS custom-property blocks in globals.css
+ * (`html[data-theme='…']`). Light themes additionally keep the legacy
+ * `theme-light` class on <html> so the existing paper-glass remaps fire.
+ * The backdrop pattern is exposed as a `data-pattern` attribute that the
+ * DYNAMIC BACKGROUND section of globals.css uses to restyle `.dyn-gridlayer`.
+ *
+ * Everything is applied client-side post-hydration: SSR always renders the
+ * default "Midnight Violet" dark look, so there is never a hydration
+ * mismatch.
  */
 
 import { create } from 'zustand';
 
-export type Theme = 'dark' | 'light';
+export type ThemeId = 'violet' | 'paper' | 'cyber' | 'matrix' | 'ember' | 'rose';
+export type PatternId = 'grid' | 'dots' | 'hex' | 'weave' | 'none';
 
-const LS_KEY = 'printifier.theme';
+export interface ThemeMeta {
+  id: ThemeId;
+  light: boolean;
+  /** three dots shown in the picker: page bg, surface, accent */
+  swatch: [string, string, string];
+}
 
-function applyTheme(theme: Theme) {
+export const THEMES: readonly ThemeMeta[] = [
+  { id: 'violet', light: false, swatch: ['#0b0a10', '#15121c', '#8b5cf6'] },
+  { id: 'paper', light: true, swatch: ['#f4f2f8', '#ffffff', '#7c3aed'] },
+  { id: 'cyber', light: false, swatch: ['#05080d', '#0a141c', '#22d3ee'] },
+  { id: 'matrix', light: false, swatch: ['#030907', '#081511', '#34d399'] },
+  { id: 'ember', light: false, swatch: ['#0c0703', '#160e07', '#f59e0b'] },
+  { id: 'rose', light: true, swatch: ['#fdf5f8', '#ffffff', '#db2777'] },
+];
+
+export const PATTERNS: readonly PatternId[] = ['grid', 'dots', 'hex', 'weave', 'none'];
+
+export const isLightTheme = (id: ThemeId): boolean =>
+  THEMES.find((t) => t.id === id)?.light ?? false;
+
+const THEME_IDS = THEMES.map((t) => t.id);
+const PATTERN_IDS = PATTERNS;
+
+const LS_NEW = 'printifier.theme2';
+const LS_LEGACY = 'printifier.theme';
+
+function applyTheme(id: ThemeId) {
   try {
-    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    const root = document.documentElement;
+    root.dataset.theme = id;
+    root.classList.toggle('theme-light', isLightTheme(id));
+  } catch {
+    // non-DOM context — ignore
+  }
+}
+
+function applyPattern(p: PatternId) {
+  try {
+    document.documentElement.dataset.pattern = p;
   } catch {
     // non-DOM context — ignore
   }
 }
 
 interface ThemeState {
-  theme: Theme;
-  toggle: () => void;
-  /** Restore the persisted choice (mount-time, client only). */
+  themeId: ThemeId;
+  pattern: PatternId;
+  /** last dark / light theme — used by the quick light/dark flip */
+  lastDark: ThemeId;
+  lastLight: ThemeId;
+  setTheme: (id: ThemeId) => void;
+  setPattern: (p: PatternId) => void;
+  /** Flip between the last dark and last light theme (quick toggle). */
+  flip: () => void;
+  /** Restore persisted choices (mount-time, client only). */
   hydrate: () => void;
 }
 
+interface Persist {
+  id: ThemeId;
+  pattern: PatternId;
+  lastDark: ThemeId;
+  lastLight: ThemeId;
+}
+
+function persist(s: Pick<ThemeState, 'themeId' | 'pattern' | 'lastDark' | 'lastLight'>) {
+  try {
+    const blob: Persist = {
+      id: s.themeId,
+      pattern: s.pattern,
+      lastDark: s.lastDark,
+      lastLight: s.lastLight,
+    };
+    window.localStorage.setItem(LS_NEW, JSON.stringify(blob));
+  } catch {
+    // storage unavailable — session-only theme
+  }
+}
+
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: 'dark',
-  toggle: () => {
-    const next: Theme = get().theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    try {
-      window.localStorage.setItem(LS_KEY, next);
-    } catch {
-      // storage unavailable — session-only theme
-    }
-    set({ theme: next });
+  themeId: 'violet',
+  pattern: 'grid',
+  lastDark: 'violet',
+  lastLight: 'paper',
+
+  setTheme: (id) => {
+    if (!THEME_IDS.includes(id)) return;
+    applyTheme(id);
+    const patch: Partial<ThemeState> = { themeId: id };
+    if (isLightTheme(id)) patch.lastLight = id;
+    else patch.lastDark = id;
+    set(patch as ThemeState);
+    persist({ ...get(), ...patch } as ThemeState);
   },
+
+  setPattern: (p) => {
+    if (!PATTERN_IDS.includes(p)) return;
+    applyPattern(p);
+    set({ pattern: p });
+    persist(get());
+  },
+
+  flip: () => {
+    const cur = get().themeId;
+    const next = isLightTheme(cur) ? get().lastDark : get().lastLight;
+    get().setTheme(next);
+  },
+
   hydrate: () => {
     try {
-      const saved = window.localStorage.getItem(LS_KEY);
-      if (saved === 'light' || saved === 'dark') {
-        applyTheme(saved);
-        set({ theme: saved });
+      const raw = window.localStorage.getItem(LS_NEW);
+      if (raw) {
+        const p = JSON.parse(raw) as Partial<Persist>;
+        const id = p.id && THEME_IDS.includes(p.id) ? p.id : 'violet';
+        const pattern = p.pattern && PATTERN_IDS.includes(p.pattern) ? p.pattern : 'grid';
+        applyTheme(id);
+        applyPattern(pattern);
+        set({
+          themeId: id,
+          pattern,
+          lastDark: p.lastDark && THEME_IDS.includes(p.lastDark) ? p.lastDark : 'violet',
+          lastLight: p.lastLight && THEME_IDS.includes(p.lastLight) ? p.lastLight : 'paper',
+        });
+        return;
+      }
+      // legacy migration: old 'dark' | 'light' key
+      const legacy = window.localStorage.getItem(LS_LEGACY);
+      if (legacy === 'light') {
+        applyTheme('paper');
+        applyPattern('grid');
+        set({ themeId: 'paper' });
       }
     } catch {
-      // storage unavailable — stay dark
+      // storage unavailable — stay default
     }
   },
 }));

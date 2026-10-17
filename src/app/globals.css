@@ -118,21 +118,250 @@ html.theme-light [class*="bg-white/"] {
 html.theme-light .bg-white\/25 {
   background-color: oklch(0.32 0.03 290 / 16%);
 }
+/* Light themes read the same accent vars — defaults keep the Paper look. */
 html.theme-light .text-violet-200,
 html.theme-light .text-violet-300 {
-  color: #6d28d9;
+  color: var(--acc-300l, #6d28d9);
 }
 html.theme-light .text-violet-400 {
-  color: #7c3aed;
+  color: var(--acc-400l, #7c3aed);
 }
 html.theme-light .text-fuchsia-200,
 html.theme-light .text-fuchsia-300 {
-  color: #a21caf;
+  color: var(--accf-300l, #a21caf);
 }
 html.theme-light .text-emerald-200,
 html.theme-light .text-emerald-300,
 html.theme-light .text-emerald-400 {
   color: #047857;
+}
+
+/*
+ * SELECTABLE THEMES — token + accent overrides. Each block sits after (and
+ * therefore beats, on specificity ties) `html.theme-light`, so light themes
+ * like Rose Quartz can recolor everything the paper defaults set. Accent
+ * variables feed the ACCENT REMAP LAYER above; --dyn-* feed the DYNAMIC
+ * BACKGROUND section. All colors are plain rgb/hex for old WebViews.
+ */
+
+/* Cyber Neon — deep space black, cyan primary, magenta counterpart */
+html[data-theme='cyber'] {
+  color-scheme: dark;
+  --background: #05080d;
+  --foreground: #e6f9ff;
+  --card: #0a141c;
+  --card-foreground: #e6f9ff;
+  --popover: #0a141c;
+  --popover-foreground: #e6f9ff;
+  --primary: #22d3ee;
+  --primary-foreground: #02181d;
+  --secondary: #101d27;
+  --secondary-foreground: #e6f9ff;
+  --muted: #101d27;
+  --muted-foreground: #84a7b8;
+  --accent: #101d27;
+  --accent-foreground: #e6f9ff;
+  --destructive: #fb7185;
+  --border: rgba(125, 225, 255, 0.13);
+  --input: rgba(125, 225, 255, 0.18);
+  --ring: #22d3ee;
+  --header-bg: rgba(5, 8, 13, 0.8);
+  --acc-100: #cffafe;
+  --acc-200: #a5f3fc;
+  --acc-300: #67e8f9;
+  --acc-400: #67e8f9;
+  --acc-500: #22d3ee;
+  --acc-500h: #0e7490;
+  --acc-600: #0891b2;
+  --acc-rgb-400: 103 232 249;
+  --acc-rgb: 34 211 238;
+  --acc-rgb-600: 8 145 178;
+  --acc-rgb-900: 8 51 68;
+  --accf-300: #f0abfc;
+  --accf-400: #e879f9;
+  --accf-500: #d946ef;
+  --accf-500h: #a21caf;
+  --accf-600: #c026d3;
+  --accf-rgb-400: 232 121 249;
+  --accf-rgb: 217 70 239;
+  --accf-rgb-600: 192 38 211;
+}
+html[data-theme='cyber'] .dyn-bg {
+  --dyn-o1: rgba(34, 211, 238, 0.24);
+  --dyn-o2: rgba(217, 70, 239, 0.13);
+  --dyn-o3: rgba(45, 212, 191, 0.11);
+  --dyn-o4: rgba(139, 92, 246, 0.1);
+  --dyn-grid-line: rgba(103, 232, 249, 0.055);
+  --dyn-dot: rgba(165, 243, 252, 0.55);
+  --dyn-dot-glow: rgba(34, 211, 238, 0.55);
+  --dyn-vignette: rgba(1, 4, 8, 0.55);
+  --dyn-sweep: rgba(103, 232, 249, 0.05);
+}
+
+/* Emerald Terminal — phosphor green on near-black */
+html[data-theme='matrix'] {
+  color-scheme: dark;
+  --background: #030907;
+  --foreground: #e7fbf3;
+  --card: #081511;
+  --card-foreground: #e7fbf3;
+  --popover: #081511;
+  --popover-foreground: #e7fbf3;
+  --primary: #34d399;
+  --primary-foreground: #022c22;
+  --secondary: #0c1f18;
+  --secondary-foreground: #e7fbf3;
+  --muted: #0c1f18;
+  --muted-foreground: #7fb3a0;
+  --accent: #0c1f18;
+  --accent-foreground: #e7fbf3;
+  --destructive: #f87171;
+  --border: rgba(52, 211, 153, 0.14);
+  --input: rgba(52, 211, 153, 0.18);
+  --ring: #34d399;
+  --header-bg: rgba(3, 9, 7, 0.82);
+  --acc-100: #d1fae5;
+  --acc-200: #a7f3d0;
+  --acc-300: #6ee7b7;
+  --acc-400: #6ee7b7;
+  --acc-500: #34d399;
+  --acc-500h: #047857;
+  --acc-600: #059669;
+  --acc-rgb-400: 110 231 183;
+  --acc-rgb: 52 211 153;
+  --acc-rgb-600: 5 150 105;
+  --acc-rgb-900: 2 44 34;
+  --accf-300: #5eead4;
+  --accf-400: #2dd4bf;
+  --accf-500: #14b8a6;
+  --accf-500h: #0f766e;
+  --accf-600: #0d9488;
+  --accf-rgb-400: 45 212 191;
+  --accf-rgb: 20 184 166;
+  --accf-rgb-600: 13 148 136;
+}
+html[data-theme='matrix'] .dyn-bg {
+  --dyn-o1: rgba(16, 185, 129, 0.22);
+  --dyn-o2: rgba(20, 184, 166, 0.13);
+  --dyn-o3: rgba(132, 204, 22, 0.08);
+  --dyn-o4: rgba(45, 212, 191, 0.12);
+  --dyn-grid-line: rgba(110, 231, 183, 0.05);
+  --dyn-dot: rgba(167, 243, 208, 0.5);
+  --dyn-dot-glow: rgba(52, 211, 153, 0.45);
+  --dyn-vignette: rgba(0, 0, 0, 0.55);
+  --dyn-sweep: rgba(110, 231, 183, 0.045);
+}
+
+/* Solar Ember — warm amber/charcoal */
+html[data-theme='ember'] {
+  color-scheme: dark;
+  --background: #0c0703;
+  --foreground: #fdf1e3;
+  --card: #160e07;
+  --card-foreground: #fdf1e3;
+  --popover: #160e07;
+  --popover-foreground: #fdf1e3;
+  --primary: #f59e0b;
+  --primary-foreground: #271303;
+  --secondary: #241609;
+  --secondary-foreground: #fdf1e3;
+  --muted: #241609;
+  --muted-foreground: #c9a583;
+  --accent: #241609;
+  --accent-foreground: #fdf1e3;
+  --destructive: #f87171;
+  --border: rgba(245, 158, 11, 0.16);
+  --input: rgba(245, 158, 11, 0.22);
+  --ring: #f59e0b;
+  --header-bg: rgba(12, 7, 3, 0.82);
+  --acc-100: #fef3c7;
+  --acc-200: #fde68a;
+  --acc-300: #fcd34d;
+  --acc-400: #fbbf24;
+  --acc-500: #f59e0b;
+  --acc-500h: #b45309;
+  --acc-600: #d97706;
+  --acc-rgb-400: 251 191 36;
+  --acc-rgb: 245 158 11;
+  --acc-rgb-600: 217 119 6;
+  --acc-rgb-900: 69 26 3;
+  --accf-300: #fed7aa;
+  --accf-400: #fb923c;
+  --accf-500: #f97316;
+  --accf-500h: #c2410c;
+  --accf-600: #ea580c;
+  --accf-rgb-400: 251 146 60;
+  --accf-rgb: 249 115 22;
+  --accf-rgb-600: 234 88 12;
+}
+html[data-theme='ember'] .dyn-bg {
+  --dyn-o1: rgba(245, 158, 11, 0.22);
+  --dyn-o2: rgba(249, 115, 22, 0.15);
+  --dyn-o3: rgba(239, 68, 68, 0.08);
+  --dyn-o4: rgba(251, 191, 36, 0.1);
+  --dyn-grid-line: rgba(253, 230, 138, 0.05);
+  --dyn-dot: rgba(254, 243, 199, 0.5);
+  --dyn-dot-glow: rgba(245, 158, 11, 0.5);
+  --dyn-vignette: rgba(8, 3, 0, 0.55);
+  --dyn-sweep: rgba(253, 230, 138, 0.045);
+}
+
+/* Rose Quartz — soft pink light theme */
+html[data-theme='rose'] {
+  color-scheme: light;
+  --background: #fdf5f8;
+  --foreground: #3b2230;
+  --card: #ffffff;
+  --card-foreground: #3b2230;
+  --popover: #ffffff;
+  --popover-foreground: #3b2230;
+  --primary: #db2777;
+  --primary-foreground: #ffffff;
+  --secondary: #f9e8f0;
+  --secondary-foreground: #4a2b3c;
+  --muted: #f9e8f0;
+  --muted-foreground: #96687f;
+  --accent: #f9e8f0;
+  --accent-foreground: #4a2b3c;
+  --destructive: #e11d48;
+  --border: rgba(120, 40, 80, 0.15);
+  --input: rgba(120, 40, 80, 0.2);
+  --ring: #db2777;
+  --header-bg: rgba(255, 255, 255, 0.82);
+  --acc-100: #fce7f3;
+  --acc-200: #fbcfe8;
+  --acc-300: #f9a8d4;
+  --acc-300l: #be185d;
+  --acc-400: #f472b6;
+  --acc-400l: #db2777;
+  --acc-500: #ec4899;
+  --acc-500h: #be185d;
+  --acc-600: #db2777;
+  --acc-rgb-400: 244 114 182;
+  --acc-rgb: 236 72 153;
+  --acc-rgb-600: 219 39 119;
+  --acc-rgb-900: 131 24 67;
+  --accf-300: #f0abfc;
+  --accf-300l: #a21caf;
+  --accf-400: #e879f9;
+  --accf-500: #d946ef;
+  --accf-500h: #86198f;
+  --accf-600: #a21caf;
+  --accf-rgb-400: 232 121 249;
+  --accf-rgb: 217 70 239;
+  --accf-rgb-600: 162 28 175;
+}
+html[data-theme='rose'] .dyn-bg {
+  --dyn-o1: rgba(219, 39, 119, 0.09);
+  --dyn-o2: rgba(192, 38, 211, 0.07);
+  --dyn-o3: rgba(244, 114, 182, 0.09);
+  --dyn-o4: rgba(249, 168, 212, 0.1);
+  --dyn-grid-line: rgba(190, 24, 93, 0.05);
+  --dyn-dot: rgba(219, 39, 119, 0.38);
+  --dyn-dot-glow: rgba(219, 39, 119, 0.28);
+  --dyn-vignette: rgba(255, 255, 255, 0);
+  --dyn-sweep: rgba(219, 39, 119, 0.035);
+  --dyn-noise-opacity: 0.025;
 }
 
 /*
@@ -156,17 +385,75 @@ html.theme-light .text-emerald-400 {
 .bg-gradient-to-l { --tw-gradient-position: to left; }
 .bg-gradient-to-tl { --tw-gradient-position: to top left; }
 
-.from-violet-400 { --tw-gradient-from: #a78bfa; }
-.from-violet-500 { --tw-gradient-from: #8b5cf6; }
-.from-violet-600 { --tw-gradient-from: #7c3aed; }
-.via-fuchsia-400 { --tw-gradient-via: #e879f9; }
-.via-fuchsia-500 { --tw-gradient-via: #d946ef; }
-.to-violet-400 { --tw-gradient-to: #a78bfa; }
-.to-violet-500 { --tw-gradient-to: #8b5cf6; }
-.to-fuchsia-500 { --tw-gradient-to: #d946ef; }
-.to-fuchsia-600 { --tw-gradient-to: #c026d3; }
+/*
+ * ACCENT REMAP LAYER — every violet/fuchsia utility used across the app is
+ * re-pointed at theme CSS variables (fallbacks = the original violet palette,
+ * which is the default "Midnight Violet" theme). Selecting another theme
+ * therefore recolors buttons, gradients, badges, glows and borders with no
+ * component changes. Hover variants get their own rules because the
+ * unlayered base rules below would otherwise out-specify Tailwind's layered
+ * `hover:` variants.
+ */
+.from-violet-400 { --tw-gradient-from: var(--acc-400, #a78bfa); }
+.from-violet-500 { --tw-gradient-from: var(--acc-500, #8b5cf6); }
+.from-violet-600 { --tw-gradient-from: var(--acc-600, #7c3aed); }
+.via-fuchsia-400 { --tw-gradient-via: var(--accf-400, #e879f9); }
+.via-fuchsia-500 { --tw-gradient-via: var(--accf-500, #d946ef); }
+.to-violet-400 { --tw-gradient-to: var(--acc-400, #a78bfa); }
+.to-violet-500 { --tw-gradient-to: var(--acc-500, #8b5cf6); }
+.to-fuchsia-400 { --tw-gradient-to: var(--accf-400, #e879f9); }
+.to-fuchsia-500 { --tw-gradient-to: var(--accf-500, #d946ef); }
+.to-fuchsia-600 { --tw-gradient-to: var(--accf-600, #c026d3); }
+.hover\:from-violet-500:hover { --tw-gradient-from: var(--acc-500h, #7c3aed); }
+.hover\:to-fuchsia-500:hover { --tw-gradient-to: var(--accf-500h, #c026d3); }
 .from-emerald-400 { --tw-gradient-from: #34d399; }
 .to-emerald-500 { --tw-gradient-to: #10b981; }
+
+.text-violet-100 { color: var(--acc-100, #ede9fe); }
+.text-violet-200 { color: var(--acc-200, #ddd6fe); }
+.text-violet-300 { color: var(--acc-300, #c4b5fd); }
+.text-violet-300\/80 { color: rgb(var(--acc-rgb-400, 167 139 250) / 0.8); }
+.text-violet-400 { color: var(--acc-400, #a78bfa); }
+.text-fuchsia-200, .text-fuchsia-300 { color: var(--accf-300, #f0abfc); }
+.text-fuchsia-400 { color: var(--accf-400, #e879f9); }
+
+.bg-violet-400 { background-color: var(--acc-400, #a78bfa); }
+.bg-violet-500 { background-color: var(--acc-500, #8b5cf6); }
+.bg-violet-600 { background-color: var(--acc-600, #7c3aed); }
+.bg-violet-500\/5 { background-color: rgb(var(--acc-rgb, 139 92 246) / 0.05); }
+.bg-violet-500\/10 { background-color: rgb(var(--acc-rgb, 139 92 246) / 0.1); }
+.bg-violet-500\/15 { background-color: rgb(var(--acc-rgb, 139 92 246) / 0.15); }
+.bg-violet-500\/20 { background-color: rgb(var(--acc-rgb, 139 92 246) / 0.2); }
+.bg-violet-600\/25 { background-color: rgb(var(--acc-rgb-600, 124 58 237) / 0.25); }
+.bg-fuchsia-400\/60 { background-color: rgb(var(--accf-rgb-400, 232 121 249) / 0.6); }
+.bg-fuchsia-500\/15 { background-color: rgb(var(--accf-rgb, 217 70 239) / 0.15); }
+.bg-fuchsia-500\/20 { background-color: rgb(var(--accf-rgb, 217 70 239) / 0.2); }
+.bg-fuchsia-600\/15 { background-color: rgb(var(--accf-rgb-600, 192 38 211) / 0.15); }
+
+.border-violet-300 { border-color: var(--acc-300, #c4b5fd); }
+.border-violet-400\/20 { border-color: rgb(var(--acc-rgb-400, 167 139 250) / 0.2); }
+.border-violet-400\/25 { border-color: rgb(var(--acc-rgb-400, 167 139 250) / 0.25); }
+.border-violet-400\/30 { border-color: rgb(var(--acc-rgb-400, 167 139 250) / 0.3); }
+.border-violet-400\/40 { border-color: rgb(var(--acc-rgb-400, 167 139 250) / 0.4); }
+.border-violet-400\/50 { border-color: rgb(var(--acc-rgb-400, 167 139 250) / 0.5); }
+.border-violet-400\/60 { border-color: rgb(var(--acc-rgb-400, 167 139 250) / 0.6); }
+.border-violet-500\/30 { border-color: rgb(var(--acc-rgb, 139 92 246) / 0.3); }
+.border-violet-500\/40 { border-color: rgb(var(--acc-rgb, 139 92 246) / 0.4); }
+.border-violet-500\/50 { border-color: rgb(var(--acc-rgb, 139 92 246) / 0.5); }
+.hover\:border-violet-500\/40:hover { border-color: rgb(var(--acc-rgb, 139 92 246) / 0.4); }
+
+.shadow-violet-600\/25 { --tw-shadow-color: rgb(var(--acc-rgb-600, 124 58 237) / 0.25); }
+.shadow-violet-600\/30 { --tw-shadow-color: rgb(var(--acc-rgb-600, 124 58 237) / 0.3); }
+.shadow-violet-600\/40 { --tw-shadow-color: rgb(var(--acc-rgb-600, 124 58 237) / 0.4); }
+.shadow-violet-900\/20 { --tw-shadow-color: rgb(var(--acc-rgb-900, 76 29 149) / 0.2); }
+.shadow-violet-900\/40 { --tw-shadow-color: rgb(var(--acc-rgb-900, 76 29 149) / 0.4); }
+
+.ring-violet-500\/10 { --tw-ring-color: rgb(var(--acc-rgb, 139 92 246) / 0.1); }
+.ring-violet-300 { --tw-ring-color: var(--acc-300, #c4b5fd); }
+.ring-fuchsia-400 { --tw-ring-color: var(--accf-400, #e879f9); }
+.data-\[state\=checked\]\:bg-violet-600[data-state='checked'] {
+  background-color: var(--acc-600, #7c3aed);
+}
 
 @supports (color: oklch(0% 0 0)) {
   .bg-gradient-to-t { --tw-gradient-position: to top in srgb; }
@@ -254,10 +541,10 @@ html.theme-light .text-emerald-400 {
   }
 }
 
-/* Slim violet scrollbar for long lists */
+/* Slim accent scrollbar for long lists — recolors with the active theme */
 .pretty-scroll {
   scrollbar-width: thin;
-  scrollbar-color: oklch(0.541 0.281 293 / 0.5) transparent;
+  scrollbar-color: rgb(var(--acc-rgb, 139 92 246) / 0.5) transparent;
 }
 .pretty-scroll::-webkit-scrollbar {
   width: 8px;
@@ -267,11 +554,11 @@ html.theme-light .text-emerald-400 {
   background: transparent;
 }
 .pretty-scroll::-webkit-scrollbar-thumb {
-  background: oklch(0.541 0.281 293 / 0.45);
+  background: rgb(var(--acc-rgb, 139 92 246) / 0.45);
   border-radius: 8px;
 }
 .pretty-scroll::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.606 0.25 292.7 / 0.65);
+  background: rgb(var(--acc-rgb, 139 92 246) / 0.65);
 }
 
 /*
@@ -385,7 +672,110 @@ html.theme-light .dyn-bg {
   will-change: transform;
 }
 @keyframes dyn-pan {
-  to { transform: translate3d(88px, 88px, 0); }
+  to { transform: translate3d(var(--pan-x, 88px), var(--pan-y, 88px), 0); }
+}
+
+/*
+ * BACKDROP PATTERNS — selectable via <html data-pattern='…'>. Each variant
+ * restyles the drifting .dyn-gridlayer; pan distances stay exact multiples
+ * of the tile size so the 88px-based seamless loop never jumps.
+ */
+[data-pattern='dots'] .dyn-gridlayer {
+  --pan-x: 88px;
+  --pan-y: 88px;
+  background-image: radial-gradient(rgb(var(--acc-rgb, 139 92 246) / 0.14) 1.2px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+[data-pattern='hex'] .dyn-gridlayer {
+  --pan-x: 160px;
+  --pan-y: 280px;
+  background-image:
+    linear-gradient(30deg, var(--dyn-grid-line) 12%, transparent 12.5% 87.5%, var(--dyn-grid-line) 87.5%),
+    linear-gradient(150deg, var(--dyn-grid-line) 12%, transparent 12.5% 87.5%, var(--dyn-grid-line) 87.5%),
+    linear-gradient(30deg, var(--dyn-grid-line) 12%, transparent 12.5% 87.5%, var(--dyn-grid-line) 87.5%),
+    linear-gradient(150deg, var(--dyn-grid-line) 12%, transparent 12.5% 87.5%, var(--dyn-grid-line) 87.5%);
+  background-size: 80px 140px;
+  background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+}
+[data-pattern='weave'] .dyn-gridlayer {
+  --pan-x: 96px;
+  --pan-y: 96px;
+  background-image:
+    repeating-linear-gradient(45deg, var(--dyn-grid-line) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(-45deg, var(--dyn-grid-line) 0 1px, transparent 1px 12px);
+}
+[data-pattern='none'] .dyn-gridlayer {
+  opacity: 0;
+}
+
+/*
+ * FUTURISTIC ACCENTS
+ */
+
+/* Holo ring — a slow conic gradient sweeping around the app panel.
+   @property is what lets the angle interpolate; engines without it simply
+   show a static partial arc — graceful degradation. */
+@property --holo-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.holo-ring {
+  position: relative;
+}
+.holo-ring::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 1.6rem;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--holo-angle),
+    transparent 0deg,
+    var(--acc-500, #8b5cf6) 55deg,
+    var(--accf-400, #e879f9) 95deg,
+    transparent 150deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: holo-spin 9s linear infinite;
+  opacity: 0.55;
+  pointer-events: none;
+}
+@keyframes holo-spin {
+  to { --holo-angle: 360deg; }
+}
+
+/* Glow title — soft accent bloom behind big headings */
+.glow-title {
+  text-shadow:
+    0 0 28px rgb(var(--acc-rgb, 139 92 246) / 0.35),
+    0 0 64px rgb(var(--acc-rgb, 139 92 246) / 0.18);
+}
+
+/*
+ * THEME FLIP — circular reveal via the View Transitions API. The old look
+ * stays put while the new one is unclipped from the button that was
+ * clicked (origin passed as --vt-x/--vt-y by theme-flip.ts). Engines
+ * without the API skip this entirely and use the JS veil fallback.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+  animation: vt-reveal 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes vt-reveal {
+  from { clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 24px)); }
+  to { clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 24px)); }
 }
 
 /* Light sweep — a skewed beam glides across every ~15s, then idles */
@@ -456,6 +846,9 @@ html.theme-light .dyn-bg {
   .dyn-gridlayer,
   .dyn-sweep,
   .dyn-dot {
+    animation: none !important;
+  }
+  .holo-ring::before {
     animation: none !important;
   }
 }

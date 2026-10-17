@@ -65,6 +65,8 @@ import { UpdateBanner } from './update-banner';
 import { ScrollProgress, BackToTop } from './site-chrome';
 import { SectionHead } from './section-head';
 import { DynamicBackground } from './dynamic-background';
+import { ThemePicker } from './theme-picker';
+import { animatedThemeFlip } from '@/lib/theme-flip';
 import { SavingsCalculator } from './savings-calculator';
 import { UseCases } from './use-cases';
 import { usePrintifyStore } from '@/lib/printify-store';
@@ -157,9 +159,9 @@ function LangToggle() {
 
 function ThemeToggle() {
   const t = useT();
-  const theme = useThemeStore((s) => s.theme);
-  const toggle = useThemeStore((s) => s.toggle);
-  const isLight = theme === 'light';
+  const theme = useThemeStore((s) => s.themeId);
+  const flip = useThemeStore((s) => s.flip);
+  const isLight = theme === 'paper' || theme === 'rose';
 
   return (
     <Button
@@ -168,7 +170,7 @@ function ThemeToggle() {
       variant="outline"
       aria-label={t('th.toggle')}
       title={t('th.toggle')}
-      onClick={toggle}
+      onClick={(e) => animatedThemeFlip(flip, { x: e.clientX, y: e.clientY })}
       className="h-9 w-9 border-white/15 bg-white/5 p-0 text-muted-foreground hover:bg-white/10 hover:text-foreground"
     >
       {isLight ? (
@@ -182,8 +184,9 @@ function ThemeToggle() {
 
 function SheetThemeRow() {
   const t = useT();
-  const theme = useThemeStore((s) => s.theme);
-  const toggle = useThemeStore((s) => s.toggle);
+  const theme = useThemeStore((s) => s.themeId);
+  const flip = useThemeStore((s) => s.flip);
+  const isLight = theme === 'paper' || theme === 'rose';
 
   return (
     <SheetClose asChild>
@@ -191,9 +194,9 @@ function SheetThemeRow() {
         type="button"
         variant="outline"
         className="border-white/15 bg-white/5 hover:bg-white/10"
-        onClick={toggle}
+        onClick={() => animatedThemeFlip(flip)}
       >
-        {theme === 'light' ? (
+        {isLight ? (
           <Moon className="mr-2 h-4 w-4" />
         ) : (
           <Sun className="mr-2 h-4 w-4" />
@@ -246,6 +249,7 @@ function Header() {
 
         <div className="flex items-center gap-2">
           <InstallButton />
+          <ThemePicker />
           <ThemeToggle />
           <LangToggle />
           <LabsPopover />
@@ -296,6 +300,9 @@ function Header() {
                   </Button>
                 </SheetClose>
                 <SheetThemeRow />
+                <div className="flex justify-end px-1">
+                  <ThemePicker />
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -341,25 +348,7 @@ function Hero() {
 
   return (
     <section className="relative overflow-hidden px-4 pb-14 pt-12 sm:pb-20 sm:pt-20">
-      {/* decorative glows */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-violet-600/25 blur-[120px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 top-40 h-72 w-72 rounded-full bg-fuchsia-600/15 blur-[100px]"
-      />
-      {/* subtle grid backdrop */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.35] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent)]"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
-          backgroundSize: '44px 44px',
-        }}
-      />
+      {/* ambient look is owned by <DynamicBackground /> — themed globally */}
 
       <div className="relative mx-auto max-w-4xl text-center">
         <motion.div
@@ -383,7 +372,7 @@ function Hero() {
           initial={reduce ? false : { opacity: 0, y: 18 }}
           animate={reduce ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.08 }}
-          className="text-4xl font-extrabold tracking-tight sm:text-6xl"
+          className="glow-title text-4xl font-extrabold tracking-tight sm:text-6xl"
         >
           {t('hero.title1')}{' '}
           <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
@@ -785,7 +774,7 @@ export function PrintifierApp() {
 
         <section id="app" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-8">
           <Reveal>
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-4 shadow-2xl shadow-black/40 ring-1 ring-violet-500/10 sm:p-6 lg:p-8">
+            <div className="holo-ring rounded-3xl border border-white/10 bg-white/[0.02] p-4 shadow-2xl shadow-black/40 ring-1 ring-violet-500/10 sm:p-6 lg:p-8">
               <Stepper />
               {step === 0 && <UploadStep />}
               {step === 1 && <PagesStep />}
