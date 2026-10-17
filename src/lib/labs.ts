@@ -20,7 +20,7 @@ const LS_FLAG = 'printifier.labs.rememberSettings';
 const LS_REPAINT_FLAG = 'printifier.labs.textRepaint';
 const LS_PREFS = 'printifier.saved-prefs.v1';
 
-export interface SavedPrefs {
+interface SavedPrefs {
   filters?: unknown;
   layout?: unknown;
 }
@@ -82,6 +82,3 @@ export function savePrefs(filters: unknown, layout: unknown): void {
   }
 }
 
-export function clearSavedPrefs(): void {
-  ls()?.removeItem(LS_PREFS);
-}

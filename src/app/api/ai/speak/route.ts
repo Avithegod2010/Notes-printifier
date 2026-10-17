@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { spawn } from 'node:child_process'
 import ZAI from 'z-ai-web-dev-sdk'
-import { clientKey, rateLimit } from '../_rate-limit'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
         contentType = 'audio/wav'
       }
     }
-    return new NextResponse(audio, {
+    return new NextResponse(new Uint8Array(audio), {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'no-store',

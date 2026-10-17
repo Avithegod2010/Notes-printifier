@@ -24,7 +24,7 @@ interface Parsed {
 }
 
 /** Deterministic intent parsing over the transcript — EN + HI keyword hits. */
-export function parseVoiceCommand(raw: string): Parsed[] {
+function parseVoiceCommand(raw: string): Parsed[] {
   const s = raw.toLowerCase();
   const out: Parsed[] = [];
   const hit = (re: RegExp) => re.test(s);
@@ -90,7 +90,7 @@ export function VoiceBar() {
     );
     return () => {
       // safety: never leave a recorder running after unmount
-      recorder.current?.state === 'recording' && recorder.current.stop();
+      if (recorder.current?.state === 'recording') recorder.current.stop();
       stream.current?.getTracks().forEach((tr) => tr.stop());
     };
   }, []);

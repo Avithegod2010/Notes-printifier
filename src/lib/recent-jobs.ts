@@ -27,7 +27,7 @@ export interface RecentSourceFile {
   blob: Blob;
 }
 
-export interface RecentSource {
+interface RecentSource {
   id: string; // same id as the finished job
   ts: number;
   files: RecentSourceFile[];
@@ -70,7 +70,7 @@ function txDone(tx: IDBTransaction): Promise<void> {
   });
 }
 
-export type NewRecentJob = Omit<RecentJob, 'id' | 'ts'>;
+type NewRecentJob = Omit<RecentJob, 'id' | 'ts'>;
 
 /** Save a finished conversion, prune to the newest MAX_JOBS, return its id. */
 export async function saveRecentJob(job: NewRecentJob): Promise<string> {

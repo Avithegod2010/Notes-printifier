@@ -32,7 +32,7 @@ export function ListenButton() {
   useEffect(
     () => () => {
       audioRef.current?.pause();
-      if (cacheRef.current) URL.revokeObjectURL(cacheRef.current);
+      if (cacheRef.current) URL.revokeObjectURL(cacheRef.current.url);
     },
     [],
   );
@@ -89,7 +89,7 @@ export function ListenButton() {
       const blob = await res.blob();
       if (!blob.type.startsWith('audio/')) throw new Error('not audio');
 
-      if (cacheRef.current) URL.revokeObjectURL(cacheRef.current);
+      if (cacheRef.current) URL.revokeObjectURL(cacheRef.current.url);
       const url = URL.createObjectURL(blob);
       cacheRef.current = { lang, url };
 

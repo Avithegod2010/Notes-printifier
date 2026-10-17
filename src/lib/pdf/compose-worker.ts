@@ -47,20 +47,12 @@ async function ensureParser(): Promise<void> {
 async function loadDocument(data: ArrayBuffer): Promise<PdfDocLike> {
   const copy = new Uint8Array(data.slice(0));
   try {
-    return await pdfjsLib.getDocument({
-      data: copy,
-      wasmUrl: PDF_WASM_URL,
-      isEvalSupported: false,
-    }).promise;
+    return (await pdfjsLib.getDocument({ data: copy, wasmUrl: PDF_WASM_URL }).promise) as unknown as PdfDocLike;
   } catch (err) {
     console.warn('[compose-worker] subworker parse failed, using fake worker', err);
     fakeWorkerReady = true;
     await ensureParser();
-    return await pdfjsLib.getDocument({
-      data: copy,
-      wasmUrl: PDF_WASM_URL,
-      isEvalSupported: false,
-    }).promise;
+    return (await pdfjsLib.getDocument({ data: copy, wasmUrl: PDF_WASM_URL }).promise) as unknown as PdfDocLike;
   }
 }
 

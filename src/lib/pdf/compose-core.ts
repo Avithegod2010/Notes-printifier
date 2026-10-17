@@ -250,7 +250,7 @@ export interface ComposeEnv {
 }
 
 /** The slice of pdf.js a page object must expose for the pipeline. */
-export interface PdfPageLike {
+interface PdfPageLike {
   getViewport: (p: { scale: number; rotation?: number }) => {
     width: number;
     height: number;
@@ -649,7 +649,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
  * Encode a canvas as JPEG bytes. OffscreenCanvas uses convertToBlob,
  * HTMLCanvasElement uses toBlob.
  */
-export async function canvasToJpegBytes(
+async function canvasToJpegBytes(
   canvas: AnyCanvas,
   quality: number,
 ): Promise<Uint8Array> {
@@ -666,7 +666,7 @@ export async function canvasToJpegBytes(
 }
 
 /** Pre-filled white canvas — shared by preview paths. */
-export function makeWhiteCanvas(env: ComposeEnv, w: number, h: number): { canvas: AnyCanvas; ctx: AnyCtx } {
+function makeWhiteCanvas(env: ComposeEnv, w: number, h: number): { canvas: AnyCanvas; ctx: AnyCtx } {
   const canvas = env.createCanvas(Math.max(1, Math.floor(w)), Math.max(1, Math.floor(h)));
   const ctx = canvas.getContext('2d', { willReadFrequently: true }) as AnyCtx;
   ctx.fillStyle = '#ffffff';

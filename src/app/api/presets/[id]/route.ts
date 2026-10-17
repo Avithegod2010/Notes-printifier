@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,11 +10,21 @@ export const dynamic = 'force-dynamic'
  * (8 unambiguous chars ≈ 30 bits of entropy, links expire in 30 days).
  */
 const ID_RE = /^[A-HJ-NP-Z2-9]{8}$/
+// The id is the only secret — throttle lookups so the space can't be walked.
+const RATE_MAX = 60
+const RATE_WINDOW_MS = 5 * 60 * 1000
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!rateLimit(`presets:get:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
+    return NextResponse.json(
+      { ok: false, error: 'Too many requests, try again in a few minutes' },
+      { status: 429 },
+    )
+  }
+
   const { id } = await params
   if (!ID_RE.test(id)) {
     return NextResponse.json({ ok: false, error: 'Bad id' }, { status: 400 })

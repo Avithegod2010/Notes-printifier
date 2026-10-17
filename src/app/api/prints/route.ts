@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
+
+// Anonymous counter: generous for real conversions, enough to stop DB floods.
+const RATE_MAX = 60
+const RATE_WINDOW_MS = 5 * 60 * 1000
 
 const MAX_COUNT = 1_000_000_000
 const MAX_INK_SAVED_PCT = 100
@@ -137,6 +142,13 @@ function parsePrintJob(body: unknown): ParseResult {
 }
 
 export async function POST(request: Request) {
+  if (!rateLimit(`prints:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
+    return NextResponse.json(
+      { ok: false, error: 'Too many requests, try again in a few minutes' },
+      { status: 429 }
+    )
+  }
+
   let body: unknown
   try {
     body = await request.json()

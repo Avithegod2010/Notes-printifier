@@ -42,8 +42,8 @@ const EMPTY: InkStats = {
   ts: 0,
 };
 
-export const CO2_G_PER_SHEET = 5;
-export const SHEETS_PER_TREE = 8333;
+const CO2_G_PER_SHEET = 5;
+const SHEETS_PER_TREE = 8333;
 
 function ls(): Storage | null {
   try {
@@ -116,7 +116,7 @@ function appendJobLog(ts: number): void {
   }
 }
 
-export interface StreakInfo {
+interface StreakInfo {
   /** Jobs finished in the current Mon–Sun week. */
   weekCount: number;
   /** Sheets saved in the current week. */
@@ -161,7 +161,7 @@ export function computeStreak(log: number[], sheetsPerJob?: Map<number, number>)
 }
 
 /** Milestone tiers for lifetime sheets saved. */
-export const SHEET_TIERS: Array<{ sheets: number; key: string }> = [
+const SHEET_TIERS: Array<{ sheets: number; key: string }> = [
   { sheets: 10, key: 'im.tier.bronze' },
   { sheets: 50, key: 'im.tier.silver' },
   { sheets: 100, key: 'im.tier.gold' },
@@ -170,7 +170,7 @@ export const SHEET_TIERS: Array<{ sheets: number; key: string }> = [
   { sheets: 1000, key: 'im.tier.legend' },
 ];
 
-export interface MilestoneInfo {
+interface MilestoneInfo {
   /** Lifetime sheets that define the current tier (0 = none yet). */
   currentTierSheets: number;
   /** i18n key of the current tier, or null when below Bronze. */

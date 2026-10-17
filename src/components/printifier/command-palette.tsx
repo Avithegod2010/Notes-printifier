@@ -94,12 +94,8 @@ const THEME_KEY: Record<ThemeId, string> = {
   mint: 'th.mint',
 };
 
-export function openPalette() {
+function openPalette() {
   window.dispatchEvent(new CustomEvent('printifier:palette'));
-}
-
-export function openShortcuts() {
-  window.dispatchEvent(new CustomEvent('printifier:shortcuts'));
 }
 
 export function CommandPalette() {

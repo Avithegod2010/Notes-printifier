@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,17 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
 
+const CREATE_RATE_MAX = 20
+const RATE_WINDOW_MS = 5 * 60 * 1000
+
 export async function POST(request: Request) {
+  if (!rateLimit(`presets:create:${clientKey(request)}`, CREATE_RATE_MAX, RATE_WINDOW_MS)) {
+    return NextResponse.json(
+      { ok: false, error: 'Too many requests, try again in a few minutes' },
+      { status: 429 },
+    )
+  }
+
   let body: unknown
   try {
     body = await request.json()

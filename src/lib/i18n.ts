@@ -811,7 +811,7 @@ export const useLangStore = create<LangState>((set) => ({
   },
 }));
 
-export type Translate = (key: string, vars?: Record<string, string | number>) => string;
+type Translate = (key: string, vars?: Record<string, string | number>) => string;
 
 export function useT(): Translate {
   const lang = useLangStore((s) => s.lang);

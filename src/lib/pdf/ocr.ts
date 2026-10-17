@@ -30,7 +30,7 @@ export interface OcrWord {
   confidence: number;
 }
 
-export interface OcrKey {
+interface OcrKey {
   docId: number;
   pageNumber: number;
   rotation: number;
@@ -45,7 +45,7 @@ function sanitize(text: string): string {
   return text.replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').trim();
 }
 
-export function ocrKeyString(k: OcrKey): string {
+function ocrKeyString(k: OcrKey): string {
   // delegate to the shared helper so OCR keys can never drift from the
   // compose-side lookup keys (same docId:page:rotation format)
   return composeItemKey(k);
@@ -122,7 +122,7 @@ export async function ocrComposeItems(
       if (!ctx) throw new Error('Canvas unavailable for OCR');
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
       page.cleanup();
 
       const { data } = await worker.recognize(canvas, {}, { blocks: true });
@@ -161,7 +161,7 @@ export async function ocrComposeItems(
  * (tolerance ≈ 0.6 × median word height). Words inside a line are sorted
  * left-to-right so the repaint pass draws them in reading order.
  */
-export function groupOcrWordsIntoLines(words: OcrWord[]): OcrWord[][] {
+function groupOcrWordsIntoLines(words: OcrWord[]): OcrWord[][] {
   if (words.length === 0) return [];
   const heights = words.map((w) => w.fy1 - w.fy0).sort((a, b) => a - b);
   const medianH = heights[Math.floor(heights.length / 2)];

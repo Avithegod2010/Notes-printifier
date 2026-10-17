@@ -1,6 +1,6 @@
 import { type PdfDocument } from './pdfjs';
 
-export interface RenderOptions {
+interface RenderOptions {
   /** Render so that the canvas is ~this many CSS pixels wide. */
   targetWidth?: number;
   /** Explicit pdf.js scale (overrides targetWidth). */
@@ -47,7 +47,7 @@ export async function renderPageToCanvas(
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  await page.render({ canvasContext: ctx, viewport }).promise;
+  await page.render({ canvas, canvasContext: ctx, viewport }).promise;
   page.cleanup();
   return canvas;
 }

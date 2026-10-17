@@ -254,7 +254,6 @@ export function LayoutStep() {
       }
     }, 300);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- previewThumbs tracked via sheetKey
   }, [sheetKey, filters]);
 
   const noteLinesAvailable = !layout.booklet && layout.rows === 3 && layout.cols === 1;

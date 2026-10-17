@@ -40,7 +40,7 @@ export type PatternId =
   | 'plus'
   | 'none';
 
-export interface ThemeMeta {
+interface ThemeMeta {
   id: ThemeId;
   light: boolean;
   /** three dots shown in the picker: page bg, surface, accent */

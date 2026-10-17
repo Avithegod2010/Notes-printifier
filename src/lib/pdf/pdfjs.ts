@@ -23,7 +23,8 @@ export async function getPdfjs(): Promise<PdfjsModule> {
   return cached;
 }
 
-export type PdfDocument = Awaited<ReturnType<typeof loadPdfDocument>>;
+/** A loaded pdf.js document (inferred straight from the lib to avoid a circular alias). */
+export type PdfDocument = Awaited<ReturnType<PdfjsModule['getDocument']>['promise']>;
 
 /**
  * Load a PDF from raw bytes. `data.slice(0)` matters: pdf.js transfers the

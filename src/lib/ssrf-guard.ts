@@ -16,7 +16,7 @@ export type LookupFn = (
   options: { all: true },
 ) => Promise<Array<{ address: string; family: number }>>;
 
-export function isPrivateIPv4(ip: string): boolean {
+function isPrivateIPv4(ip: string): boolean {
   const parts = ip.split('.').map((p) => parseInt(p, 10));
   if (parts.length !== 4 || parts.some((n) => Number.isNaN(n) || n < 0 || n > 255)) {
     return true; // unparseable → treat as private (refuse)
@@ -30,7 +30,7 @@ export function isPrivateIPv4(ip: string): boolean {
   return false;
 }
 
-export function isPrivateIPv6(raw: string): boolean {
+function isPrivateIPv6(raw: string): boolean {
   const ip = raw.toLowerCase().replace(/^\[|\]$/g, '');
   // IPv4-mapped / IPv4-compatible (::ffff:10.0.0.1)
   const mapped = ip.match(/^(::ffff:|::)((\d{1,3}\.){3}\d{1,3})$/);
@@ -47,7 +47,7 @@ export function isPrivateIPv6(raw: string): boolean {
 }
 
 /** True when the hostname is safe to fetch (public address only). */
-export async function isPublicHost(
+async function isPublicHost(
   hostname: string,
   lookup: LookupFn = (h, o) => dns.promises.lookup(h, o),
 ): Promise<boolean> {

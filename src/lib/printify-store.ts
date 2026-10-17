@@ -43,14 +43,14 @@ import {
 } from './labs';
 import { translateStatic, useLangStore } from './i18n';
 
-export interface DocInfo {
+interface DocInfo {
   id: number;
   name: string;
   size: number;
   pageCount: number;
 }
 
-export interface PageItem {
+interface PageItem {
   id: string;
   docId: number;
   pageNumber: number;
@@ -63,7 +63,7 @@ export interface PageItem {
   blank?: boolean;
 }
 
-export interface ProcessResult {
+interface ProcessResult {
   url: string;
   outputBytes: number;
   outputPages: number;
@@ -181,13 +181,13 @@ export class JobCancelled extends Error {
   }
 }
 
-export interface JobProgress {
+interface JobProgress {
   done: number;
   total: number;
   ocr?: boolean;
 }
 
-export interface ComposeJobInput {
+interface ComposeJobInput {
   docs: DocInfo[];
   /** Page pool for this job — only the selected ones are composed. */
   pages: PageItem[];

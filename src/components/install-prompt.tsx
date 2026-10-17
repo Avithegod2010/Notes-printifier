@@ -60,7 +60,7 @@ function canInstall(): boolean {
 }
 
 /** Show the native install dialog. No-op when nothing is pending. */
-export function requestInstall(): void {
+function requestInstall(): void {
   void deferred?.prompt().then(() => {
     // the beforeinstallprompt event is single-use — drop it after prompting
     deferred = null;

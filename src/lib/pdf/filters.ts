@@ -124,10 +124,10 @@ const TINT_LUM_CUT = 200;
  */
 const INVERT_CYAN_LUM_CUT = 170;
 /** Mean luminance below which a page counts as "dark" in auto mode. */
-export const AUTO_INVERT_THRESHOLD = 110;
+const AUTO_INVERT_THRESHOLD = 110;
 
 /** Create a canvas of the same kind as the given one. */
-export function createLikeCanvas(canvas: AnyCanvas, w: number, h: number): AnyCanvas {
+function createLikeCanvas(canvas: AnyCanvas, w: number, h: number): AnyCanvas {
   if (typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
     return new OffscreenCanvas(w, h);
   }
@@ -471,7 +471,7 @@ const DESKEW_MAX_POINTS = 30000;
  * Budget: ~420×315 work image, ≤30k mask points × 20 angle probes ≈ a few
  * ms on a mid-range phone — far below the 120 ms/page target.
  */
-export function estimateSkewAngle(canvas: AnyCanvas): number {
+function estimateSkewAngle(canvas: AnyCanvas): number {
   const w = canvas.width;
   const h = canvas.height;
   if (w < 16 || h < 16) return 0;
@@ -701,7 +701,7 @@ function edgeRingModeColor(canvas: AnyCanvas, ctx: AnyCtx): string {
  * (see edgeRingModeColor) — NOT plain white — so deskewed dark slides don't
  * grow black corner triangles when the invert filter runs right after.
  */
-export function deskewCanvas(canvas: AnyCanvas, angleDeg: number): AnyCanvas {
+function deskewCanvas(canvas: AnyCanvas, angleDeg: number): AnyCanvas {
   if (!Number.isFinite(angleDeg) || Math.abs(angleDeg) < 0.35) return canvas;
   const w = canvas.width;
   const h = canvas.height;
@@ -750,7 +750,7 @@ export function estimateDeskewForPage(canvas: AnyCanvas): number {
  * drew the boxes on the raw, un-rotated page they saw in the preview — the
  * white patch then tilts along with the page exactly like the logo does.
  */
-export function whiteoutRegions(canvas: AnyCanvas, regions: LogoRegion[]): AnyCanvas {
+function whiteoutRegions(canvas: AnyCanvas, regions: LogoRegion[]): AnyCanvas {
   if (!regions.length) return canvas;
   const ctx = canvas.getContext('2d', { willReadFrequently: true }) as AnyCtx | null;
   if (!ctx) return canvas;
@@ -775,7 +775,7 @@ export function whiteoutRegions(canvas: AnyCanvas, regions: LogoRegion[]): AnyCa
  * into a solid black bar) and BEFORE margin trim (so "trim margins" can pull
  * the content up into the freed space instead of leaving a dead gap).
  */
-export function whiteoutHeaderBand(canvas: AnyCanvas, pct: number): AnyCanvas {
+function whiteoutHeaderBand(canvas: AnyCanvas, pct: number): AnyCanvas {
   const band = Math.round(canvas.height * (Math.min(25, Math.max(0, pct)) / 100));
   if (band <= 0) return canvas;
   const ctx = canvas.getContext('2d', { willReadFrequently: true }) as AnyCtx | null;
@@ -812,14 +812,6 @@ export function preparePageCanvas(
   if (s.trimMargins) out = trimCanvasMargins(out);
   return out;
 }
-
-export const COLOR_MODE_LABELS: Record<ColorMode, { title: string; hint: string }> = {
-  auto: { title: 'Smart (per page)', hint: 'Dark slides inverted, light pages kept light' },
-  original: { title: 'Original', hint: 'Keep colors, clean background stains' },
-  invert: { title: 'Invert', hint: 'Dark slides → white pages' },
-  grayscale: { title: 'Grayscale', hint: 'Remove all color' },
-  bw: { title: 'Black & White', hint: 'Maximum ink saving' },
-};
 
 /**
  * F8 — "erased pixels" preview overlay.

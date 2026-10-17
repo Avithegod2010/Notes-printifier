@@ -79,7 +79,7 @@ export function costProfileIsDefault(p: CostProfile): boolean {
   );
 }
 
-export interface SavingsInput {
+interface SavingsInput {
   inputPages: number;
   outputPages: number;
   /** % ink removed by the filters (0–100). */
@@ -88,7 +88,7 @@ export interface SavingsInput {
   beforeInkPct?: number;
 }
 
-export interface SavingsEstimate {
+interface SavingsEstimate {
   sheetsSaved: number;
   rupees: number;
 }

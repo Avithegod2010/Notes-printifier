@@ -7,7 +7,7 @@
  * server round-trip, works offline.
  */
 
-export interface ReceiptData {
+interface ReceiptData {
   inputPages: number;
   outputPages: number;
   inkSavedPct: number;
@@ -20,7 +20,7 @@ export interface ReceiptData {
   badgeText?: string;
 }
 
-export interface ReceiptLabels {
+interface ReceiptLabels {
   title: string;
   subtitle: string;
   inkSaved: string;

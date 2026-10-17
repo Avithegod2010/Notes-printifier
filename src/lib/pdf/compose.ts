@@ -14,10 +14,9 @@ import {
   type ComposeEnv,
   type ComposeOptions,
   type EstimateResult,
+  type PdfDocLike,
 } from './compose-core';
-import type { FilterSettings, AnyCanvas, AnyCtx } from './filters';
-import { applyFilters, trimCanvasMargins } from './filters';
-import { loadPdfDocument, PDF_WASM_URL, type PdfDocument } from './pdfjs';
+import { loadPdfDocument } from './pdfjs';
 
 export type {
   ComposeItem,
@@ -58,17 +57,18 @@ const mainEnv: ComposeEnv = {
     canvas.height = Math.max(1, Math.floor(h));
     return canvas;
   },
-  loadDocument: (data) => loadPdfDocument(data),
+  loadDocument: (data) =>
+    loadPdfDocument(data) as unknown as Promise<PdfDocLike>,
   yield: () => new Promise((r) => setTimeout(r, 0)),
 };
 
 /** Run the pipeline on the main thread (fallback). */
-export async function composePdfMainThread(o: ComposeOptions): Promise<ComposeResult> {
+async function composePdfMainThread(o: ComposeOptions): Promise<ComposeResult> {
   const core = await composePdfCore(mainEnv, o);
   return { ...core, blob: new Blob([core.pdfBytes as BlobPart], { type: 'application/pdf' }) };
 }
 
-export async function estimateMainThread(
+async function estimateMainThread(
   o: Omit<ComposeOptions, 'onProgress'>,
 ): Promise<EstimateResult> {
   return estimateCore(mainEnv, o);
@@ -232,32 +232,3 @@ export async function estimateOutput(
   }
 }
 
-/** Render one page for the enhance/preview dialogs (main thread helper). */
-export async function renderFilteredPage(
-  doc: PdfDocument,
-  pageNumber: number,
-  filters: FilterSettings,
-  opts: { targetWidth: number; extraRotation?: number; trim?: boolean },
-): Promise<HTMLCanvasElement> {
-  const { renderPageToCanvas } = await import('./render');
-  let canvas: AnyCanvas = await renderPageToCanvas(doc, pageNumber, {
-    targetWidth: opts.targetWidth,
-    extraRotation: opts.extraRotation,
-  });
-  applyFilters(canvas, filters);
-  if (opts.trim) {
-    const trimmed = trimCanvasMargins(canvas);
-    if (trimmed !== canvas) canvas = trimmed;
-  }
-  return canvas as HTMLCanvasElement;
-}
-
-/** Exported so the store can reuse the same env for OCR preview renders. */
-export const MAIN_ENV = mainEnv;
-
-/** Ensure a canvas has a 2d context of the union type (helper for UI code). */
-export function ctxOf(canvas: AnyCanvas): AnyCtx {
-  return canvas.getContext('2d', { willReadFrequently: true }) as AnyCtx;
-}
-
-export { PDF_WASM_URL };

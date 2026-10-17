@@ -175,7 +175,7 @@ class LazySide {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const task = p.render({ canvasContext: ctx, viewport });
+    const task = p.render({ canvas, canvasContext: ctx, viewport });
     this.tasks.push(task);
     await task.promise.catch(() => undefined);
     p.cleanup();
