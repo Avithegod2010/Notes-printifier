@@ -66,12 +66,15 @@ import { ScrollProgress, BackToTop } from './site-chrome';
 import { SectionHead } from './section-head';
 import { DynamicBackground } from './dynamic-background';
 import { ThemePicker } from './theme-picker';
+import { CommandPalette, PaletteButton, PaletteSheetRow } from './command-palette';
+import { VoiceBar } from './voice-bar';
+import { ImpactDashboard } from './impact-dashboard';
 import { animatedThemeFlip } from '@/lib/theme-flip';
 import { SavingsCalculator } from './savings-calculator';
 import { UseCases } from './use-cases';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { useLangStore, useT } from '@/lib/i18n';
-import { useThemeStore } from '@/lib/theme';
+import { useThemeStore, isLightTheme } from '@/lib/theme';
 import { APP_VERSION } from '@/lib/version';
 import { cn } from '@/lib/utils';
 import {
@@ -89,6 +92,7 @@ const NAV_SECTIONS = [
   { id: 'how', key: 'nav.how' },
   { id: 'features', key: 'nav.features' },
   { id: 'calculator', key: 'nav.calc' },
+  { id: 'impact', key: 'db.eyebrow' },
   { id: 'faq', key: 'nav.faq' },
 ] as const;
 
@@ -161,7 +165,7 @@ function ThemeToggle() {
   const t = useT();
   const theme = useThemeStore((s) => s.themeId);
   const flip = useThemeStore((s) => s.flip);
-  const isLight = theme === 'paper' || theme === 'rose';
+  const isLight = isLightTheme(theme);
 
   return (
     <Button
@@ -186,7 +190,7 @@ function SheetThemeRow() {
   const t = useT();
   const theme = useThemeStore((s) => s.themeId);
   const flip = useThemeStore((s) => s.flip);
-  const isLight = theme === 'paper' || theme === 'rose';
+  const isLight = isLightTheme(theme);
 
   return (
     <SheetClose asChild>
@@ -248,6 +252,7 @@ function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <PaletteButton />
           <InstallButton />
           <ThemePicker />
           <ThemeToggle />
@@ -300,6 +305,11 @@ function Header() {
                   </Button>
                 </SheetClose>
                 <SheetThemeRow />
+                <SheetClose asChild>
+                  <div>
+                    <PaletteSheetRow />
+                  </div>
+                </SheetClose>
                 <div className="flex justify-end px-1">
                   <ThemePicker />
                 </div>
@@ -399,7 +409,7 @@ function Hero() {
             type="button"
             size="lg"
             onClick={() => scrollToId('app')}
-            className="h-12 w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-8 text-base text-white shadow-xl shadow-violet-600/40 hover:from-violet-500 hover:to-fuchsia-500 sm:w-auto"
+            className="neon-edge h-12 w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-8 text-base text-white hover:from-violet-500 hover:to-fuchsia-500 sm:w-auto"
           >
             <FileUp className="mr-2 h-5 w-5" /> {t('hero.cta')}
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -454,7 +464,7 @@ function Hero() {
           initial={reduce ? false : { opacity: 0, y: 24 }}
           animate={reduce ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.32 }}
-          className="relative mx-auto mt-14 mb-10 flex max-w-2xl items-center justify-center gap-3 sm:gap-6"
+          className="relative mx-auto mt-14 mb-10 flex max-w-2xl items-center justify-center gap-3 sm:gap-6 scanlines"
         >
           {/* floating stat chips (desktop) */}
           <FloatingChip reduce={reduce} delay={1.0} className="absolute -left-2 top-2 z-10 hidden lg:flex">
@@ -776,6 +786,7 @@ export function PrintifierApp() {
           <Reveal>
             <div className="holo-ring rounded-3xl border border-white/10 bg-white/[0.02] p-4 shadow-2xl shadow-black/40 ring-1 ring-violet-500/10 sm:p-6 lg:p-8">
               <Stepper />
+              <VoiceBar />
               {step === 0 && <UploadStep />}
               {step === 1 && <PagesStep />}
               {step === 2 && <EnhanceStep />}
@@ -788,6 +799,7 @@ export function PrintifierApp() {
         <HowItWorks />
         <FeatureGrid />
         <SavingsCalculator />
+        <ImpactDashboard />
         <UseCases />
         <FaqSection />
         <StatsStrip />
@@ -795,6 +807,7 @@ export function PrintifierApp() {
       <Footer />
       <BackToTop />
       <UpdateBanner />
+      <CommandPalette />
 
       {/* F2 — one-tap apply for an incoming shared preset */}
       <Dialog

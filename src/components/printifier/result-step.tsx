@@ -56,6 +56,7 @@ import {
 } from '@/lib/ink-stats';
 import { listRecentJobs, downloadBlob, type RecentJob } from '@/lib/recent-jobs';
 import { buildReceiptCanvas, receiptCanvasToBlob } from '@/lib/receipt';
+import { ListenButton } from './listen-button';
 import { toast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
 
@@ -423,7 +424,7 @@ export function ResultStep() {
       )}
 
       {/* Shareable receipt card — stats for the class group, 100% on-device */}
-      <div className="flex justify-center">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <Button
           type="button"
           variant="outline"
@@ -439,6 +440,7 @@ export function ResultStep() {
           )}
           {t('rs.receipt.btn')}
         </Button>
+        <ListenButton />
       </div>
 
       {/* Lifetime impact meter — pure local data, one tap to clear */}

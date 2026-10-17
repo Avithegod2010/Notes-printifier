@@ -22,6 +22,7 @@ export function PagesStep() {
   const pages = usePrintifyStore((s) => s.pages);
   const togglePage = usePrintifyStore((s) => s.togglePage);
   const setAllSelected = usePrintifyStore((s) => s.setAllSelected);
+  const smartPick = usePrintifyStore((s) => s.smartPick);
   const removePage = usePrintifyStore((s) => s.removePage);
   const rotatePage = usePrintifyStore((s) => s.rotatePage);
   const movePage = usePrintifyStore((s) => s.movePage);
@@ -141,6 +142,28 @@ export function PagesStep() {
           >
             {t('pg.clear')}
           </Button>
+        </div>
+        {/* Quick picks — one-tap bulk selection for big decks */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground">{t('pg.pick')}:</span>
+          {(
+            [
+              ['all', 'pg.pick.all'],
+              ['odd', 'pg.pick.odd'],
+              ['even', 'pg.pick.even'],
+              ['invert', 'pg.pick.invert'],
+              ['last10', 'pg.pick.last'],
+            ] as const
+          ).map(([mode, key]) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => smartPick(mode)}
+              className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-violet-500/40 hover:text-foreground"
+            >
+              {t(key)}
+            </button>
+          ))}
         </div>
       </div>
 

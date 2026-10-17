@@ -364,6 +364,340 @@ html[data-theme='rose'] .dyn-bg {
   --dyn-noise-opacity: 0.025;
 }
 
+/* Crimson Dusk — deep wine black, rose-red primary, ember counterpart */
+html[data-theme='crimson'] {
+  color-scheme: dark;
+  --background: #0d0507;
+  --foreground: #ffeef1;
+  --card: #180a0e;
+  --card-foreground: #ffeef1;
+  --popover: #180a0e;
+  --popover-foreground: #ffeef1;
+  --primary: #f43f5e;
+  --primary-foreground: #2b040c;
+  --secondary: #241014;
+  --secondary-foreground: #ffeef1;
+  --muted: #241014;
+  --muted-foreground: #c29aa4;
+  --accent: #241014;
+  --accent-foreground: #ffeef1;
+  --destructive: #fb923c;
+  --border: rgba(244, 63, 94, 0.15);
+  --input: rgba(244, 63, 94, 0.2);
+  --ring: #f43f5e;
+  --header-bg: rgba(13, 5, 7, 0.82);
+  --acc-100: #ffe4e6;
+  --acc-200: #fecdd3;
+  --acc-300: #fda4af;
+  --acc-400: #fb7185;
+  --acc-500: #f43f5e;
+  --acc-500h: #be123c;
+  --acc-600: #e11d48;
+  --acc-rgb-400: 251 113 133;
+  --acc-rgb: 244 63 94;
+  --acc-rgb-600: 225 29 72;
+  --acc-rgb-900: 76 5 25;
+  --accf-300: #fed7aa;
+  --accf-400: #fb923c;
+  --accf-500: #f97316;
+  --accf-500h: #c2410c;
+  --accf-600: #ea580c;
+  --accf-rgb-400: 251 146 60;
+  --accf-rgb: 249 115 22;
+  --accf-rgb-600: 234 88 12;
+}
+html[data-theme='crimson'] .dyn-bg {
+  --dyn-o1: rgba(244, 63, 94, 0.22);
+  --dyn-o2: rgba(249, 115, 22, 0.13);
+  --dyn-o3: rgba(190, 18, 60, 0.12);
+  --dyn-o4: rgba(251, 146, 60, 0.1);
+  --dyn-grid-line: rgba(253, 164, 175, 0.05);
+  --dyn-dot: rgba(254, 205, 211, 0.5);
+  --dyn-dot-glow: rgba(244, 63, 94, 0.5);
+  --dyn-vignette: rgba(8, 1, 3, 0.55);
+  --dyn-sweep: rgba(253, 164, 175, 0.045);
+}
+
+/* Deep Ocean — abyssal navy, sky-blue primary, aqua counterpart */
+html[data-theme='ocean'] {
+  color-scheme: dark;
+  --background: #030b14;
+  --foreground: #dff3ff;
+  --card: #081725;
+  --card-foreground: #dff3ff;
+  --popover: #081725;
+  --popover-foreground: #dff3ff;
+  --primary: #38bdf8;
+  --primary-foreground: #032030;
+  --secondary: #0b2030;
+  --secondary-foreground: #dff3ff;
+  --muted: #0b2030;
+  --muted-foreground: #86a8bc;
+  --accent: #0b2030;
+  --accent-foreground: #dff3ff;
+  --destructive: #fb7185;
+  --border: rgba(56, 189, 248, 0.14);
+  --input: rgba(56, 189, 248, 0.19);
+  --ring: #38bdf8;
+  --header-bg: rgba(3, 11, 20, 0.82);
+  --acc-100: #e0f2fe;
+  --acc-200: #bae6fd;
+  --acc-300: #7dd3fc;
+  --acc-400: #38bdf8;
+  --acc-500: #0ea5e9;
+  --acc-500h: #0369a1;
+  --acc-600: #0284c7;
+  --acc-rgb-400: 56 189 248;
+  --acc-rgb: 14 165 233;
+  --acc-rgb-600: 2 132 199;
+  --acc-rgb-900: 3 44 68;
+  --accf-300: #5eead4;
+  --accf-400: #2dd4bf;
+  --accf-500: #14b8a6;
+  --accf-500h: #0f766e;
+  --accf-600: #0d9488;
+  --accf-rgb-400: 45 212 191;
+  --accf-rgb: 20 184 166;
+  --accf-rgb-600: 13 148 136;
+}
+html[data-theme='ocean'] .dyn-bg {
+  --dyn-o1: rgba(14, 165, 233, 0.24);
+  --dyn-o2: rgba(20, 184, 166, 0.13);
+  --dyn-o3: rgba(2, 132, 199, 0.12);
+  --dyn-o4: rgba(125, 211, 252, 0.1);
+  --dyn-grid-line: rgba(125, 211, 252, 0.05);
+  --dyn-dot: rgba(186, 230, 253, 0.5);
+  --dyn-dot-glow: rgba(56, 189, 248, 0.5);
+  --dyn-vignette: rgba(0, 4, 10, 0.55);
+  --dyn-sweep: rgba(125, 211, 252, 0.045);
+}
+
+/* Nordic Frost — muted arctic slate, frost-blue primary */
+html[data-theme='nord'] {
+  color-scheme: dark;
+  --background: #0c1116;
+  --foreground: #eceff4;
+  --card: #12181f;
+  --card-foreground: #eceff4;
+  --popover: #12181f;
+  --popover-foreground: #eceff4;
+  --primary: #88c0d0;
+  --primary-foreground: #10222b;
+  --secondary: #1a222c;
+  --secondary-foreground: #eceff4;
+  --muted: #1a222c;
+  --muted-foreground: #9aa7b4;
+  --accent: #1a222c;
+  --accent-foreground: #eceff4;
+  --destructive: #bf616a;
+  --border: rgba(136, 192, 208, 0.14);
+  --input: rgba(136, 192, 208, 0.19);
+  --ring: #88c0d0;
+  --header-bg: rgba(12, 17, 22, 0.82);
+  --acc-100: #e5f0f5;
+  --acc-200: #c6dde7;
+  --acc-300: #a7ccd9;
+  --acc-400: #93ccd9;
+  --acc-500: #88c0d0;
+  --acc-500h: #5e9db0;
+  --acc-600: #5e8fa3;
+  --acc-rgb-400: 147 204 217;
+  --acc-rgb: 136 192 208;
+  --acc-rgb-600: 94 143 163;
+  --acc-rgb-900: 30 58 74;
+  --accf-300: #b3cdea;
+  --accf-400: #81a1c1;
+  --accf-500: #6d93b5;
+  --accf-500h: #4c7396;
+  --accf-600: #5e81ac;
+  --accf-rgb-400: 129 161 193;
+  --accf-rgb: 109 147 181;
+  --accf-rgb-600: 94 129 172;
+}
+html[data-theme='nord'] .dyn-bg {
+  --dyn-o1: rgba(136, 192, 208, 0.18);
+  --dyn-o2: rgba(94, 129, 172, 0.16);
+  --dyn-o3: rgba(163, 190, 140, 0.08);
+  --dyn-o4: rgba(129, 161, 193, 0.12);
+  --dyn-grid-line: rgba(200, 220, 230, 0.045);
+  --dyn-dot: rgba(200, 225, 235, 0.45);
+  --dyn-dot-glow: rgba(136, 192, 208, 0.4);
+  --dyn-vignette: rgba(2, 5, 9, 0.55);
+  --dyn-sweep: rgba(200, 225, 235, 0.04);
+}
+
+/* Noir Mono — true black, silver primary (gradient CTA goes monochrome) */
+html[data-theme='noir'] {
+  color-scheme: dark;
+  --background: #060607;
+  --foreground: #f4f4f5;
+  --card: #101012;
+  --card-foreground: #f4f4f5;
+  --popover: #101012;
+  --popover-foreground: #f4f4f5;
+  --primary: #e4e4e7;
+  --primary-foreground: #101012;
+  --secondary: #1b1b1e;
+  --secondary-foreground: #f4f4f5;
+  --muted: #1b1b1e;
+  --muted-foreground: #a1a1aa;
+  --accent: #1b1b1e;
+  --accent-foreground: #f4f4f5;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: #d4d4d8;
+  --header-bg: rgba(6, 6, 7, 0.82);
+  --acc-100: #fafafa;
+  --acc-200: #f4f4f5;
+  --acc-300: #e4e4e7;
+  --acc-400: #d4d4d8;
+  --acc-500: #d4d4d8;
+  --acc-500h: #a1a1aa;
+  --acc-600: #a1a1aa;
+  --acc-rgb-400: 212 212 216;
+  --acc-rgb: 228 228 231;
+  --acc-rgb-600: 161 161 170;
+  --acc-rgb-900: 24 24 27;
+  --accf-300: #d4d4d8;
+  --accf-400: #a1a1aa;
+  --accf-500: #71717a;
+  --accf-500h: #52525b;
+  --accf-600: #52525b;
+  --accf-rgb-400: 161 161 170;
+  --accf-rgb: 113 113 122;
+  --accf-rgb-600: 82 82 91;
+}
+html[data-theme='noir'] .dyn-bg {
+  --dyn-o1: rgba(255, 255, 255, 0.1);
+  --dyn-o2: rgba(255, 255, 255, 0.07);
+  --dyn-o3: rgba(255, 255, 255, 0.05);
+  --dyn-o4: rgba(255, 255, 255, 0.06);
+  --dyn-grid-line: rgba(255, 255, 255, 0.05);
+  --dyn-dot: rgba(255, 255, 255, 0.4);
+  --dyn-dot-glow: rgba(255, 255, 255, 0.3);
+  --dyn-vignette: rgba(0, 0, 0, 0.6);
+  --dyn-sweep: rgba(255, 255, 255, 0.04);
+}
+
+/* Desert Sand — warm parchment light theme */
+html[data-theme='sand'] {
+  color-scheme: light;
+  --background: #faf6ee;
+  --foreground: #3b2f1f;
+  --card: #ffffff;
+  --card-foreground: #3b2f1f;
+  --popover: #ffffff;
+  --popover-foreground: #3b2f1f;
+  --primary: #b45309;
+  --primary-foreground: #ffffff;
+  --secondary: #f5ecdd;
+  --secondary-foreground: #4a3a24;
+  --muted: #f5ecdd;
+  --muted-foreground: #97815f;
+  --accent: #f5ecdd;
+  --accent-foreground: #4a3a24;
+  --destructive: #dc2626;
+  --border: rgba(120, 90, 40, 0.16);
+  --input: rgba(120, 90, 40, 0.2);
+  --ring: #b45309;
+  --header-bg: rgba(255, 255, 255, 0.82);
+  --acc-100: #fef3c7;
+  --acc-200: #fde68a;
+  --acc-300: #fcd34d;
+  --acc-300l: #a16207;
+  --acc-400: #fbbf24;
+  --acc-400l: #b45309;
+  --acc-500: #d97706;
+  --acc-500h: #92400e;
+  --acc-600: #b45309;
+  --acc-rgb-400: 251 191 36;
+  --acc-rgb: 217 119 6;
+  --acc-rgb-600: 180 83 9;
+  --acc-rgb-900: 69 39 3;
+  --accf-300: #fdba74;
+  --accf-300l: #c2410c;
+  --accf-400: #fb923c;
+  --accf-400l: #c2410c;
+  --accf-500: #f97316;
+  --accf-500h: #c2410c;
+  --accf-600: #ea580c;
+  --accf-rgb-400: 251 146 60;
+  --accf-rgb: 249 115 22;
+  --accf-rgb-600: 234 88 12;
+}
+html[data-theme='sand'] .dyn-bg {
+  --dyn-o1: rgba(180, 83, 9, 0.1);
+  --dyn-o2: rgba(234, 88, 12, 0.07);
+  --dyn-o3: rgba(217, 119, 6, 0.08);
+  --dyn-o4: rgba(251, 191, 36, 0.1);
+  --dyn-grid-line: rgba(146, 64, 14, 0.05);
+  --dyn-dot: rgba(180, 83, 9, 0.35);
+  --dyn-dot-glow: rgba(180, 83, 9, 0.25);
+  --dyn-vignette: rgba(255, 255, 255, 0);
+  --dyn-sweep: rgba(180, 83, 9, 0.035);
+  --dyn-noise-opacity: 0.025;
+}
+
+/* Fresh Mint — cool green light theme */
+html[data-theme='mint'] {
+  color-scheme: light;
+  --background: #f2faf5;
+  --foreground: #1f3a2d;
+  --card: #ffffff;
+  --card-foreground: #1f3a2d;
+  --popover: #ffffff;
+  --popover-foreground: #1f3a2d;
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+  --secondary: #e4f4eb;
+  --secondary-foreground: #24513a;
+  --muted: #e4f4eb;
+  --muted-foreground: #6b8f7c;
+  --accent: #e4f4eb;
+  --accent-foreground: #24513a;
+  --destructive: #dc2626;
+  --border: rgba(20, 90, 60, 0.16);
+  --input: rgba(20, 90, 60, 0.2);
+  --ring: #059669;
+  --header-bg: rgba(255, 255, 255, 0.82);
+  --acc-100: #d1fae5;
+  --acc-200: #a7f3d0;
+  --acc-300: #6ee7b7;
+  --acc-300l: #047857;
+  --acc-400: #34d399;
+  --acc-400l: #059669;
+  --acc-500: #10b981;
+  --acc-500h: #047857;
+  --acc-600: #059669;
+  --acc-rgb-400: 52 211 153;
+  --acc-rgb: 16 185 129;
+  --acc-rgb-600: 5 150 105;
+  --acc-rgb-900: 2 44 34;
+  --accf-300: #5eead4;
+  --accf-300l: #0f766e;
+  --accf-400: #2dd4bf;
+  --accf-400l: #0f766e;
+  --accf-500: #14b8a6;
+  --accf-500h: #0f766e;
+  --accf-600: #0d9488;
+  --accf-rgb-400: 45 212 191;
+  --accf-rgb: 20 184 166;
+  --accf-rgb-600: 13 148 136;
+}
+html[data-theme='mint'] .dyn-bg {
+  --dyn-o1: rgba(16, 185, 129, 0.1);
+  --dyn-o2: rgba(13, 148, 136, 0.07);
+  --dyn-o3: rgba(52, 211, 153, 0.09);
+  --dyn-o4: rgba(110, 231, 183, 0.1);
+  --dyn-grid-line: rgba(4, 120, 87, 0.05);
+  --dyn-dot: rgba(5, 150, 105, 0.32);
+  --dyn-dot-glow: rgba(5, 150, 105, 0.22);
+  --dyn-vignette: rgba(255, 255, 255, 0);
+  --dyn-sweep: rgba(5, 150, 105, 0.035);
+  --dyn-noise-opacity: 0.025;
+}
+
 /*
  * GRADIENT FIX — Tailwind v4 emits `linear-gradient(to right in oklab, …)`
  * with oklch() stop colors. Consequences:
@@ -704,6 +1038,97 @@ html.theme-light .dyn-bg {
     repeating-linear-gradient(45deg, var(--dyn-grid-line) 0 1px, transparent 1px 12px),
     repeating-linear-gradient(-45deg, var(--dyn-grid-line) 0 1px, transparent 1px 12px);
 }
+/*
+ * Mask-painted patterns (topo / circuit / waves / plus) — an SVG tile mask
+ * reveals an accent-tinted background color, so the artwork re-tints with
+ * every theme for free. The tile mask AND the base radial fade are layered
+ * and intersected; engines without mask-composite simply lose the edge fade
+ * (graceful), and engines without masks at all fall back to the plain grid
+ * because everything lives inside @supports. Pan distances stay exact
+ * multiples of the tile size so the drift loop never jumps.
+ */
+[data-pattern='topo'] .dyn-gridlayer {
+  --pan-x: 120px;
+  --pan-y: 120px;
+}
+[data-pattern='circuit'] .dyn-gridlayer {
+  --pan-x: 96px;
+  --pan-y: 96px;
+}
+[data-pattern='waves'] .dyn-gridlayer {
+  --pan-x: 96px;
+  --pan-y: 96px;
+}
+[data-pattern='plus'] .dyn-gridlayer {
+  --pan-x: 112px;
+  --pan-y: 112px;
+}
+@supports ((mask-image: url('x')) or (-webkit-mask-image: url('x'))) {
+  [data-pattern='topo'] .dyn-gridlayer {
+    background-image: none;
+    background-color: rgb(var(--acc-rgb, 139 92 246) / 0.14);
+    -webkit-mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='white' stroke-width='1.2'%3E%3Ccircle cx='56' cy='56' r='14'/%3E%3Ccircle cx='56' cy='56' r='30'/%3E%3Ccircle cx='56' cy='56' r='46'/%3E%3Ccircle cx='56' cy='56' r='62'/%3E%3Ccircle cx='96' cy='92' r='8'/%3E%3Ccircle cx='96' cy='92' r='16'/%3E%3Cpath d='M8 112c14-6 20-14 22-24'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='white' stroke-width='1.2'%3E%3Ccircle cx='56' cy='56' r='14'/%3E%3Ccircle cx='56' cy='56' r='30'/%3E%3Ccircle cx='56' cy='56' r='46'/%3E%3Ccircle cx='56' cy='56' r='62'/%3E%3Ccircle cx='96' cy='92' r='8'/%3E%3Ccircle cx='96' cy='92' r='16'/%3E%3Cpath d='M8 112c14-6 20-14 22-24'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    -webkit-mask-size: 120px 120px, 100% 100%;
+    mask-size: 120px 120px, 100% 100%;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  [data-pattern='circuit'] .dyn-gridlayer {
+    background-image: none;
+    background-color: rgb(var(--acc-rgb, 139 92 246) / 0.15);
+    -webkit-mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 8h32v20h22'/%3E%3Cpath d='M88 8v32H68'/%3E%3Cpath d='M8 88h22V64'/%3E%3Cpath d='M88 88H58'/%3E%3Ccircle cx='8' cy='8' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='62' cy='28' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='68' cy='40' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='88' cy='8' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='30' cy='64' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='8' cy='88' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='58' cy='88' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='88' cy='88' r='2.6' fill='white' stroke='none'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 8h32v20h22'/%3E%3Cpath d='M88 8v32H68'/%3E%3Cpath d='M8 88h22V64'/%3E%3Cpath d='M88 88H58'/%3E%3Ccircle cx='8' cy='8' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='62' cy='28' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='68' cy='40' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='88' cy='8' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='30' cy='64' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='8' cy='88' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='58' cy='88' r='2.6' fill='white' stroke='none'/%3E%3Ccircle cx='88' cy='88' r='2.6' fill='white' stroke='none'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    -webkit-mask-size: 96px 96px, 100% 100%;
+    mask-size: 96px 96px, 100% 100%;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  [data-pattern='waves'] .dyn-gridlayer {
+    background-image: none;
+    background-color: rgb(var(--acc-rgb, 139 92 246) / 0.15);
+    -webkit-mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M0 24 Q12 13 24 24 T48 24 T72 24 T96 24'/%3E%3Cpath d='M0 72 Q12 61 24 72 T48 72 T72 72 T96 72'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M0 24 Q12 13 24 24 T48 24 T72 24 T96 24'/%3E%3Cpath d='M0 72 Q12 61 24 72 T48 72 T72 72 T96 72'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    -webkit-mask-size: 96px 96px, 100% 100%;
+    mask-size: 96px 96px, 100% 100%;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  [data-pattern='plus'] .dyn-gridlayer {
+    background-image: none;
+    background-color: rgb(var(--acc-rgb, 139 92 246) / 0.17);
+    -webkit-mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M14 9v10M9 14h10'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    mask-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M14 9v10M9 14h10'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 70% 55% at 50% 38%, black 20%, transparent 72%);
+    -webkit-mask-size: 28px 28px, 100% 100%;
+    mask-size: 28px 28px, 100% 100%;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+}
+/* Diagonal pinstripes — pure CSS, theme-colored via the grid-line var.
+   One 45° band per 16px tile; pan is a multiple of 16 so the loop is seamless. */
+[data-pattern='diag'] .dyn-gridlayer {
+  --pan-x: 128px;
+  --pan-y: 128px;
+  background-image: linear-gradient(45deg, transparent 46%, var(--dyn-grid-line) 46% 54%, transparent 54%);
+  background-size: 16px 16px;
+}
 [data-pattern='none'] .dyn-gridlayer {
   opacity: 0;
 }
@@ -753,6 +1178,40 @@ html.theme-light .dyn-bg {
   text-shadow:
     0 0 28px rgb(var(--acc-rgb, 139 92 246) / 0.35),
     0 0 64px rgb(var(--acc-rgb, 139 92 246) / 0.18);
+}
+
+/* Neon edge — an accent glow that follows the primary CTA. Pure box-shadow,
+   so it composites on the GPU and degrades to nothing on old engines. */
+.neon-edge {
+  box-shadow:
+    0 0 0 1px rgb(var(--acc-rgb-400, 167 139 250) / 0.35),
+    0 0 18px rgb(var(--acc-rgb, 139 92 246) / 0.35),
+    0 8px 30px rgb(var(--acc-rgb-600, 124 58 237) / 0.35);
+}
+.neon-edge:hover {
+  box-shadow:
+    0 0 0 1px rgb(var(--acc-rgb-400, 167 139 250) / 0.55),
+    0 0 26px rgb(var(--acc-rgb, 139 92 246) / 0.5),
+    0 10px 36px rgb(var(--acc-rgb-600, 124 58 237) / 0.45);
+}
+
+/* Scanlines — a faint CRT overlay for the hero before/after visual.
+   Static background tile, zero runtime cost. */
+.scanlines {
+  position: relative;
+}
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.035) 0 1px,
+    transparent 1px 4px
+  );
+  mix-blend-mode: overlay;
 }
 
 /*

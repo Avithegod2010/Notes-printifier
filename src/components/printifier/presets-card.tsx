@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import QRCode from 'qrcode';
 import {
   BookmarkPlus,
   Check,
   Leaf,
   Link2,
+  QrCode,
   Scale,
   Share2,
   Timer,
@@ -14,6 +16,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { usePrintifyStore } from '@/lib/printify-store';
 import {
   BUILTIN_PRESETS,
@@ -149,6 +158,40 @@ export function PresetsCard() {
     [presets, sharingId, t],
   );
 
+  // QR share — a scannable code for the same ?p=<id> link, so a phone can
+  // load the preset straight from a laptop screen.
+  const [qr, setQr] = useState<{ name: string; url: string; dataUrl: string } | null>(null);
+  const [qrBusyId, setQrBusyId] = useState<string | null>(null);
+  const onShareQr = useCallback(
+    async (presetId: string) => {
+      const p = presets.find((x) => x.id === presetId);
+      if (!p || qrBusyId) return;
+      setQrBusyId(presetId);
+      try {
+        const res = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: p.name, filters: p.filters, layout: p.layout }),
+        });
+        if (!res.ok) throw new Error('share failed');
+        const data = (await res.json()) as { id?: string };
+        if (!data.id) throw new Error('no id');
+        const url = `${window.location.origin}/?p=${data.id}`;
+        const dataUrl = await QRCode.toDataURL(url, {
+          width: 320,
+          margin: 2,
+          color: { dark: '#18181b', light: '#ffffff' },
+        });
+        setQr({ name: p.name, url, dataUrl });
+      } catch {
+        setImportMsg(t('pr.qr.fail'));
+      } finally {
+        setQrBusyId(null);
+      }
+    },
+    [presets, qrBusyId, t],
+  );
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -278,6 +321,22 @@ export function PresetsCard() {
                 type="button"
                 size="icon"
                 variant="ghost"
+                aria-label={`${t('pr.qr')} — ${p.name}`}
+                title={t('pr.qr')}
+                disabled={qrBusyId === p.id}
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-violet-300"
+                onClick={() => void onShareQr(p.id)}
+              >
+                {qrBusyId === p.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <QrCode className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
                 aria-label={`${t('up.remove')} ${p.name}`}
                 className="h-8 w-8 shrink-0 text-muted-foreground hover:text-red-400"
                 onClick={() => deletePreset(p.id)}
@@ -334,6 +393,43 @@ export function PresetsCard() {
           e.target.value = '';
         }}
       />
+
+      {/* QR share dialog — scan with a phone to open the preset link */}
+      <Dialog open={qr !== null} onOpenChange={(v) => !v && setQr(null)}>
+        <DialogContent className="max-w-xs rounded-2xl border-white/10 bg-popover">
+          <DialogHeader>
+            <DialogTitle className="text-left">{t('pr.qr.title')}</DialogTitle>
+            <DialogDescription className="text-left">
+              {t('pr.qr.sub')}
+            </DialogDescription>
+          </DialogHeader>
+          {qr && (
+            <div className="flex flex-col items-center gap-3">
+              {/* white plate so dark themes keep scanner contrast */}
+              <img
+                src={qr.dataUrl}
+                alt={`${t('pr.qr')} — ${qr.name}`}
+                className="w-full max-w-[240px] rounded-xl bg-white p-2"
+              />
+              <p className="max-w-full truncate text-xs text-muted-foreground">{qr.name}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full border-white/15 bg-white/5 hover:bg-white/10"
+                onClick={() => {
+                  void navigator.clipboard
+                    ?.writeText(qr.url)
+                    .then(() => setImportMsg(t('pr.qr.copied')))
+                    .catch(() => undefined);
+                }}
+              >
+                <Link2 className="mr-1.5 h-3.5 w-3.5" /> {t('pr.qr.copy')}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

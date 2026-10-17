@@ -1,5 +1,5 @@
 /**
- * theme.ts — 6 selectable themes + 5 backdrop patterns.
+ * theme.ts — 12 selectable themes + 10 backdrop patterns.
  *
  * A theme is an id that maps to CSS custom-property blocks in globals.css
  * (`html[data-theme='…']`). Light themes additionally keep the legacy
@@ -14,8 +14,31 @@
 
 import { create } from 'zustand';
 
-export type ThemeId = 'violet' | 'paper' | 'cyber' | 'matrix' | 'ember' | 'rose';
-export type PatternId = 'grid' | 'dots' | 'hex' | 'weave' | 'none';
+export type ThemeId =
+  | 'violet'
+  | 'paper'
+  | 'cyber'
+  | 'matrix'
+  | 'ember'
+  | 'rose'
+  | 'crimson'
+  | 'ocean'
+  | 'nord'
+  | 'noir'
+  | 'sand'
+  | 'mint';
+
+export type PatternId =
+  | 'grid'
+  | 'dots'
+  | 'hex'
+  | 'weave'
+  | 'topo'
+  | 'circuit'
+  | 'waves'
+  | 'diag'
+  | 'plus'
+  | 'none';
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -31,9 +54,26 @@ export const THEMES: readonly ThemeMeta[] = [
   { id: 'matrix', light: false, swatch: ['#030907', '#081511', '#34d399'] },
   { id: 'ember', light: false, swatch: ['#0c0703', '#160e07', '#f59e0b'] },
   { id: 'rose', light: true, swatch: ['#fdf5f8', '#ffffff', '#db2777'] },
+  { id: 'crimson', light: false, swatch: ['#0d0507', '#180a0e', '#f43f5e'] },
+  { id: 'ocean', light: false, swatch: ['#030b14', '#081725', '#38bdf8'] },
+  { id: 'nord', light: false, swatch: ['#0c1116', '#12181f', '#88c0d0'] },
+  { id: 'noir', light: false, swatch: ['#060607', '#101012', '#e4e4e7'] },
+  { id: 'sand', light: true, swatch: ['#faf6ee', '#ffffff', '#b45309'] },
+  { id: 'mint', light: true, swatch: ['#f2faf5', '#ffffff', '#059669'] },
 ];
 
-export const PATTERNS: readonly PatternId[] = ['grid', 'dots', 'hex', 'weave', 'none'];
+export const PATTERNS: readonly PatternId[] = [
+  'grid',
+  'dots',
+  'hex',
+  'weave',
+  'topo',
+  'circuit',
+  'waves',
+  'diag',
+  'plus',
+  'none',
+];
 
 export const isLightTheme = (id: ThemeId): boolean =>
   THEMES.find((t) => t.id === id)?.light ?? false;

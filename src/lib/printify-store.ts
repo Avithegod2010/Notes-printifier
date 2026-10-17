@@ -492,6 +492,8 @@ interface PrintifyState {
   removeDoc: (docId: number) => void;
   togglePage: (pageId: string) => void;
   setAllSelected: (selected: boolean) => void;
+  /** Quick picks — bulk selection by position: all / odd / even / invert / last10. */
+  smartPick: (mode: 'all' | 'odd' | 'even' | 'invert' | 'last10') => void;
   /** Deselect (near-)blank pages. Returns how many were deselected. */
   skipBlankPages: () => Promise<number>;
   removePage: (pageId: string) => void;
@@ -670,6 +672,34 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
     set((s) => ({
       pages: s.pages.map((p) => ({ ...p, selected, blank: false })),
     })),
+
+  smartPick: (mode) =>
+    set((s) => {
+      const n = s.pages.length;
+      return {
+        pages: s.pages.map((p, i) => {
+          let selected: boolean;
+          switch (mode) {
+            case 'all':
+              selected = true;
+              break;
+            case 'odd':
+              selected = i % 2 === 0; // 1st, 3rd, … (1-based odd positions)
+              break;
+            case 'even':
+              selected = i % 2 === 1;
+              break;
+            case 'invert':
+              selected = !p.selected;
+              break;
+            case 'last10':
+              selected = i >= n - 10;
+              break;
+          }
+          return selected === p.selected ? p : { ...p, selected };
+        }),
+      };
+    }),
 
   skipBlankPages: async () => {
     const pages = get().pages;

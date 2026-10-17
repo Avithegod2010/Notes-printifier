@@ -49,6 +49,7 @@ import { renderPageToCanvas } from '@/lib/pdf/render';
 import { getDocBuffer, usePrintifyStore } from '@/lib/printify-store';
 import { useT } from '@/lib/i18n';
 import { PresetsCard } from './presets-card';
+import { DoctorCard } from './doctor-card';
 import { PreviewDialog } from './preview-dialog';
 
 const MODES: ColorMode[] = ['auto', 'invert', 'original', 'grayscale', 'bw'];
@@ -738,6 +739,8 @@ export function EnhanceStep() {
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          <DoctorCard />
 
           <PresetsCard />
         </div>
