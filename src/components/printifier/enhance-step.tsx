@@ -20,7 +20,9 @@ import {
   ScanText,
   Scissors,
   SlidersHorizontal,
+  SquareDashed,
   Wand2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -43,6 +45,7 @@ import {
   trimCanvasMargins,
   type AnyCanvas,
   type ColorMode,
+  type LogoRegion,
 } from '@/lib/pdf/filters';
 import { loadPdfDocument } from '@/lib/pdf/pdfjs';
 import { renderPageToCanvas } from '@/lib/pdf/render';
@@ -137,6 +140,16 @@ export function EnhanceStep() {
 
   // F8 toggle — render the erased-pixels view instead of the clean result
   const [showErased, setShowErased] = useState(false);
+
+  // Logo region picker — drag boxes on the ORIGINAL preview page; each box is
+  // erased on every page of the deck (logos repeat at the same spot).
+  const [pickMode, setPickMode] = useState(false);
+  const [draft, setDraft] = useState<LogoRegion | null>(null);
+  const pickRef = useRef<HTMLDivElement>(null);
+  const drawStart = useRef<{ x: number; y: number } | null>(null);
+  /** Mirror of `draft` so the pointerup handler can read it without deps. */
+  const draftRef = useRef<LogoRegion | null>(null);
+  const logoRegions = filters.logoRegions ?? [];
 
   const selectedPages = pages.filter((p) => p.selected);
   const selIdx = Math.min(previewIdx, Math.max(0, selectedPages.length - 1));
@@ -242,14 +255,60 @@ export function EnhanceStep() {
     };
   }, []);
 
+  // Logo region drawing — window-level pointer tracking while a box is
+  // dragged, mirroring the wipe-compare pattern above. A drag commits when
+  // both sides are ≥1.2% of the page (filters out accidental taps).
+  useEffect(() => {
+    if (!pickMode) return;
+    const move = (e: PointerEvent) => {
+      const start = drawStart.current;
+      if (!start) return;
+      const el = pickRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const p = {
+        x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+        y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+      };
+      const next: LogoRegion = {
+        x: Math.min(start.x, p.x),
+        y: Math.min(start.y, p.y),
+        w: Math.abs(p.x - start.x),
+        h: Math.abs(p.y - start.y),
+      };
+      draftRef.current = next;
+      setDraft(next);
+    };
+    const up = () => {
+      const d = draftRef.current;
+      drawStart.current = null;
+      draftRef.current = null;
+      setDraft(null);
+      if (d && d.w >= 0.012 && d.h >= 0.012) {
+        setFilters({ logoRegions: [...(filters.logoRegions ?? []), d] });
+      }
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+  }, [pickMode, filters.logoRegions, setFilters]);
+
   const savedPct =
     inkBefore > 0.05 ? Math.max(0, Math.round(((inkBefore - inkAfter) / inkBefore) * 100)) : 0;
 
-  // how many of the advanced toggles are active — surfaced on the collapsed header
+  // how many of the advanced toggles are active — surfaced on the collapsed
+  // header (stains, trim, pen, deskew, OCR)
   const activeAdv =
     (filters.cleanStains ? 1 : 0) +
     (filters.trimMargins ? 1 : 0) +
-    (filters.penBoost > 0 ? 1 : 0);
+    (filters.penBoost > 0 ? 1 : 0) +
+    (filters.deskew ? 1 : 0) +
+    (filters.searchable ? 1 : 0);
 
   const shownAfter = showErased && overlay ? overlay : after;
 
@@ -369,12 +428,73 @@ export function EnhanceStep() {
                 </figcaption>
                 <div className="pretty-scroll overflow-auto rounded-xl border border-white/10 bg-zinc-950">
                   {before ? (
-                    <img
-                      src={before}
-                      alt="Original page"
-                      className="block max-w-none"
-                      style={{ width: `${zoom * 100}%` }}
-                    />
+                    <div
+                      ref={pickRef}
+                      className={cn(
+                        'relative',
+                        pickMode && 'cursor-crosshair touch-none select-none',
+                      )}
+                      onPointerDown={(e) => {
+                        if (!pickMode || e.button !== 0) return;
+                        e.preventDefault();
+                        const r = e.currentTarget.getBoundingClientRect();
+                        const p = {
+                          x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+                          y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+                        };
+                        drawStart.current = p;
+                        draftRef.current = { x: p.x, y: p.y, w: 0, h: 0 };
+                        setDraft(draftRef.current);
+                      }}
+                    >
+                      <img
+                        src={before}
+                        alt="Original page"
+                        draggable={false}
+                        className="block max-w-none"
+                        style={{ width: `${zoom * 100}%` }}
+                      />
+                      {/* committed erase boxes — tap × to remove one */}
+                      {logoRegions.map((r, i) => (
+                        <div
+                          key={i}
+                          className="absolute border-2 border-dashed border-violet-400 bg-violet-400/10"
+                          style={{
+                            left: `${r.x * 100}%`,
+                            top: `${r.y * 100}%`,
+                            width: `${r.w * 100}%`,
+                            height: `${r.h * 100}%`,
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={() =>
+                              setFilters({
+                                logoRegions: logoRegions.filter((_, j) => j !== i),
+                              })
+                            }
+                            aria-label={t('en.logo.region.del')}
+                            className="absolute -right-2.5 -top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-white shadow-md hover:bg-violet-400"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {/* box currently being drawn */}
+                      {draft && (draft.w > 0.004 || draft.h > 0.004) && (
+                        <div
+                          aria-hidden
+                          className="pointer-events-none absolute border-2 border-dashed border-violet-300 bg-violet-300/10"
+                          style={{
+                            left: `${draft.x * 100}%`,
+                            top: `${draft.y * 100}%`,
+                            width: `${draft.w * 100}%`,
+                            height: `${draft.h * 100}%`,
+                          }}
+                        />
+                      )}
+                    </div>
                   ) : (
                     <div className="flex aspect-[4/3] items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -589,73 +709,83 @@ export function EnhanceStep() {
             <p className="mt-2 text-xs text-muted-foreground">{t('en.ink.d')}</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-1 flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <RotateCw className="h-4 w-4 text-violet-400" /> {t('en.deskew')}
-                {filters.deskew && skewAngle !== null && Math.abs(skewAngle) >= 1 && (
-                  <Badge
-                    className="ml-1 border-0 bg-amber-500/20 text-[10px] text-amber-200"
-                    title={t('en.deskew.badge')}
-                  >
-                    {/* shows the applied correction: positive skew (content
-                        droops clockwise) straightens with a −angle turn */}
-                    {skewAngle > 0 ? '−' : '+'}
-                    {Math.abs(skewAngle).toFixed(1)}°
-                  </Badge>
-                )}
-              </h3>
-              <Switch
-                checked={filters.deskew ?? false}
-                onCheckedChange={(v) => setFilters({ deskew: v })}
-                aria-label={t('en.deskew')}
-              />
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">{t('en.deskew.d')}</p>
-          </div>
-
+          {/* Logo removal — pick exact boxes on the page (e.g. a top-right
+              watermark) and/or shave the top band. Boxes are normalized so
+              they land on the same spot of EVERY page. */}
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <div className="mb-1 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 <Scissors className="h-4 w-4 text-violet-400" /> {t('en.logo')}
               </h3>
               <Badge variant="secondary">
-                {(filters.headerTrim ?? 0) > 0
-                  ? `${filters.headerTrim}%`
-                  : t('en.logo.off')}
+                {logoRegions.length > 0
+                  ? t('en.logo.regions', { n: logoRegions.length })
+                  : (filters.headerTrim ?? 0) > 0
+                    ? `${filters.headerTrim}%`
+                    : t('en.logo.off')}
               </Badge>
             </div>
-            <Slider
-              value={[filters.headerTrim ?? 0]}
-              onValueChange={(v) => setFilters({ headerTrim: v[0] ?? 0 })}
-              min={0}
-              max={25}
-              step={1}
-              className="mt-3"
-              aria-label={t('en.logo.aria')}
-            />
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t('en.logo.d')}</p>
-          </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{t('en.logo.d')}</p>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-1 flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                <ScanText className="h-4 w-4 text-violet-400" /> {t('en.ocr')}
-                <Badge className="ml-1 border-0 bg-fuchsia-500/20 text-[10px] text-fuchsia-200">
-                  {t('en.badge.new')}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant={pickMode ? 'default' : 'outline'}
+                size="sm"
+                aria-pressed={pickMode}
+                onClick={() => setPickMode((v) => !v)}
+                className={cn(
+                  'h-8',
+                  pickMode
+                    ? 'bg-violet-600 text-white hover:bg-violet-500'
+                    : 'border-violet-400/40 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20',
+                )}
+              >
+                <SquareDashed className="mr-1.5 h-3.5 w-3.5" />
+                {pickMode ? t('en.logo.pick.done') : t('en.logo.pick')}
+              </Button>
+              {logoRegions.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setFilters({ logoRegions: [] })}
+                >
+                  <X className="mr-1 h-3.5 w-3.5" /> {t('en.logo.clear')}
+                </Button>
+              )}
+            </div>
+            {pickMode && (
+              <p className="mt-2 rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs leading-relaxed text-violet-200">
+                {t('en.logo.pick.hint')}
+              </p>
+            )}
+
+            {/* secondary: the classic top-band shave */}
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-medium text-muted-foreground">{t('en.logo.band')}</p>
+                <Badge variant="secondary">
+                  {(filters.headerTrim ?? 0) > 0
+                    ? `${filters.headerTrim}%`
+                    : t('en.logo.off')}
                 </Badge>
-              </h3>
-              <Switch
-                checked={filters.searchable}
-                onCheckedChange={(v) => setFilters({ searchable: v })}
-                aria-label={t('en.ocr')}
+              </div>
+              <Slider
+                value={[filters.headerTrim ?? 0]}
+                onValueChange={(v) => setFilters({ headerTrim: v[0] ?? 0 })}
+                min={0}
+                max={25}
+                step={1}
+                aria-label={t('en.logo.aria')}
               />
             </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
           </div>
 
-          {/* Advanced — stain cleanup, trim margins & handwriting boost tucked
-              away so the main column stays focused on the big-impact controls. */}
+          {/* Advanced — everything beyond the big-impact controls: stain
+              cleanup, trim, pen boost, deskew, OCR and the AI Print Doctor,
+              tucked away so the main column stays focused. */}
           <Collapsible
             open={advOpen}
             onOpenChange={setAdvOpen}
@@ -736,11 +866,54 @@ export function EnhanceStep() {
                   />
                   <p className="mt-2 text-xs text-muted-foreground">{t('en.pen.d')}</p>
                 </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                      <RotateCw className="h-4 w-4 text-violet-400" /> {t('en.deskew')}
+                      {filters.deskew && skewAngle !== null && Math.abs(skewAngle) >= 1 && (
+                        <Badge
+                          className="ml-1 border-0 bg-amber-500/20 text-[10px] text-amber-200"
+                          title={t('en.deskew.badge')}
+                        >
+                          {/* shows the applied correction: positive skew
+                              (content droops clockwise) straightens with a
+                              −angle turn */}
+                          {skewAngle > 0 ? '−' : '+'}
+                          {Math.abs(skewAngle).toFixed(1)}°
+                        </Badge>
+                      )}
+                    </h4>
+                    <Switch
+                      checked={filters.deskew ?? false}
+                      onCheckedChange={(v) => setFilters({ deskew: v })}
+                      aria-label={t('en.deskew')}
+                    />
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{t('en.deskew.d')}</p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                      <ScanText className="h-4 w-4 text-violet-400" /> {t('en.ocr')}
+                      <Badge className="ml-1 border-0 bg-fuchsia-500/20 text-[10px] text-fuchsia-200">
+                        {t('en.badge.new')}
+                      </Badge>
+                    </h4>
+                    <Switch
+                      checked={filters.searchable}
+                      onCheckedChange={(v) => setFilters({ searchable: v })}
+                      aria-label={t('en.ocr')}
+                    />
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
+                </div>
+
+                <DoctorCard />
               </div>
             </CollapsibleContent>
           </Collapsible>
-
-          <DoctorCard />
 
           <PresetsCard />
         </div>

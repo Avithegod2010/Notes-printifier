@@ -137,13 +137,23 @@ const DICT: Record<string, [string, string]> = {
   'en.stains.light': ['Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes.', 'स्लाइड के बीच के हल्के नीले दाग़ और सवाल-नंबर/ऑप्शन के पीछे का सायन रंग मिटा देता है; हस्तलेखन, चित्र और टेक्स्ट सुरक्षित रहते हैं। सफ़ेद बैकग्राउंड वाले नोट्स के लिए बढ़िया।'],
   'en.trim': ['Trim margins', 'किनारे काटें'],
   'en.trim.d': ['Auto-crops empty borders so content fills each grid cell — bigger, more readable text on the same paper. Worth it when stacking 3+ slides per sheet.', 'खाली किनारे हटाकर हर बॉक्स को भर देता है — उसी कागज़ पर बड़ा, पढ़ने में आसान टेक्स्ट। 3+ स्लाइड प्रति शीट पर ज़रूर लगाएँ।'],
-  'en.logo': ['Remove logo / header strip', 'लोगो / हेडर हटाएँ'],
+  'en.logo': ['Remove logo / watermark', 'लोगो / वॉटरमार्क हटाएँ'],
   'en.logo.d': [
-    'Whites out the top band of every page — kills college logos, deck titles and watermarks in one go. 0 = off; 8–15% fits most slide decks.',
-    'हर पेज का ऊपरी हिस्सा सफ़ेद कर देता है — कॉलेज का लोगो, टाइटल और वॉटरमार्क एक साथ मिट जाते हैं। 0 = बंद; ज़्यादातर स्लाइड के लिए 8–15% सही।',
+    'Box the logo directly on the page — any corner (like a top-right watermark) — and it is erased from every page. Or shave the top band with the slider below.',
+    'पेज पर सीधे लोगो के चारों ओर बॉक्स बनाएँ — कोई भी कोना (जैसे ऊपर-दायाँ वॉटरमार्क) — वह हर पेज से मिट जाएगा। या नीचे स्लाइडर से ऊपरी पट्टी हटाएँ।',
   ],
   'en.logo.off': ['Off', 'बंद'],
   'en.logo.aria': ['Header strip removal height', 'हेडर हटाने की ऊँचाई'],
+  'en.logo.pick': ['Select area on page', 'पेज पर क्षेत्र चुनें'],
+  'en.logo.pick.done': ['Done picking', 'चयन पूरा'],
+  'en.logo.pick.hint': [
+    'Drag a box over the logo on the ORIGINAL page (left) — it gets erased on every page at that spot. The After preview shows the result.',
+    'ओरिजिनल पेज (बाएँ) पर लोगो के चारों ओर बॉक्स खींचें — हर पेज पर उसी जगह से मिट जाएगा। After प्रीव्यू में नतीजा दिखेगा।',
+  ],
+  'en.logo.clear': ['Clear areas', 'क्षेत्र हटाएँ'],
+  'en.logo.regions': ['{n} area(s)', '{n} क्षेत्र'],
+  'en.logo.region.del': ['Remove this area', 'यह क्षेत्र हटाएँ'],
+  'en.logo.band': ['Or shave the top band', 'या ऊपरी पट्टी हटाएँ'],
   'en.deskew': ['Straighten pages (auto deskew)', 'पेज सीधे करें (ऑटो-डिस्क्यू)'],
   'en.deskew.d': [
     'Detects tilted scans and phone photos and rotates each page straight before the other filters run — great for photos of handwritten notes. Pairs well with Trim margins.',
@@ -188,8 +198,8 @@ const DICT: Record<string, [string, string]> = {
 
   // advanced collapsible
   'en.adv': ['Advanced', 'उन्नत सेटिंग्स'],
-  'en.adv.sub': ['Stains · Trim · Handwriting', 'दाग़ · किनारे · लिखावट'],
-  'en.adv.on': ['{n}/3 on', '{n}/3 चालू'],
+  'en.adv.sub': ['Stains · Trim · Deskew · OCR · Doctor', 'दाग़ · किनारे · डिस्क्यू · OCR · डॉक्टर'],
+  'en.adv.on': ['{n}/5 on', '{n}/5 चालू'],
 
   // preview: compare wipe · zoom · page picker · erased overlay (F1/F4/F8)
   'en.cmp.side': ['Side by side', 'साथ-साथ'],
@@ -243,14 +253,21 @@ const DICT: Record<string, [string, string]> = {
   'rs.cost.saved': ['Print rates saved', 'प्रिंट रेट सेव हो गए'],
   'rs.assume2': ['At your rates: ₹{p}/sheet paper · ₹{i}/full-ink page', 'आपके रेट पर: ₹{p}/शीट कागज़ · ₹{i}/पूरी-स्याही पेज'],
 
-  // WhatsApp share (F6)
+  // WhatsApp + Telegram share (F6) — the CONVERTED PDF goes out, not a receipt
   'rs.wa': ['WhatsApp', 'WhatsApp'],
-  'rs.wa.aria': ['Send the PDF + a savings summary to WhatsApp', 'PDF + बचत सारांश WhatsApp पर भेजें'],
-  'rs.wa.text': [
-    '{inp} slides → {out} pages · {p}% less paper · {rs} saved — made with Notes Printifier',
-    '{inp} स्लाइड → {out} पेज · {p}% कम कागज़ · {rs} बचत — Notes Printifier से',
-  ],
+  'rs.wa.aria': ['Send the converted PDF to WhatsApp', 'बदले गए PDF को WhatsApp पर भेजें'],
   'rs.wa.shared': ['Shared!', 'शेयर हो गया!'],
+  'rs.tg': ['Telegram', 'टेलीग्राम'],
+  'rs.tg.aria': ['Send the converted PDF to Telegram', 'बदले गए PDF को टेलीग्राम पर भेजें'],
+  'rs.share.text': [
+    'Here is the print-ready PDF — made with Notes Printifier',
+    'यह रहा प्रिंट-रेडी PDF — Notes Printifier से बना',
+  ],
+  'rs.share.fallback': [
+    'PDF downloaded — attach it in the chat that just opened',
+    'PDF डाउनलोड हो गया — खुली चैट में अटैच कर दें',
+  ],
+  'rs.share.fail': ['Could not share the PDF', 'PDF शेयर नहीं हो सका'],
 
   // streaks + milestones (F7)
   'im.streak.title': ['Streak & milestones', 'स्ट्रीक और मील-पत्थर'],
@@ -286,6 +303,9 @@ const DICT: Record<string, [string, string]> = {
   'ly.separatorsSub': ['Between slides', 'स्लाइड के बीच'],
   'ly.pageNums': ['Page numbers', 'पेज नंबर'],
   'ly.pageNumsSub': ['At the bottom', 'नीचे की ओर'],
+  'ly.adv': ['Advanced', 'उन्नत सेटिंग्स'],
+  'ly.adv.sub': ['Budget · Slide nos. · Cover · Booklet', 'बजट · स्लाइड नं. · कवर · बुकलेट'],
+  'ly.adv.on': ['{n} on', '{n} चालू'],
   'ly.booklet': ['Booklet mode', 'बुकलेट मोड'],
   'ly.bookletSub': ['2-up, re-ordered for fold-in-half booklets', 'आधे पर मोड़ने वाले बुकलेट के लिए 2-अप क्रम'],
   'ly.footer': ['Footer label', 'फ़ुटर लेबल'],

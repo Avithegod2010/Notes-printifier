@@ -60,6 +60,18 @@ import { ListenButton } from './listen-button';
 import { toast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
 
+/**
+ * Telegram brand mark — lucide has no brand icons, so inline the classic
+ * paper-plane-in-circle path (simple-icons) and tint via currentColor.
+ */
+function TelegramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  );
+}
+
 function formatMB(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -247,18 +259,15 @@ export function ResultStep() {
     toast({ description: t('rs.cost.saved') });
   };
 
-  // F6 — WhatsApp: share the PDF + summary through the OS share sheet when
-  // file sharing is supported, else open wa.me with the text only.
+  // F6 — share the CONVERTED PDF itself (no ink/paper receipt) to WhatsApp or
+  // Telegram. Mobile: OS share sheet carries the file — the user picks the
+  // app. Desktop fallback: download the PDF + open the chat with a plain
+  // note so the user attaches the downloaded file there.
   const [waBusy, setWaBusy] = useState(false);
-  const shareWhatsApp = async () => {
+  const sharePdfTo = async (target: 'wa' | 'tg') => {
     if (!result || waBusy) return;
     setWaBusy(true);
-    const text = t('rs.wa.text', {
-      inp: result.inputPages,
-      out: result.outputPages,
-      p: paperSavedPct,
-      rs: formatRupees(savings.rupees),
-    });
+    const text = t('rs.share.text');
     try {
       const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
       if (typeof nav.share === 'function' && nav.canShare) {
@@ -266,16 +275,28 @@ export function ResultStep() {
           const blob = await fetch(result.url).then((r) => r.blob());
           const file = new File([blob], 'notes-printifier.pdf', { type: 'application/pdf' });
           if (nav.canShare({ files: [file] })) {
-            await nav.share({ files: [file], text, title: 'Notes Printifier' });
+            await nav.share({ files: [file], title: 'Notes Printifier' });
             toast({ description: t('rs.wa.shared') });
             return;
           }
         } catch (shareErr) {
           if (shareErr instanceof DOMException && shareErr.name === 'AbortError') return;
-          console.debug('Web Share failed, falling back to wa.me', shareErr);
+          console.debug('Web Share failed, falling back to download + chat link', shareErr);
         }
       }
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+      // No file-share support (typical desktop): hand over the PDF and open
+      // the chat — the stats receipt is deliberately NOT included.
+      const blob = await fetch(result.url).then((r) => r.blob());
+      downloadBlob(blob, 'notes-printifier.pdf');
+      const shareUrl =
+        target === 'wa'
+          ? `https://wa.me/?text=${encodeURIComponent(text)}`
+          : `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
+      window.open(shareUrl, '_blank', 'noopener');
+      toast({ description: t('rs.share.fallback') });
+    } catch (err) {
+      console.error('PDF share failed', err);
+      toast({ description: t('rs.share.fail') });
     } finally {
       setWaBusy(false);
     }
@@ -598,13 +619,24 @@ export function ResultStep() {
         <Button
           type="button"
           size="lg"
-          onClick={() => void shareWhatsApp()}
+          onClick={() => void sharePdfTo('wa')}
           disabled={waBusy}
           aria-label={t('rs.wa.aria')}
           className="w-full border border-emerald-400/40 bg-emerald-500/15 text-emerald-200 shadow-none hover:bg-emerald-500/25 sm:w-auto"
         >
           {waBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
           {t('rs.wa')}
+        </Button>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => void sharePdfTo('tg')}
+          disabled={waBusy}
+          aria-label={t('rs.tg.aria')}
+          className="w-full border border-sky-400/40 bg-sky-500/15 text-sky-200 shadow-none hover:bg-sky-500/25 sm:w-auto"
+        >
+          {waBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TelegramIcon className="mr-2 h-4 w-4" />}
+          {t('rs.tg')}
         </Button>
         <Button type="button" variant="outline" size="lg" onClick={reset} className="w-full sm:w-auto">
           <RotateCcw className="mr-2 h-4 w-4" /> {t('rs.another')}

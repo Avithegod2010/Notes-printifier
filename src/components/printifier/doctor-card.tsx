@@ -75,7 +75,7 @@ export function DoctorCard() {
             penBoost: filters.penBoost,
             searchable: filters.searchable,
             deskew: filters.deskew ?? false,
-            logoStrip: filters.logoStrip ?? 0,
+            logoStrip: filters.headerTrim ?? 0,
             rows: layout.rows,
             cols: layout.cols,
             pageSize: layout.pageSize,

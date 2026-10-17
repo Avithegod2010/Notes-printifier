@@ -44,6 +44,18 @@
 
 export type ColorMode = 'auto' | 'original' | 'invert' | 'grayscale' | 'bw';
 
+/**
+ * A user-drawn rectangle to erase, in NORMALIZED page coordinates (0–1).
+ * Lets the user box a logo anywhere on the page (e.g. the PhysicsWallah
+ * mark at the top-right) — not just the top header band.
+ */
+export interface LogoRegion {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 /** Canvas types that work both on the main thread and inside a Worker. */
 export type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export type AnyCtx =
@@ -81,6 +93,12 @@ export interface FilterSettings {
    * FilterSettings literals and must keep type-checking unchanged.
    */
   headerTrim?: number;
+  /**
+   * Normalized boxes to white out on EVERY page — picked by the user on the
+   * live preview (the same logo spot repeats across a deck). Optional in the
+   * type for the same preset-recipe reason as `headerTrim`.
+   */
+  logoRegions?: LogoRegion[];
 }
 
 export const defaultFilters: FilterSettings = {
@@ -92,6 +110,7 @@ export const defaultFilters: FilterSettings = {
   searchable: false,
   deskew: false,
   headerTrim: 0,
+  logoRegions: [],
 };
 
 /** Bright-cyan cut (QUESTION pills, option keys, cyan wash cores). */
@@ -725,6 +744,32 @@ export function estimateDeskewForPage(canvas: AnyCanvas): number {
 }
 
 /**
+ * Erase the user-drawn logo boxes — paint pure white over every normalized
+ * region scaled up to this canvas. Clamped so out-of-range drags can never
+ * throw. Runs FIRST in preparePageCanvas (before deskew) because the user
+ * drew the boxes on the raw, un-rotated page they saw in the preview — the
+ * white patch then tilts along with the page exactly like the logo does.
+ */
+export function whiteoutRegions(canvas: AnyCanvas, regions: LogoRegion[]): AnyCanvas {
+  if (!regions.length) return canvas;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }) as AnyCtx | null;
+  if (!ctx) return canvas;
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  for (const r of regions) {
+    const x = Math.round(Math.min(1, Math.max(0, r.x)) * W);
+    const y = Math.round(Math.min(1, Math.max(0, r.y)) * H);
+    const w = Math.round(Math.min(1, Math.max(0, r.w)) * W);
+    const h = Math.round(Math.min(1, Math.max(0, r.h)) * H);
+    if (w > 0 && h > 0) ctx.fillRect(x, y, w, h);
+  }
+  ctx.restore();
+  return canvas;
+}
+
+/**
  * Logo / header strip removal — paint pure white over the top `pct`% of the
  * canvas. Runs AFTER the color filters (so invert can never turn the band
  * into a solid black bar) and BEFORE margin trim (so "trim margins" can pull
@@ -755,6 +800,9 @@ export function preparePageCanvas(
   effectiveMode?: ColorMode,
 ): AnyCanvas {
   let out = canvas;
+  // User-picked logo boxes go FIRST — coordinates were drawn on the raw page
+  // (pre-deskew), and a white patch tracks the page through any rotation.
+  if (s.logoRegions && s.logoRegions.length > 0) out = whiteoutRegions(out, s.logoRegions);
   if (s.deskew) {
     const a = estimateDeskewForPage(out);
     if (a) out = deskewCanvas(out, a);

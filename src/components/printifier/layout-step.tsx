@@ -4,11 +4,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   BookOpen,
+  ChevronDown,
   FileDown,
   Gauge,
   IndianRupee,
   Loader2,
   Printer,
+  SlidersHorizontal,
   Sparkles,
   Target,
   Type,
@@ -29,6 +31,11 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
   bookletOutputPages,
@@ -129,6 +136,10 @@ export function LayoutStep() {
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [estimating, setEstimating] = useState(false);
   const estSeq = useRef(0);
+
+  // Advanced layout section — budget, slide numbers, cover, duplex pad,
+  // booklet and footer tucked away from the core grid controls.
+  const [advOpen, setAdvOpen] = useState(false);
 
   const selectedKey = useMemo(
     () => selected.map((p) => `${p.docId}:${p.pageNumber}:${p.rotation}`).join('|'),
@@ -295,6 +306,14 @@ export function LayoutStep() {
     ? Math.round((progress.done / Math.max(1, progress.total)) * 100)
     : 0;
 
+  // how many of the advanced layout options are in use — shown on the header
+  const activeLayoutAdv =
+    (!!layout.slideNumbers ? 1 : 0) +
+    (!!layout.coverSheet ? 1 : 0) +
+    (layout.duplexPad ? 1 : 0) +
+    (layout.booklet ? 1 : 0) +
+    ((layout.footerLabel ?? '').trim() ? 1 : 0);
+
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
       {/* Settings */}
@@ -370,61 +389,6 @@ export function LayoutStep() {
               ))}
             </RadioGroup>
           </div>
-        </div>
-
-        <div
-          className={cn(
-            'rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-opacity',
-            layout.booklet && 'pointer-events-none opacity-40',
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-violet-300" />
-            <p className="text-sm font-medium">{t('ly.budget.title')}</p>
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.budget.sub')}</p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <Input
-              type="number"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              value={budget}
-              onChange={(e) => {
-                setBudget(e.target.value);
-                setBudgetMsg(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') fitBudget();
-              }}
-              placeholder={t('ly.budget.ph')}
-              aria-label={t('ly.budget.title')}
-              className="sm:max-w-[140px]"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!budget || selected.length === 0}
-              onClick={fitBudget}
-              className="shrink-0 border-violet-400/40 text-violet-200 hover:bg-violet-500/15"
-            >
-              {t('ly.budget.go')}
-            </Button>
-          </div>
-          {budgetMsg && (
-            <p
-              role="status"
-              className={cn(
-                'mt-2 rounded-lg px-3 py-2 text-xs font-semibold',
-                budgetMsg.ok
-                  ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                  : 'border border-amber-500/30 bg-amber-500/10 text-amber-300',
-              )}
-            >
-              {budgetMsg.text}
-            </p>
-          )}
         </div>
 
         <div
@@ -556,102 +520,193 @@ export function LayoutStep() {
               aria-label={t('ly.pageNums')}
             />
           </div>
-          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="pr-2">
-              <p className="text-sm font-medium">{t('ly.slideNums')}</p>
-              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                {t('ly.slideNumsSub')}
-              </p>
-            </div>
-            <Switch
-              checked={!!layout.slideNumbers}
-              onCheckedChange={(v) => setLayout({ slideNumbers: v })}
-              aria-label={t('ly.slideNums')}
-            />
-          </div>
-          <div
-            className={cn(
-              'flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-opacity',
-              layout.booklet && 'pointer-events-none opacity-40',
-            )}
-          >
-            <div className="pr-2">
-              <p className="text-sm font-medium">{t('ly.cover')}</p>
-              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                {t('ly.coverSub')}
-              </p>
-            </div>
-            <Switch
-              checked={!!layout.coverSheet && !layout.booklet}
-              disabled={layout.booklet}
-              onCheckedChange={(v) => setLayout({ coverSheet: v })}
-              aria-label={t('ly.cover')}
-            />
-          </div>
-          <div
-            className={cn(
-              'flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-opacity',
-              layout.booklet && 'pointer-events-none opacity-40',
-            )}
-          >
-            <div className="pr-2">
-              <p className="text-sm font-medium">{t('ly.duplexPad')}</p>
-              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                {t('ly.duplexPadSub')}
-              </p>
-            </div>
-            <Switch
-              checked={layout.duplexPad}
-              onCheckedChange={(v) => setLayout({ duplexPad: v })}
-              aria-label={t('ly.duplexPad')}
-            />
-          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div
-            className={cn(
-              'flex items-center justify-between rounded-2xl border p-4 transition-colors',
-              layout.booklet
-                ? 'border-violet-500/50 bg-violet-500/10'
-                : 'border-white/10 bg-white/[0.03]',
-            )}
-          >
-            <div className="pr-3">
-              <p className="flex items-center gap-1.5 text-sm font-medium">
-                <BookOpen className="h-4 w-4 text-violet-300" /> {t('ly.booklet')}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.bookletSub')}</p>
-            </div>
-            <Switch
-              checked={layout.booklet}
-              onCheckedChange={(v) =>
-                setLayout(
-                  v
-                    ? { booklet: true, rows: 1, cols: 2, orientation: 'landscape' }
-                    : { booklet: false },
-                )
-              }
-              aria-label={t('ly.booklet')}
-            />
-          </div>
+        {/* Advanced — budget, slide source numbers, cover page, duplex pad,
+            booklet mode and footer label; the core grid stays front & center */}
+        <Collapsible
+          open={advOpen}
+          onOpenChange={setAdvOpen}
+          className="rounded-2xl border border-white/10 bg-white/[0.03]"
+        >
+          <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 rounded-2xl p-4 text-left transition-colors hover:bg-white/[0.02]">
+            <span>
+              <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                <SlidersHorizontal className="h-4 w-4 text-violet-400" /> {t('ly.adv')}
+              </span>
+              <span className="mt-1 block text-xs text-muted-foreground">{t('ly.adv.sub')}</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-2">
+              {activeLayoutAdv > 0 && (
+                <Badge variant="secondary">{t('ly.adv.on', { n: activeLayoutAdv })}</Badge>
+              )}
+              <ChevronDown
+                aria-hidden
+                className={cn(
+                  'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                  advOpen && 'rotate-180',
+                )}
+              />
+            </span>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="overflow-hidden data-[state=closed]:hidden">
+            <div className="space-y-4 px-4 pb-4">
+              {/* Print budget */}
+              <div
+                className={cn(
+                  'rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-opacity',
+                  layout.booklet && 'pointer-events-none opacity-40',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-violet-300" />
+                  <p className="text-sm font-medium">{t('ly.budget.title')}</p>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.budget.sub')}</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    value={budget}
+                    onChange={(e) => {
+                      setBudget(e.target.value);
+                      setBudgetMsg(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') fitBudget();
+                    }}
+                    placeholder={t('ly.budget.ph')}
+                    aria-label={t('ly.budget.title')}
+                    className="sm:max-w-[140px]"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!budget || selected.length === 0}
+                    onClick={fitBudget}
+                    className="shrink-0 border-violet-400/40 text-violet-200 hover:bg-violet-500/15"
+                  >
+                    {t('ly.budget.go')}
+                  </Button>
+                </div>
+                {budgetMsg && (
+                  <p
+                    role="status"
+                    className={cn(
+                      'mt-2 rounded-lg px-3 py-2 text-xs font-semibold',
+                      budgetMsg.ok
+                        ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : 'border border-amber-500/30 bg-amber-500/10 text-amber-300',
+                    )}
+                  >
+                    {budgetMsg.text}
+                  </p>
+                )}
+              </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <Type className="h-4 w-4 text-violet-300" />
-              <p className="text-sm font-medium">{t('ly.footer')}</p>
-              <span className="text-xs text-muted-foreground">{t('ly.footerOpt')}</span>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="pr-2">
+                    <p className="text-sm font-medium">{t('ly.slideNums')}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                      {t('ly.slideNumsSub')}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!!layout.slideNumbers}
+                    onCheckedChange={(v) => setLayout({ slideNumbers: v })}
+                    aria-label={t('ly.slideNums')}
+                  />
+                </div>
+                <div
+                  className={cn(
+                    'flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-opacity',
+                    layout.booklet && 'pointer-events-none opacity-40',
+                  )}
+                >
+                  <div className="pr-2">
+                    <p className="text-sm font-medium">{t('ly.cover')}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                      {t('ly.coverSub')}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!!layout.coverSheet && !layout.booklet}
+                    disabled={layout.booklet}
+                    onCheckedChange={(v) => setLayout({ coverSheet: v })}
+                    aria-label={t('ly.cover')}
+                  />
+                </div>
+                <div
+                  className={cn(
+                    'flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-opacity',
+                    layout.booklet && 'pointer-events-none opacity-40',
+                  )}
+                >
+                  <div className="pr-2">
+                    <p className="text-sm font-medium">{t('ly.duplexPad')}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                      {t('ly.duplexPadSub')}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={layout.duplexPad}
+                    onCheckedChange={(v) => setLayout({ duplexPad: v })}
+                    aria-label={t('ly.duplexPad')}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div
+                  className={cn(
+                    'flex items-center justify-between rounded-xl border p-4 transition-colors',
+                    layout.booklet
+                      ? 'border-violet-500/50 bg-violet-500/10'
+                      : 'border-white/10 bg-white/[0.02]',
+                  )}
+                >
+                  <div className="pr-3">
+                    <p className="flex items-center gap-1.5 text-sm font-medium">
+                      <BookOpen className="h-4 w-4 text-violet-300" /> {t('ly.booklet')}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.bookletSub')}</p>
+                  </div>
+                  <Switch
+                    checked={layout.booklet}
+                    onCheckedChange={(v) =>
+                      setLayout(
+                        v
+                          ? { booklet: true, rows: 1, cols: 2, orientation: 'landscape' }
+                          : { booklet: false },
+                      )
+                    }
+                    aria-label={t('ly.booklet')}
+                  />
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Type className="h-4 w-4 text-violet-300" />
+                    <p className="text-sm font-medium">{t('ly.footer')}</p>
+                    <span className="text-xs text-muted-foreground">{t('ly.footerOpt')}</span>
+                  </div>
+                  <Input
+                    value={layout.footerLabel ?? ''}
+                    onChange={(e) => setLayout({ footerLabel: e.target.value.slice(0, 60) })}
+                    placeholder={t('ly.footerPh')}
+                    maxLength={60}
+                    aria-label="Footer label printed on every sheet"
+                  />
+                  <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.footerNote')}</p>
+                </div>
+              </div>
             </div>
-            <Input
-              value={layout.footerLabel ?? ''}
-              onChange={(e) => setLayout({ footerLabel: e.target.value.slice(0, 60) })}
-              placeholder={t('ly.footerPh')}
-              maxLength={60}
-              aria-label="Footer label printed on every sheet"
-            />
-            <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.footerNote')}</p>
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
