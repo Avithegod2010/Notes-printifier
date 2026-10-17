@@ -1,13 +1,14 @@
 {
-  "version": "1.4.0-beta",
-  "updated": "2026-10-14",
+  "version": "1.5.0-beta",
+  "updated": "2026-10-17",
   "notes": [
-    "Built-in presets: Economy / Balanced / Exam cram — one tap, then fine-tune",
-    "Print budget: type a sheet limit, the layout auto-fits",
-    "Lifetime impact meter: sheets, rupees, trees & CO2 saved on this device",
-    "History re-run: 'Re-printify' yesterday's files with different settings",
-    "Auto deskew: tilted scans and phone photos get straightened per page",
-    "Android: share a PDF from any app straight into Notes Printifier",
-    "Labs: OCR text repaint — pages re-typeset as crisp text (experimental)"
+    "12 themes x 10 animated backdrop patterns + command palette (Ctrl/K)",
+    "AI Print Doctor: goal-based setting advice applied with one tap",
+    "Voice commands (speak your print settings) & spoken receipts",
+    "Logo region picker: erase any part of the page (e.g. corner watermarks)",
+    "QR preset sharing and a private impact dashboard with badges",
+    "Honest DPI readout, animated sliders, 4-step first-visit tour",
+    "WhatsApp & Telegram share the converted PDF itself",
+    "Security hardening: rate limits, CSP headers, -3.7k lines of dead code"
   ]
 }
