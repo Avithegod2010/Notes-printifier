@@ -54,7 +54,7 @@ jobs:
       - name: Disable Jekyll processing (_next/ must be served as-is)
         run: touch .next-static/.nojekyll
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         with:
           enablement: true
 
