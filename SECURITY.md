@@ -43,12 +43,13 @@ sanitizes file names before writing to `Downloads/Printifier`.
   where that matters.
 - `/api/prints` is unauthenticated by design (aggregate counts only). If you self-host
   publicly, put a rate limit in front of it.
-- TypeScript build errors are currently not treated as fatal (`ignoreBuildErrors`);
-  CI runs ESLint on every push.
+- TypeScript errors are fatal: `tsc --noEmit` gates CI and there is no
+  `ignoreBuildErrors` escape hatch. ESLint runs on every push.
 
 ## Dependency audit
 
-Last full audit: 2026-10-14 (`bun audit`).
+Last full audit: 2026-10-18 (fresh OSV querybatch over every resolved `name@version`
+in `bun.lock`; prior full audit 2026-10-14 via `bun audit`).
 
 - **Removed unused scaffold packages** that carried advisories: `next-auth` (critical
   auth-bypass advisory, never used), `@mdxeditor/editor`, `react-syntax-highlighter`,
@@ -65,17 +66,22 @@ Last full audit: 2026-10-14 (`bun audit`).
   browserslist, @babel/core, postcss) — all in dev/toolchain chains, all fixed in
   their existing major lines.
 - Result: **104 advisories (3 critical) → 1 (1 high)**. The single remaining finding
-  is `braces <=3.0.3` (GHSA-vfj7-8cjw-p6xm, dev-chain ReDoS) which has **no upstream
-  patch** — 3.0.3 is the newest release. It is used only by the ESLint glob chain at
-  lint time on trusted local files; risk is accepted until upstream ships a fix.
+  is `braces 3.0.3` (GHSA-vfj7-8cjw-p6xm / CVE-2026-93687, stack-exhaustion ReDoS via
+  deeply nested glob patterns) which has **no upstream patch** — 3.0.3 is the newest
+  release. It is used only by the ESLint glob chain at lint time on trusted local
+  files, never on user input; risk is accepted until upstream ships a fix.
 - The shipped client runtime (`next`, `react`, `pdfjs-dist`, `pdf-lib`, `tesseract.js`,
   `zustand`, `framer-motion`) is current and advisory-free. Self-hosters running the
   API routes should re-run `bun audit` after `bun install` and keep dependencies
   updated. Dependabot (`.github/dependabot.yml`) opens weekly update PRs.
-- **About the Dependabot banner over-reporting:** Dependabot alerts are computed from
-  `package.json` ranges because Dependabot's Bun support cannot fully honour the
-  `overrides` block. Re-verified on 2026-10-14 by querying the GitHub Advisory DB
-  directly for every resolved `name@version` in `bun.lock` (682 packages): only the
-  accepted `braces` finding above is real. Any additional "high" alerts shown on the
-  Security tab correspond to versions that the `overrides` block has already patched
-  away and can be dismissed.
+- **About the Dependabot banner over-reporting (and its fix):** the repo previously
+  used the `npm` ecosystem, which reads `package.json` ranges and ignores both
+  `bun.lock` and the `overrides` block — so it alerted on OLD in-range versions of
+  toolchain transitives (the three `sharp` "high" alerts via `next`'s optional deps,
+  `minimatch`/`brace-expansion`/`ajv` chains) that are never actually installed.
+  Re-verified on 2026-10-18 by querying the OSV database for every resolved
+  `name@version` in `bun.lock` (708 packages): exactly ONE real finding — the
+  accepted `braces` entry above. The config now uses Dependabot's native **`bun`
+  ecosystem** (reads `bun.lock`, override-aware), which should recompute the alert
+  set from resolved versions. If any phantom alert lingers after the next scan,
+  dismiss it on the Security tab as **"Inaccurate"** with a pointer to this file.

@@ -1,11 +1,15 @@
 # Dependabot — weekly dependency + action updates.
-# Version updates land as PRs; security updates are always on.
-# Note: bun.lock is supported by the "bun" ecosystem? Not yet — the "npm"
-# ecosystem reads package.json (not bun.lock) for this repo, so PR bumps are
-# advisory; run `bun update <pkg>` to apply them to the lockfile.
+#
+# The "bun" ecosystem reads bun.lock directly (override-aware): version-update
+# PRs edit the lockfile, and alert computation sees the REAL resolved versions
+# instead of guessing from package.json ranges — this is what finally stops the
+# phantom "high" alerts on transitive toolchain packages (sharp, minimatch, …)
+# whose in-range older versions carry advisories but are never installed.
+# (GA since Feb 2025; enable-beta-ecosystems kept as a safety net.)
 version: 2
+enable-beta-ecosystems: true
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "weekly"
