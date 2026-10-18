@@ -42,6 +42,7 @@ import {
   saveTextRepaintFlag,
 } from './labs';
 import { translateStatic, useLangStore } from './i18n';
+import { HAS_SERVER_API } from './server-api';
 
 interface DocInfo {
   id: number;
@@ -397,33 +398,37 @@ export async function saveJobSideEffects(
   colorMode: string,
   docs: DocInfo[],
 ): Promise<void> {
-  try {
-    // Fire-and-forget anonymous stats. File names never leave the device —
-    // only a truncated SHA-256 of the joined name is sent, so the server can
-    // still count unique documents but cannot read the titles.
-    const digestBuf = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(out.fileName),
-    );
-    const anonName = Array.from(new Uint8Array(digestBuf).slice(0, 8))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-    void fetch('/api/prints', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileName: anonName,
-        inputPages: out.result.inputPages,
-        outputPages: out.result.outputPages,
-        inputBytes: out.result.inputBytes,
-        outputBytes: out.result.outputBytes,
-        colorMode,
-        layout: layoutLabel,
-        inkSavedPct: out.result.inkSavedPct,
-      }),
-    }).catch(() => undefined);
-  } catch {
-    // stats are optional — never let them break processing
+  // Fire-and-forget anonymous stats — server deployments only. File names
+  // never leave the device — only a truncated SHA-256 of the joined name is
+  // sent, so the server can still count unique documents but cannot read the
+  // titles. Static builds (GitHub Pages / APK) ship no /api routes, so the
+  // ping is skipped entirely instead of firing a doomed request.
+  if (HAS_SERVER_API) {
+    try {
+      const digestBuf = await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(out.fileName),
+      );
+      const anonName = Array.from(new Uint8Array(digestBuf).slice(0, 8))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+      void fetch('/api/prints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: anonName,
+          inputPages: out.result.inputPages,
+          outputPages: out.result.outputPages,
+          inputBytes: out.result.inputBytes,
+          outputBytes: out.result.outputBytes,
+          colorMode,
+          layout: layoutLabel,
+          inkSavedPct: out.result.inkSavedPct,
+        }),
+      }).catch(() => undefined);
+    } catch {
+      // stats are optional — never let them break processing
+    }
   }
 
   // Private on-device history (IndexedDB) for quick re-download + re-run.
