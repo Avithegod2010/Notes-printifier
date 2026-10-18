@@ -114,7 +114,7 @@ jobs:
         run: bun run build:static
 
       # java/keytool on PATH: ecj, d8 and apksigner all run under the JDK
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         if: steps.signing.outputs.apk == 'true'
         with:
           distribution: temurin
