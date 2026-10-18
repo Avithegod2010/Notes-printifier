@@ -385,6 +385,29 @@ const DICT: Record<string, [string, string]> = {
   'st.money': ['Money saved', 'पैसे बचे'],
   'st.note': ['Anonymous, aggregated stats — no accounts, no tracking, no file uploads. ₹ estimate assumes ~₹1/sheet paper + ink.', 'गुमनाम, संयुक्त आँकड़े — न अकाउंट, न ट्रैकिंग, न अपलोड। ₹ अनुमान: ~₹1/शीट कागज़ + स्याही।'],
 
+  // server-feature dialog (static builds: GitHub Pages / offline APK)
+  'sf.title': ['“{f}” needs the Printifier server', '“{f}” को Printifier सर्वर चाहिए'],
+  'sf.body': [
+    'This feature runs on Printifier’s small server brain, which this static hosting can’t provide. The core tools — layouts, ink-saving, booklet, presets, download & share — all run 100% in your browser and work right here.',
+    'यह फ़ीचर Printifier के छोटे सर्वर-ब्रेन पर चलता है, जो स्टैटिक होस्टिंग पर उपलब्ध नहीं है। बाकी सब — लेआउट, स्याही-बचत, बुकलेट, प्रीसेट, डाउनलोड और शेयर — आपके ब्राउज़र में 100% चलता है।',
+  ],
+  'sf.whyBtn': ['Why?', 'क्यों?'],
+  'sf.whyHosting': [
+    'This site is hosted on GitHub Pages: free, fast, static file hosting with no backend. AI advice, speech, and cloud sync all need a live server process, so on this mirror they are switched off at the source — not hidden, just honest.',
+    'यह साइट GitHub Pages पर है: मुफ़्त, तेज़, स्टैटिक होस्टिंग — बिना बैकएंड। AI सलाह, आवाज़ और क्लाउड सिंक के लिए जीवित सर्वर चाहिए, इसलिए इस मिरर पर ये बंद रहते हैं — छिपे नहीं, ईमानदारी से।',
+  ],
+  'sf.whyWorks': [
+    'Everything else is pure browser magic: page picker, ink-saving enhancement, OCR, N-up layouts, booklet, presets, download, WhatsApp/Telegram share — it all works here, even offline.',
+    'बाकी सब शुद्ध ब्राउज़र-जादू है: पेज चयन, स्याही-बचत, OCR, N-up लेआउट, बुकलेट, प्रीसेट, डाउनलोड, WhatsApp/Telegram शेयर — सब यहीं चलता है, ऑफ़लाइन भी।',
+  ],
+  'sf.howToGet': [
+    'Want the full experience? Run Printifier on your own machine (bun install → bun run dev), use the Android app for the core tools offline, or wait for the hosted-server release — the code is ready, see the README.',
+    'पूरा अनुभव चाहिए? Printifier अपने कंप्यूटर पर चलाएँ (bun install → bun run dev), Android ऐप से कोर-टूल्स ऑफ़लाइन इस्तेमाल करें, या होस्टेड-सर्वर रिलीज़ का इंतज़ार करें — कोड तैयार है, README देखें।',
+  ],
+  'sf.ok': ['Got it', 'समझ गया'],
+  'sf.feature.stats': ['Community stats', 'कम्युनिटी आँकड़े'],
+  'sf.feature.preset': ['Shared preset link', 'शेयर्ड प्रीसेट लिंक'],
+
   // faq
   'faq.title': ['FAQ', 'सवाल-जवाब'],
   'faq.sub': ['Everything you might wonder before hitting print.', 'प्रिंट दबाने से पहले जो कुछ भी जिज्ञासा हो सकती है।'],

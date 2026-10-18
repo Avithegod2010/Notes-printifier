@@ -1,96 +1,152 @@
-# Notes Printifier
+<div align="center">
 
-Turn lecture PDFs into **paper- and ink-saving, print-ready PDFs** — entirely in your browser.
+# 🖨️ Notes Printifier
 
-Slides are rendered page-by-page, cleaned up (white background, grayscale/ink-saving modes, optional OCR search layer), and re-composed into dense A4 grids (up to 8 slides per sheet, booklet mode, duplex padding). Nothing is ever uploaded: PDF.js, the compose pipeline and Tesseract OCR all run client-side.
+### Turn 41 ink-heavy slides into 14 bright pages. For ₹0. In your browser.
 
-**English + हिन्दी UI · Light/dark theme · Installable PWA · Offline Android APK.**
+**Your notes never leave your device. No login. No upload. No mercy for xerox bills.**
 
-## Highlights
+[![Live site](https://img.shields.io/badge/🌍_Live_site-GitHub_Pages-8b5cf6?style=for-the-badge)](https://avithegod2010.github.io/Notes-printifier/)
+[![Latest APK](https://img.shields.io/badge/🤖_Download-Android_APK-22c55e?style=for-the-badge)](../../releases)
+[![License: MIT](https://img.shields.io/badge/⚖️_License-MIT-a78bfa?style=for-the-badge)](LICENSE)
+[![CodeQL](https://img.shields.io/badge/🔎_CodeQL-enabled-14b8a6?style=for-the-badge)](../../actions)
+[![English / हिन्दी](https://img.shields.io/badge/🗣️_English%20%2F%20हिन्दी-bilingual-f472b6?style=for-the-badge)](#-features)
 
-- **Print layouts** — 1×1 up to 3×3 slides per A4 sheet, margins/gaps tuned for hole-punching, **booklet mode** (saddle-stitch ordering + fold guide) and **duplex pad** (blank page so backs line up).
-- **Ink-saving filters** — dark-slide inversion, 2-tone posterization, grayscale, per-channel tint removal, blue-mark cleanup, edge trim, separation lines, frameless mode.
-- **Page control** — rotate, drag/button reorder, per-page exclude, name/roll-number **stamp** on every sheet.
-- **Presets** — built-in recipes (**Economy / Balanced / Exam cram**) plus your own, shareable as a JSON file.
-- **Print budget** — type a sheet limit ("xerox shop charges per sheet") and the layout auto-fits it.
-- **Impact meter** — lifetime sheets / ₹ / trees / CO₂ saved on this device, updated after every conversion.
-- **History re-run** — recent jobs keep their originals (≤15 MB), so yesterday's files can be re-printified with different settings in one tap.
-- **Auto deskew** — tilted scans and phone photos of notes are straightened per page before filtering (in Labs-friendly Enhance step).
-- **Cloud import** — paste a Google Drive / Dropbox link (server-side proxy, hardened against SSRF; the feature auto-hides when self-hosting without a server).
-- **Privacy** — files never leave the device. History, presets and settings live in IndexedDB/localStorage. The only network call is an anonymous usage ping whose "file name" is a truncated SHA-256 hash, not the real name.
-- **Savings calculator & history** — estimate sheets/₹ saved per semester, see your last jobs charted.
-- **Labs** — experimental switches in the header: remember settings, **OCR text repaint** (pages re-typeset as crisp black-on-white text; handwriting/diagrams fall back to the scan automatically).
-- **Android share-sheet** — share any PDF into the app (or "Open with → Notes Printifier") and it lands in the pipeline.
-- **Bilingual** — every string in English and हिन्दी.
+</div>
 
-## Quick start
+---
+
+<p align="center">
+  <img src="docs/screenshots/hero-dark.png" alt="Notes Printifier — Make Your Lecture Notes Print-Ready" width="820" />
+</p>
+
+Every exam season, the same tragedy: **41 dark PowerPoint slides** hit the xerox shop, come back as 41 ghostly sheets of wasted paper, and eat ₹200 of your pocket money.
+
+Notes Printifier flips them bright, stacks **3 per sheet**, and hands you a 14-page PDF. It even counts what you saved — paper, ink, trees, and rupees — because watching that number climb is half the fun.
+
+> 🎉 **Real numbers from the sample lecture PDF:** `41 pages → 14 pages` · `86% ink saved` · `1.71 MB (60% smaller)` · `≈ ₹71 kept in your pocket`
+
+---
+
+## ✨ Features
+
+| | |
+|---|---|
+| 🧩 **N-up print layouts** | 1×1 up to 3×3 slides per A4/Letter sheet, gaps tuned for hole-punching |
+| 🌓 **Dark-slide inversion** | Lecturer's black theme → bright white paper, one toggle |
+| 🖋 **Ink saver** | 2-tone posterization, grayscale, tint removal, blue-mark cleanup, edge trim |
+| 📖 **Booklet mode** | Saddle-stitch ordering + fold guide — print a real booklet |
+| 🔁 **Duplex pad** | Blank page inserted so double-sided backs line up |
+| 🧠 **AI Print Doctor** | Ask for advice ("ink", "pages", "readability") and apply a suggested recipe |
+| 🎙 **Voice commands** | "nine up", "black and white", "save ink" — EN + हिन्दी |
+| 🔊 **Spoken receipt** | The result step can read your savings out loud |
+| ✍️ **OCR + text repaint** | Searchable text layer; Labs repaints pages as crisp black-on-white text |
+| 📐 **Auto deskew** | Phone photos of notes get straightened per page |
+| 🎛 **Presets** | Economy / Balanced / Exam-cram built-ins + your own, shareable |
+| 🎯 **Print budget** | "I can afford 25 sheets" → the layout auto-fits your limit |
+| 🌱 **Impact meter** | Lifetime sheets / ₹ / trees / CO₂ saved, streaks and milestones |
+| 🕘 **History re-run** | Yesterday's file, different settings, one tap (originals stay on-device) |
+| ☁️ **Cloud import** | Paste a Google Drive / Dropbox link (self-hosted server proxy, SSRF-hardened) |
+| 📱 **PWA + Android APK** | Install to home screen, or sideload the offline APK — with Android share-sheet support |
+| 🗣 **Bilingual** | Every string in English and हिन्दी, incl. the spoken receipt |
+| 🎨 **12 themes · 10 patterns** | Dark/light, ⌘K command palette, animated theme flip |
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/app-loaded.png" alt="Upload step — drop lecture PDFs" width="412" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/result.png" alt="Result step — 41 pages to 14, 86% ink saved, ₹71 saved" width="412" />
+</p>
+
+## 🚀 Try it — pick your fighter
+
+| | Where | What you get |
+|---|---|---|
+| 🌍 **Web** | [avithegod2010.github.io/Notes-printifier](https://avithegod2010.github.io/Notes-printifier/) | The whole PDF pipeline: upload → arrange → enhance → layout → download/print/share. Installable PWA, works offline after first visit. |
+| 🤖 **Android APK** | [Releases](../../releases) → `printifier.apk` | Same pipeline, fully offline, plus Android share-sheet ("share PDF → Printifier") and home-screen app icon. |
+| 💻 **Self-host** | `bun install && bun run dev` | Everything above **plus** the server features (AI doctor, voice, Listen, cloud import, preset links, community stats). |
+
+### ☁️ The GitHub Pages fine print (honesty section)
+
+The live site is hosted on **GitHub Pages — free, fast, static file hosting with no backend**. The core app is pure browser magic and runs 100% there. A handful of features need Printifier's small server brain:
+
+> AI Print Doctor · Voice commands · Listen (spoken receipt) · Cloud preset links & QR · Cloud import · Community stats
+
+On the static site **they stay visible** — tap one and a friendly dialog explains the situation, with a **Why?** button for the full story (and how to get the full experience). Nothing is hidden; nothing fires doomed requests. Self-host (below) or use the server deployment to light them up.
+
+## 🛠 Quick start
 
 ```bash
+# you need bun (https://bun.sh) — node+npm works too, bun is just faster
 bun install
-bun run dev          # http://localhost:3000
-bun run lint
-```
+bun run dev          # → http://localhost:3000  (full server features on)
 
-## Production builds
+bun run lint         # keep it clean
+bunx tsc --noEmit    # types are not optional
 
-```bash
-# Fully static site (what the Android WebView ships) → .next-static/
-bun run build:static
+# fully static export (what Pages hosts and the APK packages)
+bun run build:static # → .next-static/
 
-# Signed offline APKs (stable + beta channels) — see VERSIONING.md
+# signed offline APKs — see VERSIONING.md for the release ritual
 bash android/build-apk.sh beta     # → public/printifier.apk
 bash android/build-apk.sh stable   # → public/printifier-stable.apk
 ```
 
-The APK pipeline is Gradle-free (`aapt2` + `ecj` + `d8` + `apksigner`) and needs the
-Android build-tools 34 + a JRE; tool locations can be overridden with
-`ANDROID_SDK=…` and `ECJ_JAR=…`.
+The APK pipeline is Gradle-free (`aapt2` + `ecj` + `d8` + `apksigner`) and needs Android
+build-tools 34 + a JRE; override locations with `ANDROID_SDK=…` and `ECJ_JAR=…`.
 
-### APK signing
+### 🔑 APK signing
 
-The signing keystore (`android/printifier.keystore`) and its password are **not in the
-repository**. The password is read from the `KS_PASS` env var or from
-`android/signing.local` (gitignored):
+The keystore (`android/printifier.keystore`) and its password are **not in this repo** (checked the
+whole git history — they never were). The build script reads the password from `$KS_PASS` or
+`android/signing.local` (gitignored). On GitHub Actions, set the `KEYSTORE_BASE64` and `KS_PASS`
+repository secrets and every `v*` tag builds a signed APK automatically. Lose the keystore and users
+must uninstall/reinstall to update — back it up.
 
-```
-KS_PASS=your-keystore-password
-```
+### 🗄 Database (optional, self-hosting only)
 
-If the keystore doesn't exist yet it is generated on first build. Losing the
-keystore means users must uninstall/reinstall to update — back it up.
+Static builds need no database. The full server uses Prisma + SQLite for two optional features —
+copy `.env.example` → `.env` and `bun run db:push`:
 
-## API routes (optional, self-hosting only)
+- `POST /api/prints` — anonymous usage stats (hashed file name + page counts)
+- `POST /api/presets` — shareable preset links & QR codes
+- `GET /api/cloud-import?url=…` — Drive/Dropbox proxy (75 MB cap, per-hop SSRF validation)
 
-The static site and the APK work with **no server at all**. When you run the full
-Next.js server, two optional routes activate:
-
-- `GET /api/cloud-import?url=…` — CORS proxy for Drive/Dropbox PDF links (75 MB cap, per-hop SSRF validation, nothing stored).
-- `POST /api/prints` — anonymous usage stats (hashed file name + page counts, stored in SQLite via Prisma). Set `DATABASE_URL` (`.env`).
-
-## Repository layout
+## 🧭 Repository layout
 
 ```
-src/app/                 Next.js App Router (page + optional API routes)
-src/components/printifier/  the app (upload → enhance → layout → result steps)
-src/lib/pdf/             PDF.js render, compose pipeline (worker), filters, OCR
-src/lib/                 i18n, store (zustand), presets, theme, savings math
-android/                 WebView APK source + build script (no Gradle)
-scripts/                 icon generators, static-export helper
-public/                  PWA assets, local pdf.js/tesseract runtimes
+src/app/                    Next.js App Router (page + optional API routes)
+src/components/printifier/  the app (upload → arrange → enhance → layout → finish)
+src/lib/pdf/                PDF.js render, compose pipeline (worker), filters, OCR
+src/lib/                    i18n, zustand store, presets, theme, savings math
+android/                    WebView APK source + Gradle-free build script
+scripts/                    icon generators, static-export helper
+docs/screenshots/           the images above
+.github/workflows/          Pages deploy · CI · CodeQL · APK releases
 ```
 
-> APK binaries are **not stored in git** — signed APKs are attached to each
-> [GitHub Release](../../releases) (`printifier.apk` beta, `printifier-stable.apk` stable).
-> When self-hosting the static site, drop them into the web root to make the
-> footer download links work.
+## 🔒 Privacy
 
-## Versioning & releases
+- **Files never leave your device.** Parsing, filtering and PDF generation all run locally —
+  load the page once and it even works offline.
+- History, presets and the impact meter live in IndexedDB/localStorage. Clear them any time.
+- The only server call on self-hosted mode is an anonymous usage ping whose "file name" is a
+  truncated SHA-256 hash, not the real name. On GitHub Pages, there are no server calls at all.
+- Security model and reporting: [SECURITY.md](SECURITY.md).
 
-Two release lines from one codebase — **stable** (beginners, frozen artifacts) and
-**beta** (rolling). Tags: `v1.0.0-stable` on the `stable` branch, `v1.x.y-beta` on
-`main`. Signed APKs ship as Release assets. See [VERSIONING.md](VERSIONING.md) for the
-release ritual and [SECURITY.md](SECURITY.md) for the security model and reporting policy.
+## 🏷 Versioning & releases
 
-## License
+Two release lines from one codebase: **stable** (frozen artifacts from the `stable` branch) and
+**beta** (rolling, from `main`). Every release lives in [Releases](../../releases) — signed APKs as
+assets, notes on what changed. See [VERSIONING.md](VERSIONING.md) for the ritual.
 
-[MIT](LICENSE)
+## 🤝 Contributing
+
+PRs welcome! Keep it typed (`bunx tsc --noEmit`), linted (`bun run lint`), and remember: anything
+that ships to the static site must work without a server. Bilingual strings live in
+`src/lib/i18n.ts` as `key: ['English', 'हिन्दी']` pairs.
+
+## ⚖️ License
+
+[MIT](LICENSE) — print freely. 🖨️

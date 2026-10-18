@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { useT } from '@/lib/i18n';
 import { toast } from '@/hooks/use-toast';
+import { HAS_SERVER_API } from '@/lib/server-api';
+import { showServerFeature } from '@/components/printifier/server-feature';
 
 /**
  * VoiceBar — speak your print settings.
@@ -140,6 +142,11 @@ export function VoiceBar() {
 
   const start = useCallback(async () => {
     if (phase !== 'idle') return;
+    // Static build (GitHub Pages / APK): no server behind ASR — explain instead.
+    if (!HAS_SERVER_API) {
+      showServerFeature(t('vc.start'));
+      return;
+    }
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.current = s;

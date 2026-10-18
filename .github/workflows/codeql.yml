@@ -8,9 +8,11 @@ on:
   schedule:
     - cron: "0 6 * * 1" # weekly, Mondays 06:00 UTC
 
-# Least privilege: uploading SARIF results needs security-events:write;
-# the scan itself only reads the repo.
+# Least privilege: uploading SARIF needs security-events:write, and the
+# analyze step reads workflow-run metadata (actions:read); the scan itself
+# only reads the repo.
 permissions:
+  actions: read
   contents: read
   security-events: write
 

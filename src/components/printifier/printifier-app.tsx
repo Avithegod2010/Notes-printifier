@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSharedPdf } from '@/hooks/use-shared-pdf';
 import { HAS_SERVER_API } from '@/lib/server-api';
+import { ServerFeatureDialog, showServerFeature } from '@/components/printifier/server-feature';
 import {
   Accordion,
   AccordionContent,
@@ -742,9 +743,15 @@ export function PrintifierApp() {
     try {
       const url = new URL(window.location.href);
       const pid = url.searchParams.get('p');
-      if (pid && HAS_SERVER_API && /^[A-HJ-NP-Z2-9]{8}$/i.test(pid)) {
+      if (pid && /^[A-HJ-NP-Z2-9]{8}$/i.test(pid)) {
         url.searchParams.delete('p');
         window.history.replaceState({}, '', url.toString());
+        // Static build: shared preset links live on the server — explain
+        // instead of firing a doomed fetch.
+        if (!HAS_SERVER_API) {
+          showServerFeature(t('sf.feature.preset'));
+          return;
+        }
         void fetch(`/api/presets/${encodeURIComponent(pid.toUpperCase())}`)
           .then((r) => (r.ok ? r.json() : null))
           .then((data: { name?: string; filters?: unknown; layout?: unknown } | null) => {
@@ -767,7 +774,7 @@ export function PrintifierApp() {
     } catch {
       // URL parsing is best-effort
     }
-  }, [hydrateLabs, hydrateLang, hydrateTheme, refreshPresets]);
+  }, [hydrateLabs, hydrateLang, hydrateTheme, refreshPresets, t]);
 
   return (
     <div className="flex min-h-screen flex-col text-foreground">
@@ -788,7 +795,7 @@ export function PrintifierApp() {
           <Reveal>
             <div className="holo-ring rounded-3xl border border-white/10 bg-white/[0.02] p-4 shadow-2xl shadow-black/40 ring-1 ring-violet-500/10 sm:p-6 lg:p-8">
               <Stepper />
-              {HAS_SERVER_API && <VoiceBar />}
+              <VoiceBar />
               {step === 0 && <UploadStep />}
               {step === 1 && <PagesStep />}
               {step === 2 && <EnhanceStep />}
@@ -804,13 +811,14 @@ export function PrintifierApp() {
         <ImpactDashboard />
         <UseCases />
         <FaqSection />
-        {HAS_SERVER_API && <StatsStrip />}
+        <StatsStrip />
       </main>
       <Footer />
       <BackToTop />
       <UpdateBanner />
       <CommandPalette />
       <WelcomeTour />
+      <ServerFeatureDialog />
 
       {/* F2 — one-tap apply for an incoming shared preset */}
       <Dialog

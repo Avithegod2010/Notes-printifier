@@ -35,6 +35,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 import { HAS_SERVER_API } from '@/lib/server-api';
+import { showServerFeature } from '@/components/printifier/server-feature';
 
 /** Icons for the built-in recipe chips, by preset id. */
 const BUILTIN_ICONS: Record<string, typeof Leaf> = {
@@ -110,6 +111,11 @@ export function PresetsCard() {
   const [sharingId, setSharingId] = useState<string | null>(null);
   const onShareLink = useCallback(
     async (presetId: string) => {
+      // Static build: share links live on the server — explain instead.
+      if (!HAS_SERVER_API) {
+        showServerFeature(t('pr.shareLink'));
+        return;
+      }
       const p = presets.find((x) => x.id === presetId);
       if (!p || sharingId) return;
       setSharingId(presetId);
@@ -165,6 +171,11 @@ export function PresetsCard() {
   const [qrBusyId, setQrBusyId] = useState<string | null>(null);
   const onShareQr = useCallback(
     async (presetId: string) => {
+      // Static build: QR codes encode a server preset link — explain instead.
+      if (!HAS_SERVER_API) {
+        showServerFeature(t('pr.qr'));
+        return;
+      }
       const p = presets.find((x) => x.id === presetId);
       if (!p || qrBusyId) return;
       setQrBusyId(presetId);
@@ -302,42 +313,38 @@ export function PresetsCard() {
               >
                 {t('en.presets.apply')}
               </Button>
-              {HAS_SERVER_API && (
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`${t('pr.shareLink')} — ${p.name}`}
-                  title={t('pr.shareLink')}
-                  disabled={sharingId === p.id}
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-violet-300"
-                  onClick={() => void onShareLink(p.id)}
-                >
-                  {sharingId === p.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Link2 className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              )}
-              {HAS_SERVER_API && (
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`${t('pr.qr')} — ${p.name}`}
-                  title={t('pr.qr')}
-                  disabled={qrBusyId === p.id}
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-violet-300"
-                  onClick={() => void onShareQr(p.id)}
-                >
-                  {qrBusyId === p.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <QrCode className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              )}
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label={`${t('pr.shareLink')} — ${p.name}`}
+                title={t('pr.shareLink')}
+                disabled={sharingId === p.id}
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-violet-300"
+                onClick={() => void onShareLink(p.id)}
+              >
+                {sharingId === p.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label={`${t('pr.qr')} — ${p.name}`}
+                title={t('pr.qr')}
+                disabled={qrBusyId === p.id}
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-violet-300"
+                onClick={() => void onShareQr(p.id)}
+              >
+                {qrBusyId === p.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <QrCode className="h-3.5 w-3.5" />
+                )}
+              </Button>
               <Button
                 type="button"
                 size="icon"

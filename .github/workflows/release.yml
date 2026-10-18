@@ -11,9 +11,12 @@ name: Release APK
 #                     shell-safe (no quotes/backslashes) — the workflow writes
 #                     it to signing.local, which build-apk.sh sources.
 #
+# WITHOUT the secrets the workflow still publishes a source-only release
+# (no APK asset) instead of failing — the APK just needs its signing key.
+#
 # Optional repository VARIABLES (fall back to build-apk.sh defaults):
 #   BETA_VERSION_CODE / BETA_VERSION_NAME — bump when rebuilding the beta
-#   channel so installed devices can upgrade (defaults: 6 / 1.4.0-beta).
+#   channel so installed devices can upgrade (defaults: 7 / 1.5.0-beta).
 #
 # Channels:
 #   * tag push v*-beta*   → beta   (public/printifier.apk, published as prerelease)
@@ -76,8 +79,43 @@ jobs:
           persist-credentials: false
           ref: ${{ steps.meta.outputs.ref }}
 
+      # Signing material is NOT in git (gitignored) — reconstruct from secrets.
+      # Missing secrets ⇒ source-only release (no APK), never a red run.
+      - name: Restore signing material from secrets
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KS_PASS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KS_PASS" ]; then
+            echo "::warning::Signing secrets missing (KEYSTORE_BASE64 / KS_PASS) — publishing a source-only release without the APK."
+            echo "apk=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/printifier.keystore
+          printf 'KS_PASS=%s\n' "$KS_PASS" > android/signing.local
+          chmod 600 android/printifier.keystore android/signing.local
+          echo "apk=true" >> "$GITHUB_OUTPUT"
+
+      # ── APK build (skipped entirely when secrets are absent) ──────────────
+      - uses: oven-sh/setup-bun@v2
+        if: steps.signing.outputs.apk == 'true'
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        if: steps.signing.outputs.apk == 'true'
+        run: bun install --frozen-lockfile
+
+      # The APK packages the static export (.next-static), so build it first
+      - name: Static web export
+        if: steps.signing.outputs.apk == 'true'
+        run: bun run build:static
+
       # java/keytool on PATH: ecj, d8 and apksigner all run under the JDK
       - uses: actions/setup-java@v4
+        if: steps.signing.outputs.apk == 'true'
         with:
           distribution: temurin
           java-version: "17"
@@ -88,6 +126,7 @@ jobs:
       #   $ECJ_JAR (Eclipse compiler for java)
       # curl/unzip/zip/rg used by the script are preinstalled on the runner.
       - name: Install Android build-tools 34.0.0 + platform android-34
+        if: steps.signing.outputs.apk == 'true'
         env:
           SDK: ${{ runner.temp }}/android-sdk
         run: |
@@ -106,48 +145,25 @@ jobs:
           echo "ANDROID_SDK=$SDK" >> "$GITHUB_ENV"
 
       - name: Install ECJ (Eclipse compiler for java)
+        if: steps.signing.outputs.apk == 'true'
         run: |
           curl -fsSL -o "$RUNNER_TEMP/ecj.jar" \
             https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.33.0/ecj-3.33.0.jar
           # build-apk.sh honours ECJ_JAR (default /home/z/tools/ecj.jar)
           echo "ECJ_JAR=$RUNNER_TEMP/ecj.jar" >> "$GITHUB_ENV"
 
-      # The APK packages the static export (.next-static), so build it first
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Static web export
-        run: bun run build:static
-
-      # Signing material is NOT in git (gitignored) — reconstruct from secrets.
-      - name: Restore signing material from secrets
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KS_PASS: ${{ secrets.KS_PASS }}
-        run: |
-          set -euo pipefail
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KS_PASS" ]; then
-            echo "::error::Required secrets missing — set KEYSTORE_BASE64 (base64 of android/printifier.keystore) and KS_PASS (keystore password)." >&2
-            exit 1
-          fi
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/printifier.keystore
-          printf 'KS_PASS=%s\n' "$KS_PASS" > android/signing.local
-          chmod 600 android/printifier.keystore android/signing.local
-
       - name: Build signed APK
+        if: steps.signing.outputs.apk == 'true'
         env:
           CHANNEL: ${{ steps.meta.outputs.channel }}
-          # empty variables fall back to the script defaults (6 / 1.4.0-beta)
+          # empty variables fall back to the script defaults (7 / 1.5.0-beta)
           BETA_VERSION_CODE: ${{ vars.BETA_VERSION_CODE }}
           BETA_VERSION_NAME: ${{ vars.BETA_VERSION_NAME }}
         run: bash android/build-apk.sh "$CHANNEL"
 
       - name: Checksum the APK
         id: apk
+        if: steps.signing.outputs.apk == 'true'
         env:
           CHANNEL: ${{ steps.meta.outputs.channel }}
         run: |
@@ -160,20 +176,21 @@ jobs:
           echo "path=$apk" >> "$GITHUB_OUTPUT"
           echo "sha256=$(sha256sum "$apk" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      # Creates the release if missing, updates it on re-runs; beta → prerelease
+      # Creates the release if missing, updates it on re-runs; beta → prerelease.
+      # Source-only runs publish a body explaining why the APK is absent.
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          HAS_APK: ${{ steps.signing.outputs.apk == 'true' }}
+          APK_SHA: ${{ steps.apk.outputs.sha256 }}
+          CHANNEL_NAME: ${{ steps.meta.outputs.channel }}
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: ${{ steps.meta.outputs.tag }}
           body: |
-            Signed APK built by `android/build-apk.sh` (${{ steps.meta.outputs.channel }} channel)
-            from commit ${{ github.sha }}.
-
-            SHA-256: `${{ steps.apk.outputs.sha256 }}`
+            ${{ env.HAS_APK == 'true' && format('Signed APK built by `android/build-apk.sh` ({0} channel) from commit {1}.{2}{3}SHA-256: `{4}`', env.CHANNEL_NAME, github.sha, '', '', env.APK_SHA) || format('Source-only release ({0} channel) from commit {1}.{2}{3}The Android APK is not attached on this run — the repo''s signing secrets (KEYSTORE_BASE64 / KS_PASS) are not configured yet, so the workflow skipped the APK build. Everything else is installable from source: `bun install` → `bun run dev`.', env.CHANNEL_NAME, github.sha, '', '') }}
           prerelease: ${{ steps.meta.outputs.channel == 'beta' }}
           make_latest: ${{ steps.meta.outputs.channel == 'stable' }}
           files: ${{ steps.apk.outputs.path }}
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: ${{ env.HAS_APK == 'true' }}

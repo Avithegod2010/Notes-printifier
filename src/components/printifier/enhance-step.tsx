@@ -53,7 +53,6 @@ import { getDocBuffer, usePrintifyStore } from '@/lib/printify-store';
 import { useT } from '@/lib/i18n';
 import { PresetsCard } from './presets-card';
 import { DoctorCard } from './doctor-card';
-import { HAS_SERVER_API } from '@/lib/server-api';
 import { PreviewDialog } from './preview-dialog';
 
 const MODES: ColorMode[] = ['auto', 'invert', 'original', 'grayscale', 'bw'];
@@ -911,7 +910,7 @@ export function EnhanceStep() {
                   <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
                 </div>
 
-                {HAS_SERVER_API && <DoctorCard />}
+                <DoctorCard />
               </div>
             </CollapsibleContent>
           </Collapsible>

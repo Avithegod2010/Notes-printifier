@@ -8,6 +8,8 @@ import { usePrintifyStore } from '@/lib/printify-store';
 import { useT, useLangStore } from '@/lib/i18n';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { HAS_SERVER_API } from '@/lib/server-api';
+import { showServerFeature } from '@/components/printifier/server-feature';
 
 /**
  * DoctorCard — "AI Print Doctor".
@@ -52,6 +54,12 @@ export function DoctorCard() {
 
   const ask = useCallback(async () => {
     if (busy) return;
+    // Static build (GitHub Pages / APK): no server behind the AI doctor —
+    // explain instead of firing a doomed request.
+    if (!HAS_SERVER_API) {
+      showServerFeature(t('dr.title'));
+      return;
+    }
     setBusy(true);
     setApplied(false);
     const id = ++reqId.current;

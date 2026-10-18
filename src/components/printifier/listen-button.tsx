@@ -7,6 +7,8 @@ import { usePrintifyStore } from '@/lib/printify-store';
 import { useT, useLangStore } from '@/lib/i18n';
 import { estimateSavings, loadCostProfile } from '@/lib/savings';
 import { toast } from '@/hooks/use-toast';
+import { HAS_SERVER_API } from '@/lib/server-api';
+import { showServerFeature } from '@/components/printifier/server-feature';
 
 /**
  * ListenButton — spoken receipt.
@@ -39,6 +41,12 @@ export function ListenButton() {
 
   const speak = useCallback(async () => {
     if (!result) return;
+
+    // Static build (GitHub Pages / APK): no server behind TTS — explain instead.
+    if (!HAS_SERVER_API) {
+      showServerFeature(t('rs.listen'));
+      return;
+    }
 
     if (phase === 'playing') {
       audioRef.current?.pause();

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { FileCheck2, Layers, Leaf, PiggyBank } from 'lucide-react';
 import { useT } from '@/lib/i18n';
+import { HAS_SERVER_API } from '@/lib/server-api';
+import { showServerFeature } from '@/components/printifier/server-feature';
 
 interface Stats {
   totalFiles: number;
@@ -14,8 +16,12 @@ interface Stats {
 export function StatsStrip() {
   const t = useT();
   const [stats, setStats] = useState<Stats | null>(null);
+  const needsServer = !HAS_SERVER_API;
 
   useEffect(() => {
+    // Static build (GitHub Pages / APK): no community stats endpoint — the
+    // tiles stay visible and explain themselves on tap instead.
+    if (!HAS_SERVER_API) return;
     let cancelled = false;
     fetch('/api/prints')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('bad status'))))
@@ -67,13 +73,28 @@ export function StatsStrip() {
     },
   ];
 
+  const tap = () => showServerFeature(t('sf.feature.stats'));
+
   return (
     <section aria-label="Community impact" className="mx-auto max-w-3xl px-4 py-14">
       <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
         {items.map((item) => (
           <div
             key={item.label}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center sm:p-6"
+            role={needsServer ? 'button' : undefined}
+            tabIndex={needsServer ? 0 : undefined}
+            onKeyDown={
+              needsServer
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') tap();
+                  }
+                : undefined
+            }
+            onClick={needsServer ? tap : undefined}
+            aria-label={needsServer ? `${item.label} — ${t('sf.whyBtn')}` : undefined}
+            className={`rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center transition-colors sm:p-6 ${
+              needsServer ? 'cursor-pointer hover:border-fuchsia-400/40 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60' : ''
+            }`}
           >
             <item.icon className="mx-auto mb-2 h-5 w-5 text-violet-400" aria-hidden="true" />
             <p className="whitespace-nowrap text-2xl font-extrabold tracking-tight sm:text-3xl">
@@ -82,6 +103,11 @@ export function StatsStrip() {
             <p className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground sm:text-xs">
               {item.label}
             </p>
+            {needsServer && (
+              <p className="mt-1.5 text-[10px] font-medium text-fuchsia-300/80">
+                {t('sf.whyBtn')}
+              </p>
+            )}
           </div>
         ))}
       </div>

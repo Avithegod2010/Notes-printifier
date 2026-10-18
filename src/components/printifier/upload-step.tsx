@@ -34,6 +34,7 @@ import { loadInkStats, type InkStats } from '@/lib/ink-stats';
 import { formatRupees } from '@/lib/savings';
 import { useT } from '@/lib/i18n';
 import { HAS_SERVER_API } from '@/lib/server-api';
+import { showServerFeature } from '@/components/printifier/server-feature';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -79,27 +80,26 @@ export function UploadStep() {
   }, []);
 
   // ---- cloud import (#8) ---------------------------------------------------
-  const [cloudAvailable, setCloudAvailable] = useState(false);
+  // On static builds (GitHub Pages / APK) the section stays visible but the
+  // toggle opens the "needs the server" explainer instead of expanding.
   const [cloudOpen, setCloudOpen] = useState(false);
   const [cloudUrl, setCloudUrl] = useState('');
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // feature-detect: the offline static export / APK doesn't ship /api/import
-    if (!HAS_SERVER_API) return;
-    let dead = false;
-    fetch('/api/cloud-import')
-      .then((r) => {
-        if (!dead && r.ok) setCloudAvailable(true);
-      })
-      .catch(() => undefined);
-    return () => {
-      dead = true;
-    };
-  }, []);
+  const toggleCloud = useCallback(() => {
+    if (!HAS_SERVER_API) {
+      showServerFeature(t('up.cloud'));
+      return;
+    }
+    setCloudOpen((v) => !v);
+  }, [t]);
 
   const importFromCloud = useCallback(async () => {
+    if (!HAS_SERVER_API) {
+      showServerFeature(t('up.cloud'));
+      return;
+    }
     const url = cloudUrl.trim();
     if (!url || cloudBusy) return;
     setCloudBusy(true);
@@ -268,15 +268,15 @@ export function UploadStep() {
         />
       </div>
 
-      {/* Cloud import (#8) — web only (needs the /api/import proxy) */}
-      {cloudAvailable && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between gap-2 text-left"
-            onClick={() => setCloudOpen((v) => !v)}
-            aria-expanded={cloudOpen}
-          >
+      {/* Cloud import (#8) — web only (needs the /api/import proxy);
+          on static builds the toggle opens the needs-server explainer */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left"
+          onClick={toggleCloud}
+          aria-expanded={cloudOpen}
+        >
             <span className="flex items-center gap-2 text-sm font-semibold">
               <Globe className="h-4 w-4 text-violet-300" />
               {t('up.cloud')}
@@ -327,8 +327,7 @@ export function UploadStep() {
               )}
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       {loadError && (
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">

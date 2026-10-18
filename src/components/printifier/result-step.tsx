@@ -57,7 +57,6 @@ import {
 import { listRecentJobs, downloadBlob, type RecentJob } from '@/lib/recent-jobs';
 import { buildReceiptCanvas, receiptCanvasToBlob } from '@/lib/receipt';
 import { ListenButton } from './listen-button';
-import { HAS_SERVER_API } from '@/lib/server-api';
 import { toast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
 
@@ -462,7 +461,7 @@ export function ResultStep() {
           )}
           {t('rs.receipt.btn')}
         </Button>
-        {HAS_SERVER_API && <ListenButton />}
+        <ListenButton />
       </div>
 
       {/* Lifetime impact meter — pure local data, one tap to clear */}
