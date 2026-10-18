@@ -9,9 +9,15 @@ name: Deploy site
 # app (upload → arrange → enhance → layout → download/print/share) works
 # entirely in the browser, so GitHub Pages hosts the full experience.
 
+# Deploys run from the `stable` branch: the repo's `github-pages` environment
+# restricts deployments to that branch (it was seeded when Pages was enabled
+# with stable as the default branch), so `main`-triggered deploys were rejected
+# outright — "Branch main is not allowed to deploy to github-pages". Promotion
+# ritual: `git push origin main:stable --force-with-lease` (the site always
+# shows exactly what the stable branch holds).
 on:
   push:
-    branches: [main]
+    branches: [stable]
   workflow_dispatch:
 
 permissions:
