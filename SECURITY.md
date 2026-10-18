@@ -85,3 +85,16 @@ in `bun.lock`; prior full audit 2026-10-14 via `bun audit`).
   ecosystem** (reads `bun.lock`, override-aware), which should recompute the alert
   set from resolved versions. If any phantom alert lingers after the next scan,
   dismiss it on the Security tab as **"Inaccurate"** with a pointer to this file.
+  Re-verified again on **2026-10-24** (`bun audit` against the refreshed
+  `bun.lock`): unchanged — exactly one finding, the accepted `braces` entry.
+  `braces` 3.0.3 is still the newest upstream release (no fix available).
+- **Dependabot PR policy (2026-10-24):** the five weekly GitHub-Actions bumps
+  (checkout v7, upload-pages-artifact v5, configure-pages v6, codeql-action v4,
+  action-gh-release v3) were merged CI-green. Major-version bumps of runtime
+  libraries (typescript 7, prisma 7, eslint 10, framer-motion 14, lucide-react 1,
+  react-day-picker 10, @tanstack/react-table 9, react-resizable-panels 4) are
+  **deliberately deferred** and now ignored in `.github/dependabot.yml` — the
+  current major lines are advisory-free. In-range minor/patch updates are applied
+  on the main line with the **pinned bun 1.3.14**: Dependabot's newer bun rewrites
+  `bun.lock` to `lockfileVersion: 3`, which the pinned toolchain cannot consume, so
+  its lockfile-editing PRs are closed in favour of local updates.
