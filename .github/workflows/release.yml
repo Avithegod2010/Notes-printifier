@@ -74,7 +74,7 @@ jobs:
             echo "ref=stable" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ steps.meta.outputs.ref }}
