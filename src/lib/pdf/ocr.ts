@@ -87,10 +87,12 @@ export async function ocrComposeItems(
   }
 
   const { createWorker, OEM } = await import('tesseract.js');
+  // GitHub Pages hosts the site under /<repo>/ — prefix self-hosted assets.
+  const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const worker = await createWorker('eng', OEM.LSTM_ONLY, {
-    workerPath: '/tesseract/worker.min.js',
-    corePath: '/tesseract',
-    langPath: '/tesseract',
+    workerPath: `${BASE}/tesseract/worker.min.js`,
+    corePath: `${BASE}/tesseract`,
+    langPath: `${BASE}/tesseract`,
     gzip: true,
     errorHandler: (e) => console.warn('[ocr]', e),
   });

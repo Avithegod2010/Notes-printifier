@@ -15,13 +15,18 @@
 
 const CACHE_NAME = 'printifier-v3';
 
+// GitHub Pages hosts project sites under /<repo>/ — derive the base from the
+// registration scope so the same file works at the root (dev, APK) and under
+// a subpath. On a root deployment this is ''.
+const BASE = new URL(self.registration.scope).pathname.replace(/\/+$/, '');
+
 const PRECACHE_URLS = [
-  '/',
-  '/manifest.webmanifest',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-maskable-512.png',
-  '/icons/apple-touch-icon.png',
+  `${BASE}/`,
+  `${BASE}/manifest.webmanifest`,
+  `${BASE}/icons/icon-192.png`,
+  `${BASE}/icons/icon-512.png`,
+  `${BASE}/icons/icon-maskable-512.png`,
+  `${BASE}/icons/apple-touch-icon.png`,
 ];
 
 // Same-origin static assets eligible for stale-while-revalidate.
@@ -104,7 +109,8 @@ async function networkFirst(request) {
     return fresh;
   } catch (err) {
     try {
-      const cached = (await fromCache(request)) || (await fromCache('/'));
+      const cached =
+        (await fromCache(request)) || (await fromCache(`${BASE}/`));
       if (cached) return cached;
     } catch (err2) {
       // Fall through to the offline response.
@@ -142,18 +148,24 @@ self.addEventListener('fetch', (event) => {
     // Same-origin GET only.
     if (url.origin !== self.location.origin) return;
 
+    // Compare below the deployment base (GitHub Pages /<repo>/ prefix).
+    const path =
+      BASE && url.pathname.startsWith(`${BASE}/`)
+        ? url.pathname.slice(BASE.length)
+        : url.pathname;
+
     // NEVER intercept Next.js build/HMR assets (dev would break).
-    if (url.pathname.startsWith('/_next/')) return;
+    if (path.startsWith('/_next/')) return;
 
     // API routes must always hit the network.
-    if (url.pathname.startsWith('/api/')) return;
+    if (path.startsWith('/api/')) return;
 
     if (request.mode === 'navigate') {
       event.respondWith(networkFirst(request));
       return;
     }
 
-    if (SWR_PATH_PATTERNS.some((pattern) => pattern.test(url.pathname))) {
+    if (SWR_PATH_PATTERNS.some((pattern) => pattern.test(path))) {
       // Kick off the background refresh synchronously so it survives.
       const refresh = updateCache(request);
       try {

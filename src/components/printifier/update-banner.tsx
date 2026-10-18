@@ -22,7 +22,7 @@ export function UpdateBanner() {
     if (typeof window === 'undefined') return;
     if (window.sessionStorage.getItem('printifier.updateDismissed') === APP_VERSION) return;
     const t1 = setTimeout(() => {
-      fetch(`/version.json?_=${Date.now()}`, { cache: 'no-store' })
+      fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/version.json?_=${Date.now()}`, { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((data: { version?: string } | null) => {
           const v = data?.version;

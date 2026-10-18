@@ -10,14 +10,17 @@ type PdfjsModule = typeof import('pdfjs-dist');
  * and JBIG2 images silently fail to decode and their pages render blank —
  * the wasm bundles live in public/pdfjs/wasm (copied from pdfjs-dist).
  */
-export const PDF_WASM_URL = '/pdfjs/wasm/';
+/** GitHub Pages subpath prefix ('' on root deployments / the APK). */
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
+export const PDF_WASM_URL = `${BASE}/pdfjs/wasm/`;
 
 let cached: PdfjsModule | null = null;
 
 export async function getPdfjs(): Promise<PdfjsModule> {
   if (!cached) {
     const lib = await import('pdfjs-dist');
-    lib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+    lib.GlobalWorkerOptions.workerSrc = `${BASE}/pdf.worker.min.mjs`;
     cached = lib;
   }
   return cached;

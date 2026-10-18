@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// GitHub Pages project sites live under /<repo>/ — prefix public assets.
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   title: "Notes Printifier — Make Your Notes Print-Ready",
   description:
@@ -28,10 +31,10 @@ export const metadata: Metadata = {
     "student tools",
   ],
   authors: [{ name: "Notes Printifier" }],
-  manifest: "/manifest.webmanifest",
+  manifest: `${BASE}/manifest.webmanifest`,
   icons: {
-    icon: "/logo.svg",
-    apple: "/icons/apple-touch-icon.png",
+    icon: `${BASE}/logo.svg`,
+    apple: `${BASE}/icons/apple-touch-icon.png`,
   },
   appleWebApp: {
     capable: true,

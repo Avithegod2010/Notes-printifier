@@ -33,6 +33,7 @@ import { treesFor } from '@/lib/ink-stats';
 import { loadInkStats, type InkStats } from '@/lib/ink-stats';
 import { formatRupees } from '@/lib/savings';
 import { useT } from '@/lib/i18n';
+import { HAS_SERVER_API } from '@/lib/server-api';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -86,6 +87,7 @@ export function UploadStep() {
 
   useEffect(() => {
     // feature-detect: the offline static export / APK doesn't ship /api/import
+    if (!HAS_SERVER_API) return;
     let dead = false;
     fetch('/api/cloud-import')
       .then((r) => {
@@ -163,7 +165,9 @@ export function UploadStep() {
 
   const loadSample = useCallback(async () => {
     try {
-      const res = await fetch('/sample-lecture.pdf');
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/sample-lecture.pdf`,
+      );
       const blob = await res.blob();
       const file = new File([blob], 'sample-lecture-notes.pdf', {
         type: 'application/pdf',

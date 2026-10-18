@@ -1,0 +1,67 @@
+name: Deploy site
+
+# Builds the fully static export (no server, no DB — the whole PDF pipeline
+# is client-side) and publishes it to GitHub Pages under /<repo>/.
+#
+# Server-only features (cloud preset links, QR share, cloud import, community
+# stats, AI doctor / voice / TTS) are compiled out via NEXT_PUBLIC_STATIC=1 —
+# they need the Next.js server that static hosting cannot provide. The core
+# app (upload → arrange → enhance → layout → download/print/share) works
+# entirely in the browser, so GitHub Pages hosts the full experience.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build static export (repo-subpath aware)
+        env:
+          STATIC_EXPORT: "1"
+          NEXT_PUBLIC_STATIC: "1"
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+        run: bash scripts/static-export.sh
+
+      - name: Disable Jekyll processing (_next/ must be served as-is)
+        run: touch .next-static/.nojekyll
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .next-static
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

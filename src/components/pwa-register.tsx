@@ -22,9 +22,11 @@ export function PWARegister() {
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
     if (!isHttps && !isLocal) return;
 
+    // GitHub Pages serves project sites under /<repo>/ — respect basePath.
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
     const register = () => {
       navigator.serviceWorker
-        .register('/sw.js')
+        .register(`${base}/sw.js`)
         .catch((err: unknown) =>
           console.debug('[pwa] service worker registration skipped:', err),
         );

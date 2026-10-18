@@ -32,7 +32,8 @@ import { PDF_WASM_URL } from './pdfjs';
 // try that first (subworkers are supported everywhere modern); if the
 // environment refuses, we fall back to the fake-worker (main-thread-of-worker)
 // mode by importing the worker bundle directly.
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE}/pdf.worker.min.mjs`;
 let fakeWorkerReady = false;
 
 async function ensureParser(): Promise<void> {

@@ -13,9 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getPdfjs, PDF_WASM_URL, type PdfDocument } from '@/lib/pdf/pdfjs';
 
-const BEFORE_URL = '/sample-lecture.pdf';
+/** Public assets must respect the GitHub Pages subpath (basePath). */
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+const BEFORE_URL = `${BASE}/sample-lecture.pdf`;
 const BEFORE_NAME = 'original-lecture.pdf';
-const AFTER_URL = '/sample-printified.pdf';
+const AFTER_URL = `${BASE}/sample-printified.pdf`;
 const AFTER_NAME = 'lecture-printified.pdf';
 /** Preview render width in CSS px (canvases are dpr-aware). */
 const PREVIEW_WIDTH = 300;

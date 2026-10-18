@@ -8,6 +8,15 @@ import type { NextConfig } from "next";
 const isStatic = process.env.STATIC_EXPORT === "1";
 
 /**
+ * GitHub Pages serves project sites under /<repo>/ — set
+ * NEXT_PUBLIC_BASE_PATH=/Notes-printifier for that build. The APK export
+ * leaves it unset (assets stay at the root inside the WebView). NEXT_PUBLIC_*
+ * values are inlined into client bundles, so hand-built public URLs must be
+ * prefixed with `process.env.NEXT_PUBLIC_BASE_PATH ?? ''`.
+ */
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || undefined;
+
+/**
  * Baseline hardening headers (server runs only — static export can't set them;
  * the WebView APK ships no server anyway).
  *  - CSP: self-only defaults; inline styles/scripts are unavoidable with Next;
@@ -56,6 +65,7 @@ const nextConfig: NextConfig = {
           return [{ source: "/:path*", headers: securityHeaders }];
         },
       }),
+  ...(basePath ? { basePath } : {}),
   reactStrictMode: false,
 };
 

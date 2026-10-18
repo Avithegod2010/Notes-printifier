@@ -35,6 +35,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSharedPdf } from '@/hooks/use-shared-pdf';
+import { HAS_SERVER_API } from '@/lib/server-api';
 import {
   Accordion,
   AccordionContent,
@@ -741,7 +742,7 @@ export function PrintifierApp() {
     try {
       const url = new URL(window.location.href);
       const pid = url.searchParams.get('p');
-      if (pid && /^[A-HJ-NP-Z2-9]{8}$/i.test(pid)) {
+      if (pid && HAS_SERVER_API && /^[A-HJ-NP-Z2-9]{8}$/i.test(pid)) {
         url.searchParams.delete('p');
         window.history.replaceState({}, '', url.toString());
         void fetch(`/api/presets/${encodeURIComponent(pid.toUpperCase())}`)
@@ -787,7 +788,7 @@ export function PrintifierApp() {
           <Reveal>
             <div className="holo-ring rounded-3xl border border-white/10 bg-white/[0.02] p-4 shadow-2xl shadow-black/40 ring-1 ring-violet-500/10 sm:p-6 lg:p-8">
               <Stepper />
-              <VoiceBar />
+              {HAS_SERVER_API && <VoiceBar />}
               {step === 0 && <UploadStep />}
               {step === 1 && <PagesStep />}
               {step === 2 && <EnhanceStep />}
@@ -803,7 +804,7 @@ export function PrintifierApp() {
         <ImpactDashboard />
         <UseCases />
         <FaqSection />
-        <StatsStrip />
+        {HAS_SERVER_API && <StatsStrip />}
       </main>
       <Footer />
       <BackToTop />
