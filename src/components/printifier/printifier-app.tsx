@@ -65,6 +65,7 @@ import { Reveal } from './reveal';
 import { ExampleDialog } from './example-dialog';
 import { UpdateBanner } from './update-banner';
 import { ScrollProgress, BackToTop } from './site-chrome';
+import { ScrollSlider } from './scroll-slider';
 import { SectionHead } from './section-head';
 import { DynamicBackground } from './dynamic-background';
 import { ThemePicker } from './theme-picker';
@@ -135,7 +136,7 @@ function Logo() {
         <Printer className="h-4.5 w-4.5 text-white" aria-hidden="true" />
       </div>
       <div className="leading-tight">
-        <p className="text-[15px] font-extrabold tracking-tight sm:text-lg">Notes Printifier</p>
+        <p className="whitespace-nowrap text-sm font-extrabold tracking-tight sm:text-base lg:text-lg">Notes Printifier</p>
         <p className="hidden text-[11px] text-muted-foreground sm:block">
           Save paper. Save ink. Print smarter.
         </p>
@@ -254,7 +255,7 @@ function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <PaletteButton />
           <InstallButton />
           <ThemePicker />
@@ -636,7 +637,7 @@ function FaqSection() {
 function Footer() {
   const t = useT();
   return (
-    <footer className="mt-auto border-t border-white/5 bg-white/[0.015] pt-10 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <footer className="mt-auto border-t border-white/5 bg-white/[0.015] pt-10 pb-22 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.8fr_1.3fr]">
         {/* brand */}
         <div>
@@ -787,8 +788,9 @@ export function PrintifierApp() {
         {t('skip')}
       </a>
       <ScrollProgress />
+      <ScrollSlider />
       <Header />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <Hero />
 
         <section id="app" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-8">
