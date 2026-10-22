@@ -48,6 +48,9 @@ export interface LayoutSettings {
   customDpi?: number | null;
   /** Optional small label printed bottom-left of every sheet. */
   footerLabel?: string;
+  /** Name stamp — ownership mark printed bottom-right of every sheet
+   *  (the advertised "Name Stamp" feature). Empty/undefined = off. */
+  nameStamp?: string;
   /** Prepend a cover page listing the source documents (batch handout). */
   coverSheet?: boolean;
   /** Soft cap for the final PDF size (MB). 0/null = off. The store lowers
@@ -70,6 +73,7 @@ export const defaultLayout: LayoutSettings = {
   customDpi: null,
   coverSheet: false,
   sizeTargetMB: null,
+  nameStamp: '',
 };
 
 export interface ComposeItem {
@@ -457,6 +461,19 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
         size: 8,
         font,
         color: textColor,
+      });
+    }
+    if (o.layout.nameStamp && o.layout.nameStamp.trim()) {
+      const stamp = o.layout.nameStamp.trim().slice(0, 40);
+      const size = 8.5;
+      const tw = font.widthOfTextAtSize(stamp, size);
+      page.drawText(stamp, {
+        x: pw - marginX - tw,
+        y: 12,
+        size,
+        font,
+        color: textColor,
+        opacity: 0.85,
       });
     }
   };

@@ -12,6 +12,7 @@ import {
   Printer,
   SlidersHorizontal,
   Sparkles,
+  Stamp,
   Target,
   Type,
 } from 'lucide-react';
@@ -311,7 +312,8 @@ export function LayoutStep() {
     (!!layout.coverSheet ? 1 : 0) +
     (layout.duplexPad ? 1 : 0) +
     (layout.booklet ? 1 : 0) +
-    ((layout.footerLabel ?? '').trim() ? 1 : 0);
+    ((layout.footerLabel ?? '').trim() ? 1 : 0) +
+    ((layout.nameStamp ?? '').trim() ? 1 : 0);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
@@ -702,6 +704,30 @@ export function LayoutStep() {
                   />
                   <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.footerNote')}</p>
                 </div>
+              </div>
+
+              {/* Name stamp — first-class ownership mark (feat.wm) */}
+              <div
+                className={cn(
+                  'rounded-xl border p-4 transition-colors',
+                  (layout.nameStamp ?? '').trim()
+                    ? 'border-violet-500/50 bg-violet-500/10'
+                    : 'border-white/10 bg-white/[0.02]',
+                )}
+              >
+                <div className="mb-2 flex items-center gap-2">
+                  <Stamp className="h-4 w-4 text-violet-300" />
+                  <p className="text-sm font-medium">{t('feat.wm.t')}</p>
+                  <span className="text-xs text-muted-foreground">{t('ly.stampOpt')}</span>
+                </div>
+                <Input
+                  value={layout.nameStamp ?? ''}
+                  onChange={(e) => setLayout({ nameStamp: e.target.value.slice(0, 40) })}
+                  placeholder={t('ly.stampPh')}
+                  maxLength={40}
+                  aria-label="Name stamp printed on every sheet"
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.stampNote')}</p>
               </div>
             </div>
           </CollapsibleContent>

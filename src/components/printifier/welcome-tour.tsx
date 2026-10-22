@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
@@ -52,6 +52,11 @@ const THEME_NAME_KEY: Record<ThemeId, string> = {
  * (live theme swatches) → a real before/after example → try it yourself.
  * Auto-opens once per device (localStorage), replayable via the ⌘K palette
  * or the `printifier:tour` window event.
+ *
+ * Animation: the card springs in, each step's content staggers up item by
+ * item, the icon pops and then gently floats, and the step-2 example's
+ * bright cells pop in. Everything collapses to simple fades (or nothing)
+ * when the user prefers reduced motion.
  */
 export function WelcomeTour() {
   const t = useT();
@@ -145,312 +150,441 @@ export function WelcomeTour() {
     setExampleOpen(true);
   };
 
+  /* ── shared animation variants (motion-safe vs reduced) ── */
+  const overlayV: Variants = reduced
+    ? { hidden: { opacity: 0 }, show: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { duration: 0.25 } },
+        exit: { opacity: 0, transition: { duration: 0.2 } },
+      };
+  const cardV: Variants = reduced
+    ? { hidden: { opacity: 0 }, show: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        hidden: { opacity: 0, scale: 0.88, y: 26 },
+        show: {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          transition: { type: 'spring', stiffness: 280, damping: 24 },
+        },
+        exit: { opacity: 0, scale: 0.94, y: 10, transition: { duration: 0.18 } },
+      };
+  /** Each step: children stagger up. */
+  const stepV: Variants = reduced
+    ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.2 } } }
+    : {
+        hidden: {},
+        show: { transition: { staggerChildren: 0.075, delayChildren: 0.04 } },
+      };
+  const itemV: Variants = reduced
+    ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.2 } } }
+    : {
+        hidden: { opacity: 0, y: 14 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: 'easeOut' } },
+      };
+  /** Nested stagger groups (badges, swatches, list rows). */
+  const groupV: Variants = reduced
+    ? { hidden: {}, show: {} }
+    : { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+  const popV: Variants = reduced
+    ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.2 } } }
+    : {
+        hidden: { opacity: 0, scale: 0.6 },
+        show: {
+          opacity: 1,
+          scale: 1,
+          transition: { type: 'spring', stiffness: 380, damping: 20 },
+        },
+      };
+
   return (
     <>
-      {open && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm"
-          onClick={close}
-          role="presentation"
-        >
-          <div
-            ref={cardRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('tour.aria')}
-            onClick={(e) => e.stopPropagation()}
-            className="holo-ring relative w-full max-w-md rounded-3xl border border-white/12 bg-popover/95 p-6 shadow-2xl shadow-black/60 outline-none"
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="tour-overlay"
+            variants={overlayV}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm"
+            onClick={close}
+            role="presentation"
           >
-            <button
-              type="button"
-              onClick={close}
-              className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+            <motion.div
+              ref={cardRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('tour.aria')}
+              variants={cardV}
+              onClick={(e) => e.stopPropagation()}
+              className="holo-ring relative w-full max-w-md rounded-3xl border border-white/12 bg-popover/95 p-6 shadow-2xl shadow-black/60 outline-none"
             >
-              {t('tour.skip')}
-            </button>
-
-            <p className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              {t('tour.stepN', { n: step + 1, m: STEP_COUNT })}
-            </p>
-
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={step}
-                initial={reduced ? false : { opacity: 0, x: 26 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={reduced ? undefined : { opacity: 0, x: -26 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-                {step === 0 && (
-                  <div>
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/30">
-                      <Printer className="h-7 w-7 text-white" />
-                    </div>
-                    <h2 className="text-xl font-extrabold tracking-tight">
-                      {t('tour.s1.t')}
-                    </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {t('tour.s1.b')}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {(
-                        [
-                          { icon: Layers, k: 'tour.s1.c1' },
-                          { icon: Droplets, k: 'tour.s1.c2' },
-                          { icon: BookOpenCheck, k: 'tour.s1.c3' },
-                          { icon: Lock, k: 'tour.s1.c4' },
-                        ] as const
-                      ).map(({ icon: Icon, k }) => (
-                        <Badge
-                          key={k}
-                          variant="outline"
-                          className="border-white/15 bg-white/5 font-normal"
-                        >
-                          <Icon className="mr-1 h-3 w-3 text-primary" />
-                          {t(k)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {step === 1 && (
-                  <div>
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/30">
-                      <Palette className="h-7 w-7 text-white" />
-                    </div>
-                    <h2 className="text-xl font-extrabold tracking-tight">
-                      {t('tour.s2.t')}
-                    </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {t('tour.s2.b')}
-                    </p>
-                    <div
-                      className="mt-4 grid grid-cols-6 gap-2"
-                      role="group"
-                      aria-label={t('tour.s2.hint')}
-                    >
-                      {THEMES.map((th) => (
-                        <button
-                          key={th.id}
-                          type="button"
-                          title={t(THEME_NAME_KEY[th.id])}
-                          aria-label={t(THEME_NAME_KEY[th.id])}
-                          aria-pressed={themeId === th.id}
-                          onClick={() => setTheme(th.id)}
-                          className={cn(
-                            'relative mx-auto h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                            themeId === th.id
-                              ? 'border-white/70 shadow-lg'
-                              : 'border-white/20',
-                          )}
-                          style={{
-                            background: `linear-gradient(135deg, ${th.swatch[0]} 0% 55%, ${th.swatch[2]} 55% 100%)`,
-                          }}
-                        >
-                          {themeId === th.id && (
-                            <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-md" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-center text-xs text-muted-foreground">
-                      {t('tour.s2.hint')}
-                    </p>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div>
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/30">
-                      <Play className="h-7 w-7 text-white" />
-                    </div>
-                    <h2 className="text-xl font-extrabold tracking-tight">
-                      {t('tour.s3.t')}
-                    </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {t('tour.s3.b')}
-                    </p>
-
-                    {/* mini before/after mock of the bundled sample */}
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-white/10 p-2">
-                        <div className="aspect-[4/3] w-full rounded-md bg-zinc-900 p-2.5">
-                          <div className="h-1.5 w-1/2 rounded bg-white/30" />
-                          <div className="mt-2 h-1 w-3/4 rounded bg-white/15" />
-                          <div className="mt-1 h-1 w-2/3 rounded bg-white/10" />
-                          <div className="mt-1 h-1 w-1/2 rounded bg-white/10" />
-                          <div className="mt-2.5 flex items-center gap-1.5">
-                            <div className="h-4 w-4 rounded-full border border-white/20" />
-                            <div className="h-1 w-8 rounded bg-white/10" />
-                          </div>
-                        </div>
-                        <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-                          {t('tour.s3.before', { n: DEMO_BEFORE })}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/[0.05] p-2">
-                        <div className="aspect-[4/3] w-full rounded-md bg-white p-2">
-                          <div className="grid grid-cols-3 gap-1">
-                            {[0, 1, 2].map((i) => (
-                              <div
-                                key={i}
-                                className="aspect-[4/3] rounded-[3px] bg-zinc-800 p-1"
-                              >
-                                <div className="h-0.5 w-3/4 rounded bg-white/40" />
-                                <div className="mt-0.5 h-0.5 w-1/2 rounded bg-white/20" />
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-1.5 h-0.5 w-3/4 rounded bg-zinc-300" />
-                          <div className="mt-1 h-0.5 w-1/2 rounded bg-zinc-200" />
-                        </div>
-                        <p className="mt-1.5 text-center text-[10px] text-emerald-300">
-                          {t('tour.s3.after', { n: DEMO_AFTER })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                      <Badge
-                        variant="outline"
-                        className="border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
-                      >
-                        <Check className="mr-1 h-3 w-3" />
-                        {t('tour.s3.pages', { n: DEMO_PAGES_SAVED })}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
-                      >
-                        <Check className="mr-1 h-3 w-3" />
-                        {t('tour.s3.ink')}
-                      </Badge>
-                    </div>
-
-                    <div className="mt-4 flex flex-col gap-2">
-                      <Button
-                        type="button"
-                        onClick={loadSampleAndClose}
-                        className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-fuchsia-500"
-                      >
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {t('tour.s3.load')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={browseFullExample}
-                        className="text-muted-foreground"
-                      >
-                        {t('tour.s3.full')}
-                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div>
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/30">
-                      <SlidersHorizontal className="h-7 w-7 text-white" />
-                    </div>
-                    <h2 className="text-xl font-extrabold tracking-tight">
-                      {t('tour.s4.t')}
-                    </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {t('tour.s4.b')}
-                    </p>
-                    <ol className="mt-4 space-y-2">
-                      {(
-                        [
-                          { icon: FileUp, k: 'tour.s4.s1' },
-                          { icon: SlidersHorizontal, k: 'tour.s4.s2' },
-                          { icon: Printer, k: 'tour.s4.s3' },
-                        ] as const
-                      ).map(({ icon: Icon, k }, i) => (
-                        <li key={k} className="flex items-center gap-2.5 text-sm">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                            <Icon className="h-3.5 w-3.5" />
-                          </span>
-                          <span>
-                            <span className="mr-1.5 font-semibold text-primary">
-                              {i + 1}.
-                            </span>
-                            {t(k)}
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
-                    <div className="mt-5 flex flex-col gap-2">
-                      <Button
-                        type="button"
-                        onClick={tryYourself}
-                        className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-fuchsia-500"
-                      >
-                        {t('tour.s4.cta')}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={loadSampleAndClose}
-                        className="text-muted-foreground"
-                      >
-                        {t('tour.s4.sample')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-
-            {/* footer: dots + nav */}
-            <div className="mt-6 flex items-center justify-between gap-2">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => goTo(step - 1)}
-                disabled={step === 0}
-                className="text-muted-foreground disabled:opacity-0"
+                onClick={close}
+                className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
               >
-                <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-                {t('tour.back')}
-              </Button>
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: STEP_COUNT }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    aria-label={t('tour.stepN', { n: i + 1, m: STEP_COUNT })}
-                    onClick={() => goTo(i)}
-                    className={cn(
-                      'h-1.5 rounded-full transition-all duration-300',
-                      i === step ? 'w-5 bg-primary' : 'w-1.5 bg-white/25 hover:bg-white/45',
-                    )}
-                  />
-                ))}
-              </div>
-              {step < STEP_COUNT - 1 ? (
-                <Button type="button" size="sm" onClick={() => goTo(step + 1)}>
-                  {t('tour.next')}
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                {t('tour.skip')}
+              </button>
+
+              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {t('tour.stepN', { n: step + 1, m: STEP_COUNT })}
+              </p>
+
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={step}
+                  variants={stepV}
+                  initial="hidden"
+                  animate="show"
+                  exit={
+                    reduced
+                      ? { opacity: 0, transition: { duration: 0.12 } }
+                      : { opacity: 0, x: -26, transition: { duration: 0.18, ease: 'easeIn' } }
+                  }
+                >
+                  {step === 0 && (
+                    <div>
+                      <TourIcon icon={Printer} variants={popV} reduce={reduced} />
+                      <motion.h2
+                        variants={itemV}
+                        className="text-xl font-extrabold tracking-tight"
+                      >
+                        {t('tour.s1.t')}
+                      </motion.h2>
+                      <motion.p
+                        variants={itemV}
+                        className="mt-2 text-sm leading-relaxed text-muted-foreground"
+                      >
+                        {t('tour.s1.b')}
+                      </motion.p>
+                      <motion.div
+                        variants={groupV}
+                        className="mt-4 flex flex-wrap gap-1.5"
+                      >
+                        {(
+                          [
+                            { icon: Layers, k: 'tour.s1.c1' },
+                            { icon: Droplets, k: 'tour.s1.c2' },
+                            { icon: BookOpenCheck, k: 'tour.s1.c3' },
+                            { icon: Lock, k: 'tour.s1.c4' },
+                          ] as const
+                        ).map(({ icon: Icon, k }) => (
+                          <motion.div key={k} variants={popV}>
+                            <Badge
+                              variant="outline"
+                              className="border-white/15 bg-white/5 font-normal"
+                            >
+                              <Icon className="mr-1 h-3 w-3 text-primary" />
+                              {t(k)}
+                            </Badge>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {step === 1 && (
+                    <div>
+                      <TourIcon icon={Palette} variants={popV} reduce={reduced} />
+                      <motion.h2
+                        variants={itemV}
+                        className="text-xl font-extrabold tracking-tight"
+                      >
+                        {t('tour.s2.t')}
+                      </motion.h2>
+                      <motion.p
+                        variants={itemV}
+                        className="mt-2 text-sm leading-relaxed text-muted-foreground"
+                      >
+                        {t('tour.s2.b')}
+                      </motion.p>
+                      <motion.div
+                        variants={groupV}
+                        className="mt-4 grid grid-cols-6 gap-2"
+                        role="group"
+                        aria-label={t('tour.s2.hint')}
+                      >
+                        {THEMES.map((th) => (
+                          <motion.button
+                            key={th.id}
+                            variants={popV}
+                            type="button"
+                            title={t(THEME_NAME_KEY[th.id])}
+                            aria-label={t(THEME_NAME_KEY[th.id])}
+                            aria-pressed={themeId === th.id}
+                            onClick={() => setTheme(th.id)}
+                            className={cn(
+                              'relative mx-auto h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                              themeId === th.id
+                                ? 'border-white/70 shadow-lg'
+                                : 'border-white/20',
+                            )}
+                            style={{
+                              background: `linear-gradient(135deg, ${th.swatch[0]} 0% 55%, ${th.swatch[2]} 55% 100%)`,
+                            }}
+                          >
+                            {themeId === th.id && (
+                              <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-md" />
+                            )}
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                      <motion.p
+                        variants={itemV}
+                        className="mt-3 text-center text-xs text-muted-foreground"
+                      >
+                        {t('tour.s2.hint')}
+                      </motion.p>
+                    </div>
+                  )}
+
+                  {step === 2 && (
+                    <div>
+                      <TourIcon icon={Play} variants={popV} reduce={reduced} />
+                      <motion.h2
+                        variants={itemV}
+                        className="text-xl font-extrabold tracking-tight"
+                      >
+                        {t('tour.s3.t')}
+                      </motion.h2>
+                      <motion.p
+                        variants={itemV}
+                        className="mt-2 text-sm leading-relaxed text-muted-foreground"
+                      >
+                        {t('tour.s3.b')}
+                      </motion.p>
+
+                      {/* mini before/after mock of the bundled sample */}
+                      <motion.div variants={groupV} className="mt-4 grid grid-cols-2 gap-3">
+                        <motion.div
+                          variants={itemV}
+                          className="rounded-xl border border-white/10 p-2"
+                        >
+                          <div className="aspect-[4/3] w-full rounded-md bg-zinc-900 p-2.5">
+                            <div className="h-1.5 w-1/2 rounded bg-white/30" />
+                            <div className="mt-2 h-1 w-3/4 rounded bg-white/15" />
+                            <div className="mt-1 h-1 w-2/3 rounded bg-white/10" />
+                            <div className="mt-1 h-1 w-1/2 rounded bg-white/10" />
+                            <div className="mt-2.5 flex items-center gap-1.5">
+                              <div className="h-4 w-4 rounded-full border border-white/20" />
+                              <div className="h-1 w-8 rounded bg-white/10" />
+                            </div>
+                          </div>
+                          <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+                            {t('tour.s3.before', { n: DEMO_BEFORE })}
+                          </p>
+                        </motion.div>
+                        <motion.div
+                          variants={itemV}
+                          className="rounded-xl border border-emerald-400/25 bg-emerald-500/[0.05] p-2"
+                        >
+                          <div className="aspect-[4/3] w-full rounded-md bg-white p-2">
+                            <motion.div variants={groupV} className="grid grid-cols-3 gap-1">
+                              {[0, 1, 2].map((i) => (
+                                <motion.div
+                                  key={i}
+                                  variants={popV}
+                                  className="aspect-[4/3] rounded-[3px] bg-zinc-800 p-1"
+                                >
+                                  <div className="h-0.5 w-3/4 rounded bg-white/40" />
+                                  <div className="mt-0.5 h-0.5 w-1/2 rounded bg-white/20" />
+                                </motion.div>
+                              ))}
+                            </motion.div>
+                            <div className="mt-1.5 h-0.5 w-3/4 rounded bg-zinc-300" />
+                            <div className="mt-1 h-0.5 w-1/2 rounded bg-zinc-200" />
+                          </div>
+                          <p className="mt-1.5 text-center text-[10px] text-emerald-300">
+                            {t('tour.s3.after', { n: DEMO_AFTER })}
+                          </p>
+                        </motion.div>
+                      </motion.div>
+                      <motion.div
+                        variants={groupV}
+                        className="mt-3 flex flex-wrap justify-center gap-1.5"
+                      >
+                        <motion.div variants={popV}>
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
+                          >
+                            <Check className="mr-1 h-3 w-3" />
+                            {t('tour.s3.pages', { n: DEMO_PAGES_SAVED })}
+                          </Badge>
+                        </motion.div>
+                        <motion.div variants={popV}>
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
+                          >
+                            <Check className="mr-1 h-3 w-3" />
+                            {t('tour.s3.ink')}
+                          </Badge>
+                        </motion.div>
+                      </motion.div>
+
+                      <motion.div variants={itemV} className="mt-4 flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          onClick={loadSampleAndClose}
+                          className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-fuchsia-500"
+                        >
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          {t('tour.s3.load')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={browseFullExample}
+                          className="text-muted-foreground"
+                        >
+                          {t('tour.s3.full')}
+                          <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                        </Button>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {step === 3 && (
+                    <div>
+                      <TourIcon icon={SlidersHorizontal} variants={popV} reduce={reduced} />
+                      <motion.h2
+                        variants={itemV}
+                        className="text-xl font-extrabold tracking-tight"
+                      >
+                        {t('tour.s4.t')}
+                      </motion.h2>
+                      <motion.p
+                        variants={itemV}
+                        className="mt-2 text-sm leading-relaxed text-muted-foreground"
+                      >
+                        {t('tour.s4.b')}
+                      </motion.p>
+                      <motion.ol variants={groupV} className="mt-4 space-y-2">
+                        {(
+                          [
+                            { icon: FileUp, k: 'tour.s4.s1' },
+                            { icon: SlidersHorizontal, k: 'tour.s4.s2' },
+                            { icon: Printer, k: 'tour.s4.s3' },
+                          ] as const
+                        ).map(({ icon: Icon, k }, i) => (
+                          <motion.li
+                            key={k}
+                            variants={itemV}
+                            className="flex items-center gap-2.5 text-sm"
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                              <Icon className="h-3.5 w-3.5" />
+                            </span>
+                            <span>
+                              <span className="mr-1.5 font-semibold text-primary">
+                                {i + 1}.
+                              </span>
+                              {t(k)}
+                            </span>
+                          </motion.li>
+                        ))}
+                      </motion.ol>
+                      <motion.div variants={itemV} className="mt-5 flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          onClick={tryYourself}
+                          className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-fuchsia-500"
+                        >
+                          {t('tour.s4.cta')}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={loadSampleAndClose}
+                          className="text-muted-foreground"
+                        >
+                          {t('tour.s4.sample')}
+                        </Button>
+                      </motion.div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* footer: dots + nav */}
+              <div className="mt-6 flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => goTo(step - 1)}
+                  disabled={step === 0}
+                  className="text-muted-foreground disabled:opacity-0"
+                >
+                  <ArrowLeft className="mr-1 h-3.5 w-3.5" />
+                  {t('tour.back')}
                 </Button>
-              ) : (
-                <span className="w-[52px]" aria-hidden />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: STEP_COUNT }, (_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      aria-label={t('tour.stepN', { n: i + 1, m: STEP_COUNT })}
+                      onClick={() => goTo(i)}
+                      className={cn(
+                        'h-1.5 rounded-full transition-all duration-300',
+                        i === step ? 'w-5 bg-primary' : 'w-1.5 bg-white/25 hover:bg-white/45',
+                      )}
+                    />
+                  ))}
+                </div>
+                {step < STEP_COUNT - 1 ? (
+                  <Button type="button" size="sm" onClick={() => goTo(step + 1)}>
+                    {t('tour.next')}
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                ) : (
+                  <span className="w-[52px]" aria-hidden />
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* full before/after browser (opened from step 3; lives outside the
           overlay so it survives the tour closing) */}
       <ExampleDialog open={exampleOpen} onOpenChange={setExampleOpen} />
     </>
+  );
+}
+
+/** Gradient tour icon that pops in and then floats gently. */
+function TourIcon({
+  icon: Icon,
+  variants,
+  reduce,
+}: {
+  icon: typeof Printer;
+  variants: Variants;
+  reduce: boolean | null;
+}) {
+  return (
+    <motion.div
+      variants={variants}
+      className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/30"
+    >
+      <motion.span
+        animate={reduce ? undefined : { y: [0, -4, 0] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
+        className="flex"
+      >
+        <Icon className="h-7 w-7 text-white" />
+      </motion.span>
+    </motion.div>
   );
 }

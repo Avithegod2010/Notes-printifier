@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   Download,
+  FileArchive,
   Layers,
   Loader2,
   X,
   XCircle,
 } from 'lucide-react';
+import { zipSync } from 'fflate';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -63,6 +65,7 @@ export function BatchQueue() {
   const [live, setLive] = useState<{ done: number; total: number; ocr?: boolean } | null>(null);
   const [done, setDone] = useState<BatchDone[]>([]);
   const [errors, setErrors] = useState<Record<number, boolean>>({});
+  const [zipping, setZipping] = useState(false);
   const cancelRef = useRef(false);
   const urlsRef = useRef<string[]>([]);
 
@@ -168,13 +171,31 @@ export function BatchQueue() {
     setCurIdx(-1);
   };
 
-  const downloadAll = () => {
-    done.forEach((d, i) => {
-      setTimeout(
-        () => downloadBlob(d.blob, `${d.name}-printified-${d.outputPages}p.pdf`),
-        i * 350,
+  /** F15 — pack every finished PDF into one .zip (no multi-download
+   *  popups for the browser to block). zipSync runs on the main thread,
+   *  which is fine for a handful of megabytes and avoids worker/CSP quirks. */
+  const downloadAllZip = () => {
+    if (zipping || done.length === 0) return;
+    setZipping(true);
+    (async () => {
+      const files: Record<string, Uint8Array> = {};
+      const used = new Set<string>();
+      for (const d of done) {
+        const base = `${d.name}-printified-${d.outputPages}p`;
+        let name = `${base}.pdf`;
+        for (let n = 2; used.has(name); n++) name = `${base} (${n}).pdf`;
+        used.add(name);
+        files[name] = new Uint8Array(await d.blob.arrayBuffer());
+      }
+      const data = zipSync(files, { level: 0 }); // PDFs are already compressed
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadBlob(
+        new Blob([data as unknown as BlobPart], { type: 'application/zip' }),
+        `printifier-batch-${stamp}.zip`,
       );
-    });
+    })()
+      .catch((err) => console.error('ZIP export failed:', err))
+      .finally(() => setZipping(false));
   };
 
   if (docs.length === 0) return null;
@@ -331,9 +352,15 @@ export function BatchQueue() {
                   size="sm"
                   variant="outline"
                   className="w-full"
-                  onClick={downloadAll}
+                  onClick={downloadAllZip}
+                  disabled={zipping}
                 >
-                  <Download className="mr-1.5 h-4 w-4" /> {t('up.batch.dlAll')}
+                  {zipping ? (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileArchive className="mr-1.5 h-4 w-4" />
+                  )}
+                  {zipping ? t('up.batch.zipBusy') : t('up.batch.dlZip')}
                 </Button>
               )}
             </div>

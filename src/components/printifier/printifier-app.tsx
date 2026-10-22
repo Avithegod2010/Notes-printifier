@@ -8,6 +8,7 @@ import {
   Contrast,
   Droplets,
   Eye,
+  FileArchive,
   FileUp,
   Globe,
   Grid2x2,
@@ -459,6 +460,7 @@ function FeatureGrid() {
     { icon: Globe, title: t('up.cloud'), desc: t('up.cloudHint') },
     { icon: BookOpen, title: t('feat.booklet.t'), desc: t('feat.booklet.d') },
     { icon: Type, title: t('feat.wm.t'), desc: t('feat.wm.d') },
+    { icon: FileArchive, title: t('feat.zip.t'), desc: t('feat.zip.d') },
   ];
 
   return (

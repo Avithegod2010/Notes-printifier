@@ -65,6 +65,9 @@ const DICT: Record<string, [string, string]> = {
   ],
   'how.cta': ['Try it now — it’s free', 'अभी आज़माएँ — मुफ़्त है'],
   'how.ctaHint': ['No signup · nothing leaves your device', 'कोई साइनअप नहीं · कुछ भी डिवाइस से बाहर नहीं जाता'],
+  'ly.stampOpt': ['optional', 'वैकल्पिक'],
+  'ly.stampPh': ['e.g. Aarav · 12-A · Roll 42', 'जैसे आरव · 12-A · रोल 42'],
+  'ly.stampNote': ['Printed small at the bottom-right of every sheet.', 'हर शीट के नीचे-दाएँ छोटे आकार में छपेगा।'],
 
   // features grid
   'feat.title': ['Everything a student needs', 'छात्र की हर ज़रूरत'],
@@ -232,6 +235,8 @@ const DICT: Record<string, [string, string]> = {
   'up.batch.done': ['All {n} files ready 🎉', 'सभी {n} फ़ाइलें तैयार 🎉'],
   'up.batch.dl': ['Download', 'डाउनलोड'],
   'up.batch.dlAll': ['Download all', 'सभी डाउनलोड करें'],
+  'up.batch.dlZip': ['Download all as .zip', 'सभी को .zip में डाउनलोड करें'],
+  'up.batch.zipBusy': ['Packing .zip…', '.zip बन रही है…'],
   'up.batch.cancel': ['Cancel', 'रद्द करें'],
   'up.batch.failed': ['Failed', 'असफल'],
   'up.batch.pages': ['{n} pages', '{n} पेज'],
@@ -542,6 +547,8 @@ const DICT: Record<string, [string, string]> = {
   'feat.booklet.d': ['Fold-in-half booklet order for duplex printing.', 'डुप्लेक्स प्रिंटिंग के लिए बीच-से-मोड़ बुकलेट क्रम।'],
   'feat.wm.t': ['Name Stamp', 'नाम स्टैम्प'],
   'feat.wm.d': ['Print your name or roll number on every sheet.', 'हर शीट पर अपना नाम या रोल नंबर छापें।'],
+  'feat.zip.t': ['ZIP Batch Export', 'ज़िप बैच एक्सपोर्ट'],
+  'feat.zip.d': ['A whole batch arrives as one tidy .zip file.', 'पूरी बैच एक साथ एक .zip फ़ाइल में आती है।'],
   'labs.rememberD': ['Keeps your Enhance & Layout choices on this device for your next visit.', 'आपकी Enhance और Layout पसंद इसी डिवाइस पर अगली बार के लिए सेव रहती हैं।'],
   'labs.repaint': ['Text repaint (OCR)', 'टेक्स्ट री-पेंट (OCR)'],
   'labs.repaintD': [
