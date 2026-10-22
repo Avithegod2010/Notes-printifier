@@ -1180,6 +1180,21 @@ html.theme-light .dyn-bg {
     0 0 64px rgb(var(--acc-rgb, 139 92 246) / 0.18);
 }
 
+/* Hero shimmer — a light sweep that periodically travels across the gradient
+   headline word. Uses background-position on the same gradient the text clips;
+   disabled for reduced-motion users. */
+.hero-shimmer {
+  background-size: 200% 100%;
+  animation: hero-shimmer 5.5s ease-in-out infinite;
+}
+@keyframes hero-shimmer {
+  0%, 55% { background-position: 110% 0; }
+  85%, 100% { background-position: -10% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-shimmer { animation: none; }
+}
+
 /* Neon edge — an accent glow that follows the primary CTA. Pure box-shadow,
    so it composites on the GPU and degrades to nothing on old engines. */
 .neon-edge {

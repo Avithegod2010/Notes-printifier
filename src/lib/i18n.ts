@@ -39,6 +39,11 @@ const DICT: Record<string, [string, string]> = {
   'hero.howlink': ['or see how it works', 'या देखें यह कैसे काम करता है'],
   'hero.before': ['41 dark slides · 41 sheets', '41 गहरे स्लाइड · 41 शीट'],
   'hero.after': ['3 slides/sheet · 14 bright pages', '3 स्लाइड/शीट · 14 उजले पन्ने'],
+  'hero.chip.ink': ['−80% ink', '−80% स्याही'],
+  'hero.chip.grid': ['3× slides/sheet', '3× स्लाइड/शीट'],
+  'hero.chip.sheets': ['~9 sheets saved', '~9 शीट बचाईं'],
+  'show.stage': ['The transformation', 'बदलाव'],
+  'show.auto': ['Live demo · auto-replaying', 'लाइव डेमो · अपने आप दोहराता है'],
 
   // how it works
   'how.title': ['How It Works', 'यह कैसे काम करता है'],
@@ -58,6 +63,8 @@ const DICT: Record<string, [string, string]> = {
     'Get a bright, compact, numbered PDF ready for your printer — with stats on paper and ink saved.',
     'उजला, कॉम्पैक्ट, नंबर-वाला PDF पाएँ, प्रिंटर के लिए तैयार — बचाए गए कागज़ और स्याही के आँकड़ों के साथ।',
   ],
+  'how.cta': ['Try it now — it’s free', 'अभी आज़माएँ — मुफ़्त है'],
+  'how.ctaHint': ['No signup · nothing leaves your device', 'कोई साइनअप नहीं · कुछ भी डिवाइस से बाहर नहीं जाता'],
 
   // features grid
   'feat.title': ['Everything a student needs', 'छात्र की हर ज़रूरत'],

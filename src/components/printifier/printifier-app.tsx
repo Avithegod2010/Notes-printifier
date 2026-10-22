@@ -13,7 +13,6 @@ import {
   Grid2x2,
   Hash,
   Languages,
-  Leaf,
   Lock,
   Menu,
   Minus,
@@ -67,6 +66,8 @@ import { UpdateBanner } from './update-banner';
 import { ScrollProgress, BackToTop } from './site-chrome';
 import { ScrollSlider } from './scroll-slider';
 import { SectionHead } from './section-head';
+import { HeroShowcase } from './hero-showcase';
+import { HowItWorks } from './how-it-works';
 import { DynamicBackground } from './dynamic-background';
 import { ThemePicker } from './theme-picker';
 import { CommandPalette, PaletteButton, PaletteSheetRow } from './command-palette';
@@ -326,35 +327,6 @@ function Header() {
   );
 }
 
-function FloatingChip({
-  children,
-  className,
-  delay,
-  reduce,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay: number;
-  reduce: boolean | null;
-}) {
-  return (
-    <motion.div
-      initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-      animate={reduce ? undefined : { opacity: 1, scale: 1 }}
-      transition={{ delay, duration: 0.5, ease: 'easeOut' }}
-      className={className}
-    >
-      <motion.div
-        animate={reduce ? undefined : { y: [0, -7, 0] }}
-        transition={{ duration: 3.5 + delay, repeat: Infinity, ease: 'easeInOut', delay }}
-        className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold shadow-xl backdrop-blur-md"
-      >
-        {children}
-      </motion.div>
-    </motion.div>
-  );
-}
-
 function Hero() {
   const t = useT();
   const reduce = useReducedMotion();
@@ -389,7 +361,7 @@ function Hero() {
           className="glow-title text-4xl font-extrabold tracking-tight sm:text-6xl"
         >
           {t('hero.title1')}{' '}
-          <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="hero-shimmer bg-gradient-to-r from-violet-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
             {t('hero.title2')}
           </span>
         </motion.h1>
@@ -463,102 +435,8 @@ function Hero() {
 
         <ExampleDialog open={exampleOpen} onOpenChange={setExampleOpen} />
 
-        {/* Before → After visual */}
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 24 }}
-          animate={reduce ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.32 }}
-          className="relative mx-auto mt-14 mb-10 flex max-w-2xl items-center justify-center gap-3 sm:gap-6 scanlines"
-        >
-          {/* floating stat chips (desktop) */}
-          <FloatingChip reduce={reduce} delay={1.0} className="absolute -left-2 top-2 z-10 hidden lg:flex">
-            <Droplets className="h-3.5 w-3.5 text-emerald-400" /> −80% ink
-          </FloatingChip>
-          <FloatingChip reduce={reduce} delay={1.25} className="absolute -top-6 right-0 z-10 hidden lg:flex">
-            <Grid2x2 className="h-3.5 w-3.5 text-violet-300" /> 3× slides/sheet
-          </FloatingChip>
-          <FloatingChip reduce={reduce} delay={1.5} className="absolute -bottom-11 left-1/2 z-10 hidden -translate-x-1/2 lg:flex">
-            <Leaf className="h-3.5 w-3.5 text-emerald-400" /> ~9 sheets saved
-          </FloatingChip>
-
-          {/* before: dark ink-heavy slide */}
-          <motion.div
-            animate={reduce ? undefined : { y: [0, -5, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-            className="flex-1"
-          >
-            <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl">
-              <div className="aspect-[16/10] w-full bg-gradient-to-br from-[#2b1d16] to-[#120b08] p-3">
-                <div className="h-2.5 w-3/4 rounded bg-amber-500/70" />
-                <div className="mt-2 h-1.5 w-1/2 rounded bg-white/25" />
-                <div className="mt-3 h-1.5 w-2/3 rounded bg-fuchsia-400/60" />
-                <div className="mt-1.5 h-1.5 w-1/2 rounded bg-emerald-400/50" />
-                <div className="mt-3 h-8 w-3/4 rounded bg-white/10" />
-                <div className="mt-2 h-1.5 w-2/5 rounded bg-white/20" />
-              </div>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">{t('hero.before')}</p>
-          </motion.div>
-
-          <div className="flex flex-col items-center gap-1">
-            <Sparkles className="h-5 w-5 text-violet-400" aria-hidden="true" />
-            <motion.div
-              animate={reduce ? undefined : { x: [0, 4, 0] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <ArrowRight className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            </motion.div>
-          </div>
-
-          {/* after: bright compact grid page */}
-          <motion.div
-            animate={reduce ? undefined : { y: [0, -8, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-            className="flex-1"
-          >
-            <div className="mx-auto w-4/5 overflow-hidden rounded-xl border border-white/10 bg-white p-1.5 shadow-2xl shadow-violet-900/40">
-              <div className="aspect-[1/1.414] w-full space-y-1 rounded-sm bg-white p-1">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="aspect-[16/9] w-full rounded-[2px] bg-zinc-100 p-1.5">
-                    <div className="h-1 w-2/3 rounded bg-zinc-400" />
-                    <div className="mt-1 h-0.5 w-1/2 rounded bg-zinc-300" />
-                    <div className="mt-1 h-2 w-3/4 rounded-sm bg-zinc-200" />
-                  </div>
-                ))}
-                <p className="text-center text-[6px] leading-none text-zinc-400">1</p>
-              </div>
-            </div>
-            <p className="mt-2 text-xs font-medium text-emerald-300">{t('hero.after')}</p>
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-function HowItWorks() {
-  const t = useT();
-  const steps = [
-    { n: '1', title: t('how.s1.t'), desc: t('how.s1.d') },
-    { n: '2', title: t('how.s2.t'), desc: t('how.s2.d') },
-    { n: '3', title: t('how.s3.t'), desc: t('how.s3.d') },
-  ];
-
-  return (
-    <section id="how" aria-label={t('how.title')} className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14">
-      <SectionHead eyebrow="how.eyebrow" title="how.title" sub="how.sub" />
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
-        {steps.map((s, i) => (
-          <Reveal key={s.n} delay={i * 0.1}>
-            <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-violet-500/40">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-sm font-extrabold text-white shadow-lg shadow-violet-600/25">
-                {s.n}
-              </div>
-              <h3 className="text-lg font-bold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-            </div>
-          </Reveal>
-        ))}
+        {/* animated before → after transformation showcase */}
+        <HeroShowcase />
       </div>
     </section>
   );

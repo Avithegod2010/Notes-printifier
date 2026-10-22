@@ -22,6 +22,9 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || undefined;
  *  - CSP: self-only defaults; inline styles/scripts are unavoidable with Next;
  *    'wasm-unsafe-eval' is required by the self-hosted Tesseract OCR engine,
  *    blob: for pdf.js worker + canvas/audio exports. Nothing external is allowed.
+ *    NOTE: no frame-ancestors / X-Frame-Options — sandbox previews (and some
+ *    host dashboards) embed the app in an iframe, and the real production host
+ *    (GitHub Pages static export) serves no custom headers anyway.
  *  - Permissions-Policy keeps the mic (voice input) but denies camera/geo/etc.
  */
 const securityHeaders = [
@@ -39,11 +42,9 @@ const securityHeaders = [
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-ancestors 'none'",
     ].join("; "),
   },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
