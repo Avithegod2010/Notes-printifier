@@ -24,12 +24,14 @@ import {
   type AnyCtx,
   type FilterSettings,
 } from './filters';
+import { PAGE_SIZES } from './layout-settings';
 
 import {
   composeItemKey,
   estimateOutputPages,
+  fixedPageSize,
   resolveQuality,
-  PAGE_SIZES,
+  sheetMargins,
   type ComposeItem,
   type CoverSheetData,
   type LayoutSettings,
@@ -124,13 +126,26 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   const out = await PDFDocument.create();
   const font = await out.embedFont(StandardFonts.Helvetica);
 
+  // Optional document metadata (title / author) — safe for any unicode input
+  // (pdf-lib writes metadata strings as PDF hex strings).
+  if (o.layout.docTitle && o.layout.docTitle.trim()) {
+    out.setTitle(o.layout.docTitle.trim().slice(0, 120));
+  }
+  if (o.layout.docAuthor && o.layout.docAuthor.trim()) {
+    out.setAuthor(o.layout.docAuthor.trim().slice(0, 120));
+  }
+  out.setCreator('Notes Printifier');
+  out.setProducer('Notes Printifier (printifier.app)');
+
   // ---- output page geometry -------------------------------------------------
   let pw = PAGE_SIZES.a4[0];
   let ph = PAGE_SIZES.a4[1];
-  if (o.layout.pageSize === 'letter') {
-    pw = PAGE_SIZES.letter[0];
-    ph = PAGE_SIZES.letter[1];
-  } else if (o.layout.pageSize === 'original') {
+  const fixed = fixedPageSize(o.layout);
+  if (fixed) {
+    pw = fixed[0];
+    ph = fixed[1];
+  } else {
+    // 'original' — first selected page decides
     const first = o.items[0];
     const p = await srcDocs.get(first.docId)!.getPage(first.pageNumber);
     const vp = p.getViewport({ scale: 1 });
@@ -146,9 +161,10 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   const rows = Math.max(1, o.layout.rows);
   const cols = Math.max(1, o.layout.cols);
   const perPage = rows * cols;
-  const marginX = 18;
-  const marginTop = 18;
-  const marginBottom = o.layout.pageNumbers ? 34 : 18;
+  const margins = sheetMargins(o.layout);
+  const marginX = margins.x;
+  const marginTop = margins.top;
+  const marginBottom = margins.bottom;
   const gap = 10;
   const cellW = (pw - marginX * 2 - gap * (cols - 1)) / cols;
   const cellH = (ph - marginTop - marginBottom - gap * (rows - 1)) / rows;
@@ -560,10 +576,11 @@ export async function estimateCore(
 
   let pw = PAGE_SIZES.a4[0];
   let ph = PAGE_SIZES.a4[1];
-  if (layout.pageSize === 'letter') {
-    pw = PAGE_SIZES.letter[0];
-    ph = PAGE_SIZES.letter[1];
-  } else if (layout.pageSize === 'original') {
+  const fixed = fixedPageSize(layout);
+  if (fixed) {
+    pw = fixed[0];
+    ph = fixed[1];
+  } else {
     const first = items[0];
     const p = await srcDocs.get(first.docId)!.getPage(first.pageNumber);
     const vp = p.getViewport({ scale: 1 });
@@ -578,9 +595,10 @@ export async function estimateCore(
 
   const rows = Math.max(1, layout.rows);
   const cols = Math.max(1, layout.cols);
-  const marginX = 18;
-  const marginTop = 18;
-  const marginBottom = layout.pageNumbers ? 34 : 18;
+  const margins = sheetMargins(layout);
+  const marginX = margins.x;
+  const marginTop = margins.top;
+  const marginBottom = margins.bottom;
   const gap = 10;
   const cellW = (pw - marginX * 2 - gap * (cols - 1)) / cols;
   const cellH = (ph - marginTop - marginBottom - gap * (rows - 1)) / rows;

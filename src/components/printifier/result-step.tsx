@@ -7,9 +7,11 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
+  FileImage,
   Flame,
   ImageDown,
   IndianRupee,
+  Layers,
   Loader2,
   MessageCircle,
   Pencil,
@@ -25,6 +27,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -156,6 +165,138 @@ export function ResultStep() {
       }
     },
     [duplex],
+  );
+
+  // ---- PDF → images export ---------------------------------------------------
+  // Renders every page of the OUTPUT pdf to PNG at the chosen dpi. One page
+  // downloads directly; multiple pages are zipped (fflate, level 0 — PNGs are
+  // already compressed).
+  const [imgBusy, setImgBusy] = useState(false);
+  const [imgDpi, setImgDpi] = useState(150);
+  const [imgParts, setImgParts] = useState<Array<{ url: string; label: string }> | null>(null);
+
+  const exportImages = async () => {
+    if (!result || imgBusy) return;
+    setImgBusy(true);
+    try {
+      const buf = await fetch(result.url).then((r) => r.arrayBuffer());
+      const { loadPdfDocument } = await import('@/lib/pdf/pdfjs');
+      const { renderPageToCanvas } = await import('@/lib/pdf/render');
+      const doc = await loadPdfDocument(buf);
+      const first = await doc.getPage(1);
+      const wPt = first.getViewport({ scale: 1 }).width || 595;
+      const pxW = Math.max(400, Math.round((wPt * imgDpi) / 72));
+      const files: Record<string, Uint8Array> = {};
+      for (let p = 1; p <= doc.numPages; p++) {
+        const canvas = await renderPageToCanvas(doc, p, { targetWidth: pxW });
+        const blob = await new Promise<Blob | null>((resolve) =>
+          (canvas as HTMLCanvasElement).toBlob(resolve, 'image/png'),
+        );
+        if (!blob) continue;
+        files[`page-${String(p).padStart(4, '0')}.png`] = new Uint8Array(
+          await blob.arrayBuffer(),
+        );
+      }
+      const names = Object.keys(files);
+      if (names.length === 0) throw new Error('no pages rendered');
+      let out: Array<{ url: string; label: string }>;
+      if (names.length === 1) {
+        out = [
+          {
+            url: URL.createObjectURL(new Blob([files[names[0]] as BlobPart], { type: 'image/png' })),
+            label: 'page-0001.png',
+          },
+        ];
+      } else {
+        const { zipSync } = await import('fflate');
+        const zipped = zipSync(files, { level: 0 });
+        out = [
+          {
+            url: URL.createObjectURL(
+              new Blob([zipped as BlobPart], { type: 'application/zip' }),
+            ),
+            label: `printifier-pages-${imgDpi}dpi.zip`,
+          },
+        ];
+      }
+      setImgParts((prev) => {
+        prev?.forEach((p) => URL.revokeObjectURL(p.url));
+        return out;
+      });
+      toast({ description: t('rs.img.done', { n: names.length }) });
+    } catch (err) {
+      console.error('Image export failed', err);
+      toast({ description: t('rs.img.fail') });
+    } finally {
+      setImgBusy(false);
+    }
+  };
+
+  // ---- split every N pages ---------------------------------------------------
+  // Cuts the output into fixed-size chunks (part-01, part-02 …). A single
+  // chunk downloads as a plain PDF; multiple chunks land in one ZIP.
+  const [splitN, setSplitN] = useState('10');
+  const [splitBusy, setSplitBusy] = useState(false);
+  const [splitParts, setSplitParts] = useState<Array<{ url: string; label: string }> | null>(null);
+
+  const splitEveryN = async () => {
+    if (!result || splitBusy) return;
+    const n = parseInt(splitN, 10);
+    if (!Number.isFinite(n) || n < 1) return;
+    setSplitBusy(true);
+    try {
+      const { PDFDocument } = await import('pdf-lib');
+      const buf = await fetch(result.url).then((r) => r.arrayBuffer());
+      const src = await PDFDocument.load(buf);
+      const total = src.getPageCount();
+      const chunks: number[][] = [];
+      for (let i = 0; i < total; i += n) {
+        chunks.push(Array.from({ length: Math.min(n, total - i) }, (_, k) => i + k));
+      }
+      const out: Array<{ url: string; label: string }> = [];
+      const zipFiles: Record<string, Uint8Array> = {};
+      for (let ci = 0; ci < chunks.length; ci++) {
+        const doc = await PDFDocument.create();
+        const copied = await doc.copyPages(src, chunks[ci]);
+        copied.forEach((p) => doc.addPage(p));
+        const bytes = await doc.save();
+        const label = `part-${String(ci + 1).padStart(2, '0')}-p${chunks[ci][0] + 1}-${chunks[ci][chunks[ci].length - 1] + 1}.pdf`;
+        if (chunks.length === 1) {
+          out.push({
+            url: URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' })),
+            label,
+          });
+        } else {
+          zipFiles[label] = bytes;
+        }
+      }
+      if (Object.keys(zipFiles).length > 0) {
+        const { zipSync } = await import('fflate');
+        const zipped = zipSync(zipFiles, { level: 0 }); // PDFs are already compressed
+        out.push({
+          url: URL.createObjectURL(new Blob([zipped as BlobPart], { type: 'application/zip' })),
+          label: `split-${chunks.length}-parts.zip`,
+        });
+      }
+      setSplitParts((prev) => {
+        prev?.forEach((p) => URL.revokeObjectURL(p.url));
+        return out;
+      });
+      toast({ description: t('rs.split.done', { n: chunks.length }) });
+    } catch (err) {
+      console.error('Chunk split failed', err);
+      toast({ description: t('rs.split.fail') });
+    } finally {
+      setSplitBusy(false);
+    }
+  };
+
+  useEffect(
+    () => () => {
+      imgParts?.forEach((p) => URL.revokeObjectURL(p.url));
+      splitParts?.forEach((p) => URL.revokeObjectURL(p.url));
+    },
+    [],
   );
 
   // ---- shareable ink-savings receipt (PNG card) ----------------------------
@@ -706,6 +847,112 @@ export function ResultStep() {
           )}
         </div>
       )}
+
+      {/* PDF → images: every page as a PNG (single file or ZIP) */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <FileImage className="h-4 w-4 text-violet-300" /> {t('rs.img.title')}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t('rs.img.body')}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Select value={String(imgDpi)} onValueChange={(v) => setImgDpi(Number(v))}>
+              <SelectTrigger className="h-9 w-[110px]" aria-label={t('rs.img.dpi')}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="110">110 dpi</SelectItem>
+                <SelectItem value="150">150 dpi</SelectItem>
+                <SelectItem value="220">220 dpi</SelectItem>
+                <SelectItem value="300">300 dpi</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => void exportImages()}
+              disabled={imgBusy}
+            >
+              {imgBusy ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ImageDown className="mr-2 h-4 w-4" />
+              )}
+              {t('rs.img.btn')}
+            </Button>
+          </div>
+        </div>
+        {imgParts && (
+          <div className="mt-3 flex flex-col gap-2">
+            {imgParts.map((p) => (
+              <a
+                key={p.label}
+                href={p.url}
+                download={p.label}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/5 px-4 text-sm font-semibold transition-colors hover:bg-white/10"
+              >
+                <Download className="h-4 w-4" /> {p.label}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Split every N pages — chunked parts for shared printers / per-chapter files */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Layers className="h-4 w-4 text-violet-300" /> {t('rs.split.title')}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t('rs.split.body')}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={splitN}
+              onChange={(e) => setSplitN(e.target.value)}
+              aria-label={t('rs.split.ph')}
+              className="h-9 w-[86px]"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => void splitEveryN()}
+              disabled={splitBusy || !parseInt(splitN, 10)}
+            >
+              {splitBusy ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Scissors className="mr-2 h-4 w-4" />
+              )}
+              {t('rs.split.btn')}
+            </Button>
+          </div>
+        </div>
+        {splitParts && (
+          <div className="pretty-scroll mt-3 flex max-h-40 flex-col gap-2 overflow-y-auto pr-1">
+            {splitParts.map((p) => (
+              <a
+                key={p.label}
+                href={p.url}
+                download={p.label}
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/5 px-4 text-sm font-semibold transition-colors hover:bg-white/10"
+              >
+                <Download className="h-4 w-4" /> {p.label}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-2">
         <p className="px-2 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

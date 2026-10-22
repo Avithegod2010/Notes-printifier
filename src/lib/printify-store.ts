@@ -24,6 +24,7 @@ import {
 } from './pdf/ocr';
 import { saveRecentJob, saveRecentSource, type RecentSourceFile } from './recent-jobs';
 import { recordJob } from './ink-stats';
+import { isImageFile, imagesToPdfBytes } from './pdf/images-to-pdf';
 import {
   allPresets,
   loadPresets,
@@ -40,7 +41,7 @@ import {
   saveRememberFlag,
   saveTextRepaintFlag,
 } from './labs';
-import { translateStatic, useLangStore } from './i18n';
+import { translateStatic, useLangStore, type Lang } from './i18n';
 import { HAS_SERVER_API } from './server-api';
 
 interface DocInfo {
@@ -195,7 +196,7 @@ interface ComposeJobInput {
   layout: LayoutSettings;
   /** LABS text-repaint flag. */
   repaint: boolean;
-  lang: 'en' | 'hi';
+  lang: Lang;
   onProgress: (p: JobProgress) => void;
   /** Return false to abort (user cancel / batch stop). */
   isActive: () => boolean;
@@ -501,6 +502,10 @@ interface PrintifyState {
   setAllSelected: (selected: boolean) => void;
   /** Quick picks — bulk selection by position: all / odd / even / invert / last10. */
   smartPick: (mode: 'all' | 'odd' | 'even' | 'invert' | 'last10') => void;
+  /** Select ONLY the pages between two 1-based positions (slider + range input). */
+  selectRange: (start1: number, end1: number) => void;
+  /** Select ONLY the given 1-based positions (parsed "1-5, 8" input). */
+  selectIndices: (positions: number[]) => void;
   /** Deselect (near-)blank pages. Returns how many were deselected. */
   skipBlankPages: () => Promise<number>;
   removePage: (pageId: string) => void;
@@ -580,20 +585,61 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   },
 
   addFiles: async (files) => {
-    const pdfFiles = files.filter(
-      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
-    );
-    if (pdfFiles.length === 0) {
-      set({ loadError: 'Please choose PDF files only.' });
+    const pdfFiles: File[] = [];
+    const imageFiles: File[] = files.filter((f) => isImageFile(f));
+    for (const f of files) {
+      if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) {
+        pdfFiles.push(f);
+      } else if (!isImageFile(f)) {
+        continue; // neither PDF nor image — ignored
+      }
+    }
+    if (pdfFiles.length === 0 && imageFiles.length === 0) {
+      set({ loadError: 'Please choose PDF or image files only.' });
       return;
     }
-    set({ loadingDocs: true, loadError: null, loadProgress: { done: 0, total: pdfFiles.length } });
+    set({ loadingDocs: true, loadError: null, loadProgress: { done: 0, total: pdfFiles.length + (imageFiles.length > 0 ? 1 : 0) } });
 
     const docs: DocInfo[] = [...get().docs];
     const pages: PageItem[] = [...get().pages];
     let done = 0;
 
     try {
+      // Images → one merged PDF document (one page per image), which then
+      // flows through the exact same pipeline as an uploaded PDF.
+      if (imageFiles.length > 0) {
+        const bytes = await imagesToPdfBytes(imageFiles);
+        const buffer = bytes.buffer.slice(
+          bytes.byteOffset,
+          bytes.byteOffset + bytes.byteLength,
+        ) as ArrayBuffer;
+        const doc = await loadPdfDocument(buffer);
+        const docId = nextDocId++;
+        docBuffers.set(docId, buffer);
+        docs.push({
+          id: docId,
+          name: `photos-${imageFiles.length}-img.pdf`,
+          size: buffer.byteLength,
+          pageCount: doc.numPages,
+        });
+        for (let p = 1; p <= doc.numPages; p++) {
+          const canvas = await renderPageToCanvas(doc, p, { targetWidth: 300 });
+          const dims = await getPageDimensions(doc, p);
+          pages.push({
+            id: `d${docId}p${p}`,
+            docId,
+            pageNumber: p,
+            rotation: 0,
+            selected: true,
+            thumb: canvasToDataUrl(canvas, 'image/jpeg', 0.55),
+            widthPt: dims.width,
+            heightPt: dims.height,
+          });
+        }
+        done++;
+        set({ loadProgress: { done, total: pdfFiles.length + 1 }, docs: [...docs], pages: [...pages] });
+      }
+
       for (const file of pdfFiles) {
         const buffer = await file.arrayBuffer();
         const doc = await loadPdfDocument(buffer);
@@ -703,6 +749,34 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
               selected = i >= n - 10;
               break;
           }
+          return selected === p.selected ? p : { ...p, selected };
+        }),
+      };
+    }),
+
+  selectRange: (start1, end1) =>
+    set((s) => {
+      const n = s.pages.length;
+      const a = Math.max(1, Math.min(start1, end1, n));
+      const b = Math.min(n, Math.max(start1, end1, 1));
+      return {
+        pages: s.pages.map((p, i) => {
+          const selected = i >= a - 1 && i <= b - 1;
+          return selected === p.selected ? p : { ...p, selected };
+        }),
+      };
+    }),
+
+  selectIndices: (positions) =>
+    set((s) => {
+      const wanted = new Set(
+        positions
+          .map((p1) => Math.round(p1) - 1)
+          .filter((i) => i >= 0 && i < s.pages.length),
+      );
+      return {
+        pages: s.pages.map((p, i) => {
+          const selected = wanted.has(i);
           return selected === p.selected ? p : { ...p, selected };
         }),
       };

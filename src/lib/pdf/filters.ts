@@ -103,7 +103,9 @@ export interface FilterSettings {
 
 export const defaultFilters: FilterSettings = {
   colorMode: 'invert',
-  inkSaver: 45,
+  // Milder default (was 45) — users found 45 too aggressive on fine text;
+  // 30 still whitens the paper wash but keeps thin handwriting intact.
+  inkSaver: 30,
   cleanStains: true,
   trimMargins: false,
   penBoost: 0,

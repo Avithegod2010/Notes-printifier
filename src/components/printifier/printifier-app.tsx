@@ -15,6 +15,7 @@ import {
   Hash,
   Languages,
   Lock,
+  Check,
   Menu,
   Minus,
   MonitorSmartphone,
@@ -52,6 +53,11 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Stepper } from './stepper';
 import { UploadStep } from './upload-step';
 import { PagesStep } from './pages-step';
@@ -79,7 +85,7 @@ import { animatedThemeFlip } from '@/lib/theme-flip';
 import { SavingsCalculator } from './savings-calculator';
 import { UseCases } from './use-cases';
 import { usePrintifyStore } from '@/lib/printify-store';
-import { useLangStore, useT } from '@/lib/i18n';
+import { useLangStore, useT, LANGUAGES } from '@/lib/i18n';
 import { useThemeStore, isLightTheme } from '@/lib/theme';
 import { APP_VERSION } from '@/lib/version';
 import { cn } from '@/lib/utils';
@@ -153,17 +159,39 @@ function LangToggle() {
   const setLang = useLangStore((s) => s.setLang);
 
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      aria-label="Language / भाषा"
-      onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-      className="h-9 border-white/15 bg-white/5 px-2.5 text-sm font-semibold text-muted-foreground hover:bg-white/10 hover:text-foreground sm:px-3"
-    >
-      <Languages className="h-4 w-4" aria-hidden="true" />
-      <span className="hidden sm:inline">{t('nav.lang')}</span>
-    </Button>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          aria-label="Language / भाषा"
+          className="h-9 border-white/15 bg-white/5 px-2.5 text-sm font-semibold text-muted-foreground hover:bg-white/10 hover:text-foreground sm:px-3"
+        >
+          <Languages className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden sm:inline">
+            {LANGUAGES.find((l) => l.id === lang)?.native ?? 'English'}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-44 rounded-xl p-1.5">
+        {LANGUAGES.map((l) => (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => setLang(l.id)}
+            aria-pressed={lang === l.id}
+            className={cn(
+              'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10',
+              lang === l.id ? 'text-primary' : 'text-foreground/85',
+            )}
+          >
+            <span>{l.native}</span>
+            {lang === l.id && <Check className="h-4 w-4" aria-hidden="true" />}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }
 

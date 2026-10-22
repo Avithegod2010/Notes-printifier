@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
-import { THEMES, useThemeStore, type ThemeId } from '@/lib/theme';
+import { THEMES, PATTERNS, useThemeStore, type PatternId, type ThemeId } from '@/lib/theme';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { ExampleDialog } from './example-dialog';
 
@@ -73,6 +73,8 @@ export function WelcomeTour() {
   const cardRef = useRef<HTMLDivElement>(null);
   const themeId = useThemeStore((s) => s.themeId);
   const setTheme = useThemeStore((s) => s.setTheme);
+  const pattern = useThemeStore((s) => s.pattern);
+  const setPattern = useThemeStore((s) => s.setPattern);
   /** Theme currently hover/keyboard-previewed in step 2 (live preview). */
   const [hoverId, setHoverId] = useState<ThemeId | null>(null);
   const swatchWrapRef = useRef<HTMLDivElement>(null);
@@ -504,6 +506,37 @@ export function WelcomeTour() {
                           aria-label={t('tour.s2.light')}
                         >
                           {THEMES.filter((th) => th.light).map(renderSwatch)}
+                        </motion.div>
+                        {/* backdrop pattern — completes the color picker:
+                            theme + pattern = the full look */}
+                        <motion.p
+                          variants={itemV}
+                          className="mt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                        >
+                          {t('tour.s2.patterns')}
+                        </motion.p>
+                        <motion.div
+                          variants={groupV}
+                          className="mt-1.5 flex flex-wrap gap-1.5"
+                          role="group"
+                          aria-label={t('tour.s2.patterns')}
+                        >
+                          {PATTERNS.map((p: PatternId) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => setPattern(p)}
+                              aria-pressed={pattern === p}
+                              className={cn(
+                                'rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize transition-colors',
+                                pattern === p
+                                  ? 'border-primary bg-primary/15 text-primary'
+                                  : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/25 hover:text-foreground',
+                              )}
+                            >
+                              {p}
+                            </button>
+                          ))}
                         </motion.div>
                       </div>
                       <motion.p

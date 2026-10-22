@@ -10,12 +10,35 @@ import {
   Loader2,
   RotateCw,
   ScanLine,
+  SlidersHorizontal,
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { useT } from '@/lib/i18n';
+
+/**
+ * Parse a page-range spec like "1-5, 8, 12-14" into 1-based positions.
+ * Returns null when the spec contains no valid page numbers.
+ */
+export function parsePageSpec(spec: string, maxPage: number): number[] | null {
+  const out = new Set<number>();
+  for (const part of spec.split(/[,;\s]+/)) {
+    if (!part) continue;
+    const m = part.match(/^(\d+)(?:\s*[-–]\s*(\d+))?$/);
+    if (!m) continue;
+    const a = parseInt(m[1], 10);
+    const b = m[2] ? parseInt(m[2], 10) : a;
+    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    const lo = Math.max(1, Math.min(a, b));
+    const hi = Math.min(maxPage, Math.max(a, b));
+    for (let i = lo; i <= hi; i++) out.add(i);
+  }
+  return out.size > 0 ? [...out].sort((x, y) => x - y) : null;
+}
 
 export function PagesStep() {
   const t = useT();
@@ -23,6 +46,8 @@ export function PagesStep() {
   const togglePage = usePrintifyStore((s) => s.togglePage);
   const setAllSelected = usePrintifyStore((s) => s.setAllSelected);
   const smartPick = usePrintifyStore((s) => s.smartPick);
+  const selectRange = usePrintifyStore((s) => s.selectRange);
+  const selectIndices = usePrintifyStore((s) => s.selectIndices);
   const removePage = usePrintifyStore((s) => s.removePage);
   const rotatePage = usePrintifyStore((s) => s.rotatePage);
   const movePage = usePrintifyStore((s) => s.movePage);
@@ -35,10 +60,45 @@ export function PagesStep() {
   const [blankMsg, setBlankMsg] = useState<string | null>(null);
   /** Last page the user acted on — target for keyboard shortcuts. */
   const [activeId, setActiveId] = useState<string | null>(null);
+  /** Two-thumb range slider window (1-based, inclusive). */
+  const [range, setRange] = useState<[number, number]>([1, 1]);
+  /** Custom range spec input ("1-5, 8, 12-14"). */
+  const [spec, setSpec] = useState('');
+  const [specMsg, setSpecMsg] = useState<string | null>(null);
   const pagesRef = useRef(pages);
   pagesRef.current = pages;
 
   const selectedCount = pages.filter((p) => p.selected).length;
+  const pageCount = pages.length;
+
+  // New document loaded (page count changed) → reset the slider to full span.
+  // Adjusting state during render (React's recommended pattern) — no effect.
+  const [lastCount, setLastCount] = useState(0);
+  if (pageCount !== lastCount) {
+    setLastCount(pageCount);
+    setRange([1, Math.max(1, pageCount)]);
+  }
+
+  const applyRange = useCallback(
+    (v: number[]) => {
+      const lo = Math.max(1, Math.min(v[0] ?? 1, pageCount));
+      const hi = Math.max(1, Math.min(v[1] ?? lo, pageCount));
+      setRange([lo, hi]);
+      selectRange(lo, hi);
+    },
+    [pageCount, selectRange],
+  );
+
+  const applySpec = useCallback(() => {
+    const parsed = parsePageSpec(spec, pageCount);
+    if (!parsed) {
+      setSpecMsg(t('pg.rangeBad'));
+      return;
+    }
+    selectIndices(parsed);
+    setRange([parsed[0], parsed[parsed.length - 1]]);
+    setSpecMsg(t('pg.rangeOk', { n: parsed.length }));
+  }, [spec, pageCount, selectIndices, t]);
 
   const onSkipBlank = useCallback(async () => {
     setScanningBlank(true);
@@ -101,13 +161,24 @@ export function PagesStep() {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">
-            {selectedCount} / {pages.length}
-          </span>{' '}
-          {t('pg.selected')}
-          <span className="hidden sm:inline">{t('pg.dragHint')}</span>
-        </p>
+        <div className="flex items-center gap-2.5">
+          {/* prominent live counter — counts every selected page */}
+          <span
+            aria-live="polite"
+            className="inline-flex items-baseline gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-3 py-1.5 shadow-sm shadow-primary/20"
+          >
+            <span className="text-xl font-extrabold leading-none text-primary tabular-nums">
+              {selectedCount}
+            </span>
+            <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+              / {pageCount}
+            </span>
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {t('pg.selected')}
+            <span className="hidden sm:inline">{t('pg.dragHint')}</span>
+          </span>
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -167,13 +238,72 @@ export function PagesStep() {
         </div>
       </div>
 
+      {/* Range slider — drag the two handles to keep only that window */}
+      {pageCount > 1 && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-violet-300" />
+              {t('pg.slider')}
+            </p>
+            <p className="text-xs font-semibold tabular-nums text-foreground">
+              {t('pg.sliderRange', { a: range[0], b: range[1] })}
+            </p>
+          </div>
+          <Slider
+            value={[range[0], range[1]]}
+            min={1}
+            max={pageCount}
+            step={1}
+            minStepsBetweenThumbs={0}
+            onValueChange={applyRange}
+            aria-label={t('pg.slider')}
+          />
+          <div className="mt-1.5 flex justify-between text-[10px] tabular-nums text-muted-foreground">
+            <span>1</span>
+            <span>{Math.max(1, Math.round(pageCount / 2))}</span>
+            <span>{pageCount}</span>
+          </div>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Input
+              value={spec}
+              onChange={(e) => {
+                setSpec(e.target.value);
+                setSpecMsg(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') applySpec();
+              }}
+              placeholder={t('pg.customPh')}
+              inputMode="numeric"
+              aria-label={t('pg.custom')}
+              className="h-9 flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0"
+              onClick={applySpec}
+              disabled={pageCount === 0}
+            >
+              {t('pg.apply')}
+            </Button>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">{t('pg.sliderHint')}</p>
+          {specMsg && (
+            <p className="mt-1.5 text-[11px] font-medium text-violet-300">{specMsg}</p>
+          )}
+        </div>
+      )}
+
       {blankMsg && (
         <p className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-200">
           {blankMsg}
         </p>
       )}
 
-      <div className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[32rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[36rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {pages.map((page, index) => (
           <div
             key={page.id}
@@ -199,6 +329,10 @@ export function PagesStep() {
               page.selected
                 ? 'border-primary/60 ring-2 ring-primary/40'
                 : 'border-white/10 opacity-40 saturate-0',
+              page.selected &&
+                index + 1 >= Math.min(range[0], range[1]) &&
+                index + 1 <= Math.max(range[0], range[1]) &&
+                'ring-primary/70',
               activeId === page.id && 'ring-1 ring-violet-300',
               overIndex === index && dragIndex !== null && 'ring-2 ring-fuchsia-400',
               dragIndex === index && 'opacity-50',

@@ -7,6 +7,19 @@
   "display": "standalone",
   "background_color": "#0b0a10",
   "theme_color": "#0b0a10",
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "application/pdf": [".pdf"]
+      },
+      "icons": ["icons/icon-192.png"],
+      "launch_type": "single-client"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "icons": [
     {
       "src": "icons/icon-192.png",

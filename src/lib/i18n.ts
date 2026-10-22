@@ -11,7 +11,18 @@
 
 import { create } from 'zustand';
 
-export type Lang = 'en' | 'hi';
+export type Lang = 'en' | 'hi' | 'mr' | 'ta' | 'bn';
+
+/** Languages offered in the switcher — native names, shown as-is. */
+export const LANGUAGES: ReadonlyArray<{ id: Lang; native: string }> = [
+  { id: 'en', native: 'English' },
+  { id: 'hi', native: 'हिन्दी' },
+  { id: 'mr', native: 'मराठी' },
+  { id: 'ta', native: 'தமிழ்' },
+  { id: 'bn', native: 'বাংলা' },
+];
+
+const LANG_IDS = LANGUAGES.map((l) => l.id);
 
 const LS_KEY = 'printifier.lang';
 
@@ -823,6 +834,62 @@ const DICT: Record<string, [string, string]> = {
   'tour.s4.cta': ['Try it yourself', 'खुद आज़माएँ'],
   'tour.s4.sample': ['Load the sample PDF', 'सैंपल PDF लोड करें'],
   'cp.tour': ['Replay the intro tour', 'इंट्रो टूर दोबारा देखें'],
+
+  // page-range slider + custom range (Arrange step)
+  'pg.slider': ['Page-range slider', 'पेज-रेंज स्लाइडर'],
+  'pg.sliderRange': ['Pages {a} – {b}', 'पेज {a} – {b}'],
+  'pg.sliderHint': [
+    'Drag both handles to keep only that window selected, or type any range below.',
+    'दोनों हैंडल खींचकर सिर्फ़ वही हिस्सा चुनें, या नीचे कोई भी रेंज टाइप करें।',
+  ],
+  'pg.custom': ['Custom range', 'कस्टम रेंज'],
+  'pg.customPh': ['e.g. 1-5, 8, 12-14', 'जैसे 1-5, 8, 12-14'],
+  'pg.apply': ['Apply', 'लागू करें'],
+  'pg.rangeOk': ['{n} pages selected', '{n} पेज चुने गए'],
+  'pg.rangeBad': ['Could not read that range', 'रेंज समझ नहीं आई'],
+
+  // layout: page sizes / margin / metadata
+  'ly.customSize': ['Custom', 'कस्टम'],
+  'ly.customW': ['Width (mm)', 'चौड़ाई (mm)'],
+  'ly.customH': ['Height (mm)', 'ऊँचाई (mm)'],
+  'ly.margin': ['Sheet margin', 'शीट मार्जिन'],
+  'ly.marginHint': [
+    'Extra breathing room on every side of the sheet (0–48 pt).',
+    'शीट के हर किनारे पर अतिरिक्त खाली जगह (0–48 pt)।',
+  ],
+  'ly.meta': ['PDF details', 'PDF विवरण'],
+  'ly.metaHint': [
+    'Title and author written into the output file’s metadata.',
+    'आउटपुट फ़ाइल के मेटाडेटा में शीर्षक और लेखक लिखे जाते हैं।',
+  ],
+  'ly.metaTitlePh': ['Title (optional)', 'शीर्षक (वैकल्पिक)'],
+  'ly.metaAuthorPh': ['Author (optional)', 'लेखक (वैकल्पिक)'],
+
+  // upload: image import hint
+  'up.imgHint': ['Photos work too — JPG · PNG · WebP become one PDF', 'फ़ोटो भी चलेंगे — JPG · PNG · WebP एक PDF बनेगा'],
+
+  // result: image export + chunk split
+  'rs.img.title': ['Export as images', 'प्रतिमा में निर्यात'],
+  'rs.img.body': [
+    'Save every page of the result as a PNG — one file, or a ZIP when there are many.',
+    'रिज़ल्ट का हर पेज PNG के रूप में सेव करें — एक फ़ाइल, या ज़्यादा हों तो ZIP।',
+  ],
+  'rs.img.dpi': ['Image resolution', 'इमेज रेज़ोल्यूशन'],
+  'rs.img.btn': ['Export PNGs', 'PNG निर्यात करें'],
+  'rs.img.done': ['{n} images ready', '{n} इमेज तैयार'],
+  'rs.img.fail': ['Image export failed', 'इमेज निर्यात नहीं हुई'],
+  'rs.split.title': ['Split every N pages', 'हर N पेज पर बाँटें'],
+  'rs.split.body': [
+    'Cut the output into fixed-size parts — handy for shared printers or per-chapter files.',
+    'आउटपुट को निश्चित आकार के हिस्सों में बाँटें — शेयर्ड प्रिंटर या चैप्टर-वाइज़ फ़ाइलों के लिए।',
+  ],
+  'rs.split.ph': ['Pages per part', 'हिस्से में पेज'],
+  'rs.split.btn': ['Split', 'बाँटें'],
+  'rs.split.done': ['{n} parts ready', '{n} हिस्से तैयार'],
+  'rs.split.fail': ['Split failed', 'बाँटना नहीं हुआ'],
+
+  // welcome tour: pattern picker
+  'tour.s2.patterns': ['Backdrop pattern', 'बैकड्रॉप पैटर्न'],
 };
 
 interface LangState {
@@ -846,7 +913,7 @@ export const useLangStore = create<LangState>((set) => ({
   hydrate: () => {
     try {
       const saved = window.localStorage.getItem(LS_KEY);
-      if (saved === 'hi' || saved === 'en') set({ lang: saved, hydrated: true });
+      if (saved && LANG_IDS.includes(saved as Lang)) set({ lang: saved as Lang, hydrated: true });
       else set({ hydrated: true });
     } catch {
       set({ hydrated: true });
@@ -854,13 +921,210 @@ export const useLangStore = create<LangState>((set) => ({
   },
 }));
 
+/**
+ * Partial dictionaries for मराठी / தமிழ் / বাংলা — the most visible strings
+ * are translated; anything missing falls back to English (never to a raw
+ * key). Adding a string: put it in DICT (en/hi) and optionally in EXTRA.
+ */
+const EXTRA: Record<'mr' | 'ta' | 'bn', Record<string, string>> = {
+  mr: {
+    'nav.how': 'कसे चालते',
+    'nav.features': 'वैशिष्ट्ये',
+    'nav.faq': 'प्रश्न',
+    'nav.start': 'सुरू करा',
+    'nav.lang': 'भाषा',
+    'hero.badge1': 'ब्राउझरमध्ये तत्काळ',
+    'hero.badge2': 'अपलोड नाही · लॉगिन नाही',
+    'hero.cta': 'PDF प्रोसेस करा',
+    'step.upload': 'अपलोड',
+    'step.arrange': 'क्रम',
+    'step.enhance': 'सुधारा',
+    'step.layout': 'मांडणी',
+    'step.finish': 'पूर्ण',
+    'up.continue': 'पुढे',
+    'up.back': 'मागे',
+    'up.drop': 'PDF येथे टाका',
+    'up.select': 'फाइल निवडा',
+    'up.imgHint': 'फोटो देखील चालतात — JPG · PNG · WebP',
+    'pg.selected': 'निवडलेली पाने',
+    'pg.slider': 'पान निवड स्लायडर',
+    'pg.sliderRange': 'पान {a} – {b}',
+    'pg.sliderHint': 'दोन हँडल ओढा — फक्त त्या क्षेत्रातील पाने निवडली जातील',
+    'pg.custom': 'सानुकूल श्रेणी',
+    'pg.customPh': 'उदा. 1-5, 8, 12-14',
+    'pg.apply': 'लागू करा',
+    'pg.rangeOk': '{n} पाने निवडली',
+    'pg.rangeBad': 'श्रेणी समजली नाही',
+    'pg.pick': 'झटपट निवड',
+    'pg.pick.all': 'सर्व',
+    'pg.pick.odd': 'विषम पाने',
+    'pg.pick.even': 'सम पाने',
+    'pg.pick.invert': 'निवड उलटा',
+    'pg.pick.last': 'शेवटची 10',
+    'en.ink': 'इंक बचत',
+    'ly.preview': 'पूर्वावलोकन',
+    'ly.paper': 'कागद',
+    'ly.customSize': 'सानुकूल',
+    'ly.customW': 'रुंदी (mm)',
+    'ly.customH': 'उंची (mm)',
+    'ly.margin': 'शीट मार्जिन',
+    'ly.marginHint': 'प्रत्येक बाजूला अतिरिक्त जागा',
+    'ly.meta': 'PDF माहिती',
+    'ly.metaTitlePh': 'शीर्षक',
+    'ly.metaAuthorPh': 'लेखक',
+    'ly.original': 'मूळ',
+    'ly.portrait': 'उभा',
+    'ly.landscape': 'आडवा',
+    'ly.process': 'प्रोसेस करा',
+    'rs.download': 'डाउनलोड',
+    'rs.open': 'उघडा',
+    'rs.another': 'नवीन PDF',
+    'rs.img.title': 'प्रतिमा म्हणून निर्यात',
+    'rs.img.btn': 'PNG निर्यात',
+    'rs.split.title': 'विभागून काढा',
+    'rs.split.btn': 'विभाग करा',
+    'up.download': 'डाउनलोड',
+    'up.remove': 'काढा',
+    'th.toggle': 'रंग बदला',
+  },
+  ta: {
+    'nav.how': 'எப்படி வேலை செய்கிறது',
+    'nav.features': 'அம்சங்கள்',
+    'nav.faq': 'கேள்விகள்',
+    'nav.start': 'தொடங்கு',
+    'nav.lang': 'மொழி',
+    'hero.badge1': 'உலாவியில் உடனடியாக',
+    'hero.badge2': 'பதிவேற்றம் இல்லை · உள்நுழைவு இல்லை',
+    'hero.cta': 'PDF செயலாக்கு',
+    'step.upload': 'பதிவேற்று',
+    'step.arrange': 'வரிசைப்படுத்து',
+    'step.enhance': 'மேம்படுத்து',
+    'step.layout': 'அமைப்பு',
+    'step.finish': 'முடிந்தது',
+    'up.continue': 'தொடர்',
+    'up.back': 'பின்செல்',
+    'up.drop': 'PDF இங்கே விடுங்கள்',
+    'up.select': 'கோப்பை தேர்வு செய்',
+    'up.imgHint': 'புகைப்படங்களும் சரி — JPG · PNG · WebP',
+    'pg.selected': 'தேர்ந்தெடுத்த பக்கங்கள்',
+    'pg.slider': 'பக்க தேர்வு ஸ்லைடர்',
+    'pg.sliderRange': 'பக்கம் {a} – {b}',
+    'pg.sliderHint': 'இரண்டு கைப்பிடிகளையும் இழுக்கவும் — அந்த வரம்பு மட்டும் தேர்வு',
+    'pg.custom': 'தனிப்பயன் வரம்பு',
+    'pg.customPh': 'எ.கா. 1-5, 8, 12-14',
+    'pg.apply': 'பயன்படுத்து',
+    'pg.rangeOk': '{n} பக்கங்கள் தேர்வு',
+    'pg.rangeBad': 'வரம்பு புரியவில்லை',
+    'pg.pick': 'விரைவு தேர்வு',
+    'pg.pick.all': 'அனைத்தும்',
+    'pg.pick.odd': 'ஒற்றை பக்கம்',
+    'pg.pick.even': 'இரட்டை பக்கம்',
+    'pg.pick.invert': 'தேர்வை மாற்று',
+    'pg.pick.last': 'கடைசி 10',
+    'en.ink': 'மை சேமிப்பு',
+    'ly.preview': 'முன்தோற்றம்',
+    'ly.paper': 'காகிதம்',
+    'ly.customSize': 'தனிப்பயன்',
+    'ly.customW': 'அகலம் (mm)',
+    'ly.customH': 'உயரம் (mm)',
+    'ly.margin': 'விளிம்பு',
+    'ly.marginHint': 'ஒவ்வொரு பக்கத்திலும் கூடுதல் இடைவெளி',
+    'ly.meta': 'PDF விவரம்',
+    'ly.metaTitlePh': 'தலைப்பு',
+    'ly.metaAuthorPh': 'ஆசிரியர்',
+    'ly.original': 'அசல்',
+    'ly.portrait': 'நிலை',
+    'ly.landscape': 'அகல',
+    'ly.process': 'செயலாக்கு',
+    'rs.download': 'பதிவிறக்கு',
+    'rs.open': 'திற',
+    'rs.another': 'புதிய PDF',
+    'rs.img.title': 'படமாக ஏற்று',
+    'rs.img.btn': 'PNG ஏற்று',
+    'rs.split.title': 'பிரி',
+    'rs.split.btn': 'பிரி',
+    'up.download': 'பதிவிறக்கு',
+    'up.remove': 'அகற்று',
+    'th.toggle': 'நிறம் மாற்று',
+  },
+  bn: {
+    'nav.how': 'যেভাবে কাজ করে',
+    'nav.features': 'ফিচার',
+    'nav.faq': 'প্রশ্নোত্তর',
+    'nav.start': 'শুরু করুন',
+    'nav.lang': 'ভাষা',
+    'hero.badge1': 'ব্রাউজারেই সঙ্গে সঙ্গে',
+    'hero.badge2': 'আপলোড নেই · লগইন নেই',
+    'hero.cta': 'PDF প্রসেস করুন',
+    'step.upload': 'আপলোড',
+    'step.arrange': 'সাজান',
+    'step.enhance': 'উন্নত করুন',
+    'step.layout': 'লেআউট',
+    'step.finish': 'শেষ',
+    'up.continue': 'এগিয়ে যান',
+    'up.back': 'পেছনে',
+    'up.drop': 'এখানে PDF ছাড়ুন',
+    'up.select': 'ফাইল বাছুন',
+    'up.imgHint': 'ছবিও চলবে — JPG · PNG · WebP',
+    'pg.selected': 'নির্বাচিত পৃষ্ঠা',
+    'pg.slider': 'পৃষ্ঠা নির্বাচন স্লাইডার',
+    'pg.sliderRange': 'পৃষ্ঠা {a} – {b}',
+    'pg.sliderHint': 'দুটি হাতল টানুন — শুধু ওই অংশের পৃষ্ঠা নির্বাচিত হবে',
+    'pg.custom': 'কাস্টম রেঞ্জ',
+    'pg.customPh': 'যেমন 1-5, 8, 12-14',
+    'pg.apply': 'প্রয়োগ করুন',
+    'pg.rangeOk': '{n} টি পৃষ্ঠা নির্বাচিত',
+    'pg.rangeBad': 'রেঞ্জ বোঝা যায়নি',
+    'pg.pick': 'দ্রুত নির্বাচন',
+    'pg.pick.all': 'সব',
+    'pg.pick.odd': 'বিজোড় পৃষ্ঠা',
+    'pg.pick.even': 'জোড় পৃষ্ঠা',
+    'pg.pick.invert': 'নির্বাচন উল্টে দিন',
+    'pg.pick.last': 'শেষ 10',
+    'en.ink': 'কালি সাশ্রয়',
+    'ly.preview': 'প্রিভিউ',
+    'ly.paper': 'কাগজ',
+    'ly.customSize': 'কাস্টম',
+    'ly.customW': 'প্রস্থ (mm)',
+    'ly.customH': 'উচ্চতা (mm)',
+    'ly.margin': 'মার্জিন',
+    'ly.marginHint': 'প্রতি পাশে অতিরিক্ত ফাঁকা জায়গা',
+    'ly.meta': 'PDF তথ্য',
+    'ly.metaTitlePh': 'শিরোনাম',
+    'ly.metaAuthorPh': 'লেখক',
+    'ly.original': 'আসল',
+    'ly.portrait': 'লম্বালম্বি',
+    'ly.landscape': 'আড়াআড়ি',
+    'ly.process': 'প্রসেস করুন',
+    'rs.download': 'ডাউনলোড',
+    'rs.open': 'খুলুন',
+    'rs.another': 'নতুন PDF',
+    'rs.img.title': 'ছবি হিসেবে রপ্তানি',
+    'rs.img.btn': 'PNG রপ্তানি',
+    'rs.split.title': 'ভাগ করুন',
+    'rs.split.btn': 'ভাগ করুন',
+    'up.download': 'ডাউনলোড',
+    'up.remove': 'সরান',
+    'th.toggle': 'রং বদলান',
+  },
+};
+
+/** Single lookup point — EXTRA first (mr/ta/bn), then DICT (en/hi). */
+function lookup(key: string, lang: Lang): string {
+  if (lang === 'hi') return DICT[key]?.[1] ?? key;
+  if (lang !== 'en') {
+    const extra = EXTRA[lang];
+    if (extra && extra[key]) return extra[key];
+  }
+  return DICT[key]?.[0] ?? key;
+}
+
 type Translate = (key: string, vars?: Record<string, string | number>) => string;
 
 export function useT(): Translate {
   const lang = useLangStore((s) => s.lang);
   return (key, vars) => {
-    const entry = DICT[key];
-    let out = entry ? entry[lang === 'hi' ? 1 : 0] : key;
+    let out = lookup(key, lang);
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
         out = out.replaceAll(`{${k}}`, String(v));
@@ -872,8 +1136,7 @@ export function useT(): Translate {
 
 /** Translate outside React (rare — toasts from store code). */
 export function translateStatic(key: string, lang: Lang, vars?: Record<string, string | number>): string {
-  const entry = DICT[key];
-  let out = entry ? entry[lang === 'hi' ? 1 : 0] : key;
+  let out = lookup(key, lang);
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
       out = out.replaceAll(`{${k}}`, String(v));

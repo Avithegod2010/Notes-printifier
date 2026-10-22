@@ -30,7 +30,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { useT, useLangStore } from '@/lib/i18n';
+import { useT, useLangStore, LANGUAGES } from '@/lib/i18n';
 import { usePrintifyStore } from '@/lib/printify-store';
 import {
   PATTERNS,
@@ -328,10 +328,18 @@ export function CommandPalette() {
             </CommandItem>
             <CommandItem
               value={`${t('cp.lang')} language`}
-              onSelect={() => run(() => setLang(lang === 'en' ? 'hi' : 'en'))}
+              onSelect={() =>
+                run(() => {
+                  const idx = LANGUAGES.findIndex((l) => l.id === lang);
+                  setLang(LANGUAGES[(idx + 1) % LANGUAGES.length].id);
+                })
+              }
             >
               <Languages className="mr-2 h-4 w-4 text-muted-foreground" />
-              <span>{t('cp.lang')}</span>
+              <span>
+                {t('cp.lang')} ·{' '}
+                {LANGUAGES[(LANGUAGES.findIndex((l) => l.id === lang) + 1) % LANGUAGES.length].native}
+              </span>
             </CommandItem>
             <CommandItem value={t('cp.shortcuts')} onSelect={() => { setOpen(false); setTimeout(() => setHelpOpen(true), 60); }}>
               <Keyboard className="mr-2 h-4 w-4 text-muted-foreground" />

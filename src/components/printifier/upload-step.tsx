@@ -185,6 +185,28 @@ export function UploadStep() {
     return () => window.removeEventListener('printifier:load-sample', onLoad);
   }, [loadSample]);
 
+  // PWA file handling — files opened from the OS (double-click a PDF, or
+  // "Open with → Printifier" on Android) arrive through launchQueue instead
+  // of the file picker. Consumed only while this step is mounted.
+  useEffect(() => {
+    interface LaunchParams {
+      files?: Array<{ getFile: () => Promise<File> }>;
+    }
+    const w = window as Window & {
+      launchQueue?: { setConsumer: (cb: (params: LaunchParams) => void) => void };
+    };
+    if (!w.launchQueue?.setConsumer) return;
+    w.launchQueue.setConsumer(async (params) => {
+      if (!params.files || params.files.length === 0) return;
+      try {
+        const files = await Promise.all(params.files.map((h) => h.getFile()));
+        void addFiles(files);
+      } catch (err) {
+        console.error('launchQueue file handling failed', err);
+      }
+    });
+  }, [addFiles]);
+
   const loadPct = loadProgress
     ? Math.round((loadProgress.done / loadProgress.total) * 100)
     : 0;
@@ -239,6 +261,7 @@ export function UploadStep() {
         <div>
           <p className="text-lg font-semibold">{t('up.drop')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('up.multi')}</p>
+          <p className="text-[11px] font-medium text-violet-300/90">{t('up.imgHint')}</p>
         </div>
         <Button
           type="button"
@@ -258,7 +281,7 @@ export function UploadStep() {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,application/pdf"
+          accept=".pdf,application/pdf,image/png,image/jpeg,image/webp"
           multiple
           hidden
           onChange={(e) => {

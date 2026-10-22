@@ -9,7 +9,7 @@
  * This module must stay dependency-free (no pdf-lib, no pdf.js, no canvas).
  */
 
-export type PageSizeOpt = 'a4' | 'letter' | 'original';
+export type PageSizeOpt = 'a4' | 'letter' | 'a3' | 'a5' | 'legal' | 'original' | 'custom';
 export type QualityOpt = 'low' | 'medium' | 'high';
 
 export interface LayoutSettings {
@@ -40,6 +40,15 @@ export interface LayoutSettings {
   /** Soft cap for the final PDF size (MB). 0/null = off. The store lowers
    *  JPEG quality and re-composes until the output fits. */
   sizeTargetMB?: number | null;
+  /** Extra sheet margin in pt (0–48) added on every side of the output page.
+   *  0 = the built-in compact default. */
+  sheetMargin?: number;
+  /** Custom page size in mm — used when pageSize === 'custom'. */
+  customPageW?: number | null;
+  customPageH?: number | null;
+  /** Optional PDF metadata written into the output file. */
+  docTitle?: string;
+  docAuthor?: string;
 }
 
 export const defaultLayout: LayoutSettings = {
@@ -58,6 +67,11 @@ export const defaultLayout: LayoutSettings = {
   coverSheet: false,
   sizeTargetMB: null,
   nameStamp: '',
+  sheetMargin: 0,
+  customPageW: null,
+  customPageH: null,
+  docTitle: '',
+  docAuthor: '',
 };
 
 export interface ComposeItem {
@@ -140,7 +154,46 @@ export function resolveQuality(layout: Pick<LayoutSettings, 'quality' | 'customD
 export const PAGE_SIZES: Record<Exclude<PageSizeOpt, 'original'>, [number, number]> = {
   a4: [595.28, 841.89],
   letter: [612, 792],
+  a3: [841.89, 1190.55],
+  a5: [419.53, 595.28],
+  legal: [612, 1008],
+  // placeholder for 'custom' — real size comes from customPageW/H (mm)
+  custom: [595.28, 841.89],
 };
+
+export const MM_TO_PT = 72 / 25.4;
+
+/** Sheet margin slider bounds (pt). */
+export const MARGIN_MIN = 0;
+export const MARGIN_MAX = 48;
+
+/**
+ * Output page size in pt (portrait) for FIXED sizes (a4/letter/a3/a5/legal/
+ * custom). Returns null for 'original' — the caller must read the first
+ * source page's viewport instead (async).
+ */
+export function fixedPageSize(layout: LayoutSettings): [number, number] | null {
+  if (layout.pageSize === 'original') return null;
+  if (layout.pageSize === 'custom') {
+    const w = layout.customPageW && layout.customPageW > 10 ? layout.customPageW * MM_TO_PT : PAGE_SIZES.a4[0];
+    const h = layout.customPageH && layout.customPageH > 10 ? layout.customPageH * MM_TO_PT : PAGE_SIZES.a4[1];
+    return [Math.min(2880, w), Math.min(2880, h)];
+  }
+  return PAGE_SIZES[layout.pageSize];
+}
+
+/**
+ * Effective sheet margins in pt for a layout: the built-in compact frame
+ * plus the user's extra-margin slider on every side.
+ */
+export function sheetMargins(layout: Pick<LayoutSettings, 'pageNumbers' | 'sheetMargin'>) {
+  const extra = Math.min(MARGIN_MAX, Math.max(MARGIN_MIN, Math.round(layout.sheetMargin ?? 0)));
+  return {
+    x: 18 + extra,
+    top: 18 + extra,
+    bottom: (layout.pageNumbers ? 34 : 18) + extra,
+  };
+}
 
 export function estimateOutputPages(pageCount: number, layout: LayoutSettings): number {
   if (layout.booklet) return bookletOutputPages(pageCount);

@@ -44,6 +44,8 @@ import {
   resolveQuality,
   DPI_MIN,
   DPI_MAX,
+  MARGIN_MIN,
+  MARGIN_MAX,
   type PageSizeOpt,
   type QualityOpt,
 } from '@/lib/pdf/layout-settings';
@@ -92,6 +94,21 @@ function GridGlyph({ rows, cols, active }: { rows: number; cols: number; active:
 const PAGE_ASPECT: Record<Exclude<PageSizeOpt, 'original'>, number> = {
   a4: 595.28 / 841.89,
   letter: 612 / 792,
+  a3: 841.89 / 1190.55,
+  a5: 419.53 / 595.28,
+  legal: 612 / 1008,
+  custom: 595.28 / 841.89, // fallback — real aspect follows the W/H inputs
+};
+
+/** Paper chips shown in the layout step (order = display order). */
+const PAGE_OPTS = ['a4', 'letter', 'legal', 'a3', 'a5', 'original', 'custom'] as const;
+const PAGE_LABEL: Record<Exclude<PageSizeOpt, 'original'>, string> = {
+  a4: 'A4',
+  letter: 'Letter',
+  a3: 'A3',
+  a5: 'A5',
+  legal: 'Legal',
+  custom: '', // i18n — filled at render time
 };
 
 function formatMB(bytes: number): string {
@@ -208,7 +225,9 @@ export function LayoutStep() {
   const aspect =
     layout.pageSize === 'original' && selected[0]
       ? selected[0].widthPt / selected[0].heightPt
-      : PAGE_ASPECT[layout.pageSize];
+      : layout.pageSize === 'custom' && layout.customPageW && layout.customPageH
+        ? layout.customPageW / layout.customPageH
+        : PAGE_ASPECT[layout.pageSize];
   const previewAspect = layout.orientation === 'landscape' ? 1 / aspect : aspect;
 
   const previewThumbs = selected.slice(0, perPage);
@@ -345,24 +364,61 @@ export function LayoutStep() {
             <RadioGroup
               value={layout.pageSize}
               onValueChange={(v) => setLayout({ pageSize: v as PageSizeOpt })}
-              className="flex gap-2"
+              className="grid grid-cols-4 gap-2 sm:grid-cols-4"
             >
-              {(['a4', 'letter', 'original'] as const).map((sz) => (
+              {PAGE_OPTS.map((sz) => (
                 <Label
                   key={sz}
                   htmlFor={`ps-${sz}`}
                   className={cn(
-                    'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border p-2.5 text-sm font-medium transition-colors',
+                    'flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-1 py-2 text-[13px] font-medium transition-colors',
                     layout.pageSize === sz
                       ? 'border-primary bg-primary/10'
                       : 'border-white/10 hover:border-white/25',
                   )}
                 >
                   <RadioGroupItem value={sz} id={`ps-${sz}`} className="sr-only" />
-                  {sz === 'original' ? t('ly.original') : sz.toUpperCase()}
+                  {sz === 'original' ? t('ly.original') : sz === 'custom' ? t('ly.customSize') : PAGE_LABEL[sz]}
                 </Label>
               ))}
             </RadioGroup>
+            {layout.pageSize === 'custom' && (
+              <div className="mt-3 flex items-end gap-2">
+                <div className="flex-1">
+                  <p className="mb-1 text-[11px] text-muted-foreground">{t('ly.customW')}</p>
+                  <Input
+                    type="number"
+                    min={20}
+                    max={1000}
+                    inputMode="numeric"
+                    value={layout.customPageW ?? ''}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setLayout({ customPageW: Number.isFinite(v) && v > 10 ? v : null });
+                    }}
+                    aria-label={t('ly.customW')}
+                    className="h-9"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="mb-1 text-[11px] text-muted-foreground">{t('ly.customH')}</p>
+                  <Input
+                    type="number"
+                    min={20}
+                    max={1000}
+                    inputMode="numeric"
+                    value={layout.customPageH ?? ''}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setLayout({ customPageH: Number.isFinite(v) && v > 10 ? v : null });
+                    }}
+                    aria-label={t('ly.customH')}
+                    className="h-9"
+                  />
+                </div>
+                <span className="pb-2 text-xs text-muted-foreground">mm</span>
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -607,6 +663,55 @@ export function LayoutStep() {
                     {budgetMsg.text}
                   </p>
                 )}
+              </div>
+
+              {/* Sheet margin — extra breathing room on every side */}
+              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="pr-2">
+                    <p className="text-sm font-medium">{t('ly.margin')}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                      {t('ly.marginHint')}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 tabular-nums">
+                    {Math.round(layout.sheetMargin ?? 0)} pt
+                  </Badge>
+                </div>
+                <Slider
+                  className="mt-3"
+                  value={[Math.round(layout.sheetMargin ?? 0)]}
+                  min={MARGIN_MIN}
+                  max={MARGIN_MAX}
+                  step={1}
+                  onValueChange={(v) => setLayout({ sheetMargin: v[0] ?? 0 })}
+                  aria-label={t('ly.margin')}
+                />
+              </div>
+
+              {/* PDF metadata — title / author written into the output file */}
+              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <div className="flex items-center gap-2">
+                  <Type className="h-4 w-4 text-violet-300" />
+                  <p className="text-sm font-medium">{t('ly.meta')}</p>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.metaHint')}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <Input
+                    value={layout.docTitle ?? ''}
+                    onChange={(e) => setLayout({ docTitle: e.target.value })}
+                    placeholder={t('ly.metaTitlePh')}
+                    aria-label={t('ly.metaTitlePh')}
+                    maxLength={120}
+                  />
+                  <Input
+                    value={layout.docAuthor ?? ''}
+                    onChange={(e) => setLayout({ docAuthor: e.target.value })}
+                    placeholder={t('ly.metaAuthorPh')}
+                    aria-label={t('ly.metaAuthorPh')}
+                    maxLength={120}
+                  />
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
