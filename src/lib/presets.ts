@@ -8,7 +8,7 @@
  */
 
 import { defaultFilters, type FilterSettings } from './pdf/filters';
-import { defaultLayout, type LayoutSettings } from './pdf/compose-core';
+import { defaultLayout, type LayoutSettings } from './pdf/layout-settings';
 
 const LS_KEY = 'printifier.presets.v1';
 export const MAX_PRESETS = 24;

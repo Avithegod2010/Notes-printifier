@@ -110,6 +110,10 @@ interface ThemeState {
   lastLight: ThemeId;
   setTheme: (id: ThemeId) => void;
   setPattern: (p: PatternId) => void;
+  /** Temporarily paint a theme's look (CSS attribute only) WITHOUT changing
+   *  the committed choice or persisting anything — powers the welcome-tour
+   *  live hover preview. Pass null to restore the committed theme. */
+  preview: (id: ThemeId | null) => void;
   /** Flip between the last dark and last light theme (quick toggle). */
   flip: () => void;
   /** Restore persisted choices (mount-time, client only). */
@@ -158,6 +162,10 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     applyPattern(p);
     set({ pattern: p });
     persist(get());
+  },
+
+  preview: (id) => {
+    applyTheme(id ?? get().themeId);
   },
 
   flip: () => {

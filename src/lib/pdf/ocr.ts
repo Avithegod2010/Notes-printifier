@@ -14,9 +14,8 @@
  * they map correctly onto the final (possibly trimmed & rescaled) placement.
  */
 
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { loadPdfDocument } from './pdfjs';
-import { composeItemKey, type ComposeItem, type Placement } from './compose-core';
+import { composeItemKey, type ComposeItem, type Placement } from './layout-settings';
 import type { AnyCanvas, AnyCtx } from './filters';
 
 export interface OcrWord {
@@ -316,6 +315,8 @@ export async function addOcrTextLayer(
   placements: Placement[],
   wordsByKey: Map<string, OcrWord[]>,
 ): Promise<Uint8Array> {
+  // pdf-lib loads on demand — keeps it out of the initial JS bundle.
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
   const doc = await PDFDocument.load(pdfBytes);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const transparent = rgb(0, 0, 0);

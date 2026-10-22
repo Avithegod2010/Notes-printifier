@@ -21,7 +21,6 @@ import {
   Type,
   Leaf,
 } from 'lucide-react';
-import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -120,6 +119,8 @@ export function ResultStep() {
     if (!result || splitting) return;
     setSplitting(true);
     try {
+      // pdf-lib loads on demand — keeps it out of the initial JS bundle.
+      const { PDFDocument } = await import('pdf-lib');
       const buf = await fetch(result.url).then((r) => r.arrayBuffer());
       const src = await PDFDocument.load(buf);
       const n = src.getPageCount();

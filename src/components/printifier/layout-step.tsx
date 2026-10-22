@@ -41,13 +41,12 @@ import { cn } from '@/lib/utils';
 import {
   bookletOutputPages,
   estimateOutputPages,
-  estimateOutput,
   resolveQuality,
   DPI_MIN,
   DPI_MAX,
   type PageSizeOpt,
   type QualityOpt,
-} from '@/lib/pdf/compose';
+} from '@/lib/pdf/layout-settings';
 import { preparePageCanvas, resolveColorMode, type AnyCanvas } from '@/lib/pdf/filters';
 import { loadPdfDocument } from '@/lib/pdf/pdfjs';
 import { renderPageToCanvas } from '@/lib/pdf/render';
@@ -160,6 +159,8 @@ export function LayoutStep() {
           .map((d) => ({ id: d.id, data: getDocBuffer(d.id) }))
           .filter((b): b is { id: number; data: ArrayBuffer } => !!b.data);
         if (buffers.length === 0) throw new Error('buffers gone');
+        // Heavy estimator (pdf.js + compose-core) loads on demand.
+        const { estimateOutput } = await import('@/lib/pdf/compose');
         const result = await estimateOutput({
           buffers,
           items: selected.map((p) => ({

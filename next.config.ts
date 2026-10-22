@@ -68,6 +68,11 @@ const nextConfig: NextConfig = {
       }),
   ...(basePath ? { basePath } : {}),
   reactStrictMode: false,
+  experimental: {
+    // Compile-time tree-shaking for the huge lucide icon barrel — only the
+    // icons actually imported ship in the client bundle.
+    optimizePackageImports: ["lucide-react"],
+  },
 };
 
 export default nextConfig;

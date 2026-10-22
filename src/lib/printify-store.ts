@@ -8,14 +8,13 @@ import {
 } from './pdf/filters';
 import {
   buildBookletItems,
-  composePdf,
   defaultLayout,
   estimateOutputPages,
   resolveQuality,
   type ComposeItem,
   type CoverSheetData,
   type LayoutSettings,
-} from './pdf/compose';
+} from './pdf/layout-settings';
 import {
   addOcrTextLayer,
   buildRepaintCanvases,
@@ -297,6 +296,9 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
     };
   }
 
+  // compose pipeline (and pdf-lib) load on demand — keeps the initial
+  // bundle light; the pipeline ships in its own async chunk.
+  const { composePdf } = await import('./pdf/compose');
   let composed = await composePdf({
     buffers,
     items,

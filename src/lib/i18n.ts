@@ -794,7 +794,13 @@ const DICT: Record<string, [string, string]> = {
     'Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime.',
     'एक रूप चुनें — पूरा ऐप तुरंत बदल जाएगा। 12 थीम और 10 बैकड्रॉप पैटर्न ऊपर पैलेट बटन में हैं, या कभी भी ⌘K / Ctrl+K दबाएँ।',
   ],
-  'tour.s2.hint': ['Tap a swatch to try it right now', 'अभी आज़माने के लिए रंग दबाएँ'],
+  'tour.s2.hint': [
+    'Hover to see it live — tap to keep it',
+    'होवर करके लाइव देखें — रखने के लिए दबाएँ',
+  ],
+  'tour.s2.dark': ['Dark', 'डार्क'],
+  'tour.s2.light': ['Light', 'लाइट'],
+  'tour.s2.live': ['Live preview', 'लाइव प्रीव्यू'],
   'tour.s3.t': ['A real example', 'असली उदाहरण'],
   'tour.s3.b': [
     'This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged.',

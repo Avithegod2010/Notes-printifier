@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion';
 import {
   ArrowLeft,
@@ -67,6 +73,9 @@ export function WelcomeTour() {
   const cardRef = useRef<HTMLDivElement>(null);
   const themeId = useThemeStore((s) => s.themeId);
   const setTheme = useThemeStore((s) => s.setTheme);
+  /** Theme currently hover/keyboard-previewed in step 2 (live preview). */
+  const [hoverId, setHoverId] = useState<ThemeId | null>(null);
+  const swatchWrapRef = useRef<HTMLDivElement>(null);
 
   const markSeen = useCallback(() => {
     try {
@@ -78,6 +87,7 @@ export function WelcomeTour() {
 
   const close = useCallback(() => {
     setOpen(false);
+    useThemeStore.getState().preview(null); // drop any in-flight live preview
     markSeen();
   }, [markSeen]);
 
@@ -105,6 +115,11 @@ export function WelcomeTour() {
     };
   }, []);
 
+  // Leaving step 2 (Back/Next/dots) must restore the committed theme.
+  useEffect(() => {
+    if (step !== 1) useThemeStore.getState().preview(null);
+  }, [step]);
+
   // Escape closes + scroll lock while open
   useEffect(() => {
     if (!open) return;
@@ -122,6 +137,66 @@ export function WelcomeTour() {
   }, [open, close]);
 
   const goTo = (i: number) => setStep(Math.min(STEP_COUNT - 1, Math.max(0, i)));
+
+  /* ── step-2 live theme preview ── */
+  const previewOn = useCallback((id: ThemeId) => {
+    setHoverId(id);
+    useThemeStore.getState().preview(id);
+  }, []);
+  const previewOff = useCallback(() => {
+    setHoverId(null);
+    useThemeStore.getState().preview(null);
+  }, []);
+
+  /** Roving arrow keys across both swatch groups (dark 0-7 → light 8-11). */
+  const onSwatchKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const els = Array.from(
+      swatchWrapRef.current?.querySelectorAll<HTMLButtonElement>('[data-swatch]') ?? [],
+    );
+    const cur = els.indexOf(document.activeElement as HTMLButtonElement);
+    if (cur < 0) return;
+    let next = -1;
+    if (e.key === 'ArrowRight') next = Math.min(els.length - 1, cur + 1);
+    else if (e.key === 'ArrowLeft') next = Math.max(0, cur - 1);
+    else if (e.key === 'ArrowDown') next = Math.min(els.length - 1, cur + 6);
+    else if (e.key === 'ArrowUp') next = Math.max(0, cur - 6);
+    if (next < 0) return;
+    e.preventDefault();
+    els[next]?.focus();
+  };
+
+  const shownId = hoverId ?? themeId;
+  const shownMeta = THEMES.find((x) => x.id === shownId) ?? THEMES[0];
+
+  const renderSwatch = (th: (typeof THEMES)[number]) => (
+    <motion.button
+      key={th.id}
+      variants={popV}
+      type="button"
+      data-swatch=""
+      title={t(THEME_NAME_KEY[th.id])}
+      aria-label={t(THEME_NAME_KEY[th.id])}
+      aria-pressed={themeId === th.id}
+      onClick={() => setTheme(th.id)}
+      onMouseEnter={() => previewOn(th.id)}
+      onFocus={() => previewOn(th.id)}
+      className={cn(
+        'relative mx-auto h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        themeId === th.id
+          ? 'border-white/70 shadow-lg'
+          : hoverId === th.id
+            ? 'border-white/50 shadow-md'
+            : 'border-white/20',
+      )}
+      style={{
+        background: `linear-gradient(135deg, ${th.swatch[0]} 0% 55%, ${th.swatch[2]} 55% 100%)`,
+      }}
+    >
+      {themeId === th.id && (
+        <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-md" />
+      )}
+    </motion.button>
+  );
 
   /** Final CTA — drop the user right onto the upload zone with a spotlight. */
   const tryYourself = () => {
@@ -303,37 +378,134 @@ export function WelcomeTour() {
                       >
                         {t('tour.s2.b')}
                       </motion.p>
-                      <motion.div
-                        variants={groupV}
-                        className="mt-4 grid grid-cols-6 gap-2"
-                        role="group"
-                        aria-label={t('tour.s2.hint')}
-                      >
-                        {THEMES.map((th) => (
-                          <motion.button
-                            key={th.id}
-                            variants={popV}
-                            type="button"
-                            title={t(THEME_NAME_KEY[th.id])}
-                            aria-label={t(THEME_NAME_KEY[th.id])}
-                            aria-pressed={themeId === th.id}
-                            onClick={() => setTheme(th.id)}
-                            className={cn(
-                              'relative mx-auto h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                              themeId === th.id
-                                ? 'border-white/70 shadow-lg'
-                                : 'border-white/20',
-                            )}
+
+                      {/* live preview pane — mirrors the hovered/selected theme */}
+                      <motion.div variants={itemV} className="mt-4">
+                        <div
+                          aria-hidden="true"
+                          className="overflow-hidden rounded-xl border transition-colors duration-300"
+                          style={{
+                            background: shownMeta.swatch[0],
+                            borderColor: shownMeta.light
+                              ? 'rgba(0,0,0,0.10)'
+                              : 'rgba(255,255,255,0.10)',
+                          }}
+                        >
+                          <div
+                            className="flex items-center justify-between border-b px-3 py-2 transition-colors duration-300"
                             style={{
-                              background: `linear-gradient(135deg, ${th.swatch[0]} 0% 55%, ${th.swatch[2]} 55% 100%)`,
+                              borderColor: shownMeta.light
+                                ? 'rgba(0,0,0,0.07)'
+                                : 'rgba(255,255,255,0.07)',
                             }}
                           >
-                            {themeId === th.id && (
-                              <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-md" />
-                            )}
-                          </motion.button>
-                        ))}
+                            <span className="flex items-center gap-1.5">
+                              {[0.6, 0.45, 0.3].map((a) => (
+                                <span
+                                  key={a}
+                                  className="h-2 w-2 rounded-full transition-colors duration-300"
+                                  style={{ background: shownMeta.swatch[2], opacity: a }}
+                                />
+                              ))}
+                            </span>
+                            <span
+                              className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
+                              style={{
+                                color: shownMeta.swatch[2],
+                                border: `1px solid ${shownMeta.swatch[2]}55`,
+                              }}
+                            >
+                              {t('tour.s2.live')}
+                            </span>
+                          </div>
+                          <div className="p-3">
+                            <div
+                              className="h-2 w-1/2 rounded-full transition-colors duration-300"
+                              style={{ background: shownMeta.swatch[2] }}
+                            />
+                            <div
+                              className="mt-1.5 h-1.5 w-3/4 rounded-full transition-colors duration-300"
+                              style={{
+                                background: shownMeta.light
+                                  ? 'rgba(0,0,0,0.28)'
+                                  : 'rgba(255,255,255,0.30)',
+                              }}
+                            />
+                            <div
+                              className="mt-1 h-1.5 w-2/3 rounded-full transition-colors duration-300"
+                              style={{
+                                background: shownMeta.light
+                                  ? 'rgba(0,0,0,0.16)'
+                                  : 'rgba(255,255,255,0.15)',
+                              }}
+                            />
+                            <div className="mt-2.5 flex items-center gap-2">
+                              <span
+                                className="flex h-6 items-center gap-1 rounded-md px-2 text-[10px] font-semibold text-white shadow-sm transition-colors duration-300"
+                                style={{ background: shownMeta.swatch[2] }}
+                              >
+                                <Printer className="h-3 w-3" />
+                                PDF
+                              </span>
+                              <span
+                                className="text-[10px] font-bold transition-colors duration-300"
+                                style={{ color: shownMeta.swatch[2] }}
+                              >
+                                −80% ink
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between px-0.5">
+                          <span className="text-xs font-semibold">
+                            {t(THEME_NAME_KEY[shownMeta.id])}
+                          </span>
+                          <span className="rounded-full border border-white/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {t(shownMeta.light ? 'tour.s2.light' : 'tour.s2.dark')}
+                          </span>
+                        </div>
                       </motion.div>
+
+                      {/* swatches — grouped dark/light, hover = live preview,
+                          click = keep. Arrow keys rove across all 12. */}
+                      <div
+                        ref={swatchWrapRef}
+                        onKeyDown={onSwatchKey}
+                        onMouseLeave={previewOff}
+                        onBlurCapture={(e) => {
+                          if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+                            previewOff();
+                        }}
+                      >
+                        <motion.p
+                          variants={itemV}
+                          className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                        >
+                          {t('tour.s2.dark')}
+                        </motion.p>
+                        <motion.div
+                          variants={groupV}
+                          className="mt-1.5 grid grid-cols-6 gap-2"
+                          role="group"
+                          aria-label={t('tour.s2.dark')}
+                        >
+                          {THEMES.filter((th) => !th.light).map(renderSwatch)}
+                        </motion.div>
+                        <motion.p
+                          variants={itemV}
+                          className="mt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                        >
+                          {t('tour.s2.light')}
+                        </motion.p>
+                        <motion.div
+                          variants={groupV}
+                          className="mt-1.5 grid grid-cols-6 gap-2"
+                          role="group"
+                          aria-label={t('tour.s2.light')}
+                        >
+                          {THEMES.filter((th) => th.light).map(renderSwatch)}
+                        </motion.div>
+                      </div>
                       <motion.p
                         variants={itemV}
                         className="mt-3 text-center text-xs text-muted-foreground"
