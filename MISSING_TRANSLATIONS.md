@@ -3,8 +3,6 @@
 
 # Missing translations — help make Printifier multilingual! 🌍
 
-> 📣 **Translate-a-thon is live** — claim a language + section in [issue #20](https://github.com/Avithegod2010/Notes-printifier/issues/20) so nobody duplicates work.
-
 Printifier's UI is fully English + हिन्दी. मराठी, தமிழ் and বাংলা are
 **partial** — the most visible strings are translated and everything else
 falls back to English (never to a raw key, the app always works).
@@ -35,7 +33,7 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 622 missing (133/755 done, 18%)
+## मराठी (Marathi) — 626 missing (133/759 done, 18%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
@@ -346,6 +344,10 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
 | `ly.md.reset` | Reset |
 | `ly.md.right` | Right |
 | `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
@@ -664,7 +666,7 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## தமிழ் (Tamil) — 622 missing (133/755 done, 18%)
+## தமிழ் (Tamil) — 626 missing (133/759 done, 18%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
@@ -975,6 +977,10 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
 | `ly.md.reset` | Reset |
 | `ly.md.right` | Right |
 | `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
@@ -1293,7 +1299,7 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## বাংলা (Bengali) — 622 missing (133/755 done, 18%)
+## বাংলা (Bengali) — 626 missing (133/759 done, 18%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
@@ -1604,6 +1610,10 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
 | `ly.md.reset` | Reset |
 | `ly.md.right` | Right |
 | `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
