@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPdfjs, PDF_WASM_URL, type PdfDocument } from '@/lib/pdf/pdfjs';
+import { loadPdfDocumentFromUrl, type PdfDocument } from '@/lib/pdf/pdfjs';
 
 /** Public assets must respect the GitHub Pages subpath (basePath). */
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -42,6 +42,11 @@ interface ExampleDialogProps {
  * "See a real example" dialog — loads two bundled PDFs (the untouched 41-page
  * dark lecture and its printified output) and renders EVERY page of both,
  * client-side, with pdf.js.
+ *
+ * The two sample docs come from the SHARED URL doc cache (pdfjs.ts —
+ * loadPdfDocumentFromUrl), so reopening the dialog is instant: no re-fetch,
+ * no re-parse. Cleanup below only tears down the canvases/observers — the
+ * cached documents stay warm for the next open.
  *
  * All pages are rendered LAZILY: each side shows skeleton slots for every
  * page immediately and an IntersectionObserver rooted at the scrolling box
@@ -221,39 +226,21 @@ function ExamplePanels() {
   useEffect(() => {
     let cancelled = false;
     const sides: LazySide[] = [];
-    // pdf.js v6 removed PDFDocumentProxy.destroy() — cleanup must go through
-    // the PDFDocumentLoadingTask returned by getDocument().
-    const loadTasks: Array<{ destroy: () => void }> = [];
     // a retry may leave canvases from a previous (partial) run behind
     if (beforeBox.current) beforeBox.current.textContent = '';
     if (afterBox.current) afterBox.current.textContent = '';
 
-    async function loadDoc(url: string) {
-      const pdfjs = await getPdfjs();
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Could not load ${url}`);
-      const buf = await res.arrayBuffer();
-      const loadTask = pdfjs.getDocument({
-        data: new Uint8Array(buf.slice(0)),
-        wasmUrl: PDF_WASM_URL,
-      });
-      loadTasks.push(loadTask);
-      const doc = await loadTask.promise;
-      if (cancelled) {
-        void loadTask.destroy();
-        throw new Error('cancelled');
-      }
-      return { doc, bytes: buf.byteLength };
-    }
-
     void (async () => {
       try {
+        // Both samples load through the shared URL doc cache (pdfjs.ts) —
+        // reopening the dialog skips fetch + parse entirely. The cache owns
+        // the document lifecycle, so cleanup below must NOT destroy docs.
         const [before, after] = await Promise.all([
           beforeBox.current
-            ? loadDoc(BEFORE_URL)
+            ? loadPdfDocumentFromUrl(BEFORE_URL)
             : Promise.reject(new Error('before box missing')),
           afterBox.current
-            ? loadDoc(AFTER_URL)
+            ? loadPdfDocumentFromUrl(AFTER_URL)
             : Promise.reject(new Error('after box missing')),
         ]);
         if (cancelled) return;
@@ -285,14 +272,9 @@ function ExamplePanels() {
 
     return () => {
       cancelled = true;
+      // UI-only teardown — the cached PDF documents stay warm in pdfjs.ts
+      // so the next open renders instantly instead of re-fetching.
       sides.forEach((s) => s.destroy());
-      loadTasks.forEach((t) => {
-        try {
-          void t.destroy();
-        } catch {
-          // already destroyed
-        }
-      });
     };
   }, [attempt]);
 

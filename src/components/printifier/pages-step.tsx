@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   ArrowLeft,
   ArrowRight,
@@ -91,6 +92,10 @@ export function PagesStep() {
   /** Scroll container of the thumbnail grid — IntersectionObserver root. */
   const gridRef = useRef<HTMLDivElement | null>(null);
 
+  /** Measured inner width of the scroll container — drives the virtualized
+   *  column count (ResizeObserver instead of viewport breakpoints). */
+  const [gridW, setGridW] = useState(0);
+
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [scanningBlank, setScanningBlank] = useState(false);
@@ -115,6 +120,38 @@ export function PagesStep() {
     setLastCount(pageCount);
     setRange([1, Math.max(1, pageCount)]);
   }
+
+  // --- virtualized grid ------------------------------------------------------
+  // A 500-page deck used to mount every thumbnail cell at once (500 DOM
+  // subtrees × 6 buttons each). The grid now windows ROWS through
+  // @tanstack/react-virtual: only the visible rows (plus overscan) exist in
+  // the DOM, while lazy thumbnails, drag & drop and keyboard shortcuts keep
+  // working on whichever cells are currently mounted.
+  const cols = gridW < 560 ? 2 : gridW < 960 ? 3 : gridW < 1240 ? 4 : 5;
+  const rowCount = Math.ceil(pageCount / cols);
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => gridRef.current,
+    overscan: 3,
+    estimateSize: () => {
+      // 4:3 thumb + action bar + border, from the measured container width
+      const cellW = Math.max(120, (gridW - 8 - 12 * (cols - 1)) / cols);
+      return cellW * 0.75 + 46;
+    },
+  });
+
+  // Track the scroll container's real width so the column count matches the
+  // space actually available (CSS breakpoints only ever saw the viewport).
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      setGridW(Math.round(w));
+    });
+    ro.observe(grid);
+    return () => ro.disconnect();
+  }, []);
 
   const applyRange = useCallback(
     (v: number[]) => {
@@ -414,11 +451,28 @@ export function PagesStep() {
 
       <div
         ref={gridRef}
-        className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[44rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        className="pretty-scroll max-h-[60vh] overflow-y-auto p-1 sm:max-h-[44rem]"
       >
-        {pages.map((page, index) => {
-          const override: Partial<FilterSettings> | undefined = pageOverrides[page.id];
-          return (
+        <div
+          style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const rowStart = virtualRow.index * cols;
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                className="absolute left-0 top-0 grid w-full gap-3 pb-3"
+                style={{
+                  transform: `translateY(${virtualRow.start}px)`,
+                  gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                }}
+              >
+                {pages.slice(rowStart, rowStart + cols).map((page, k) => {
+                  const index = rowStart + k;
+                  const override: Partial<FilterSettings> | undefined = pageOverrides[page.id];
+                  return (
           <div
             key={page.id}
             draggable
@@ -596,7 +650,11 @@ export function PagesStep() {
             </div>
           </div>
           );
-        })}
+                })}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <p className="hidden items-center justify-center gap-2 text-xs text-muted-foreground [@media(hover:hover)]:flex">

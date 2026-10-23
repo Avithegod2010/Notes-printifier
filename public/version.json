@@ -1,11 +1,11 @@
 {
-  "version": "1.6.0",
-  "updated": "2026-10-23",
+  "version": "1.6.1",
+  "updated": "2026-10-24",
   "notes": [
-    "Margin test page upgrade: mm rulers on all four edges + a fill-in worksheet that maps 1:1 onto Margin Doctor",
-    "pdf.js render-diet: thumbnails rasterize lazily as you scroll — huge decks open instantly instead of blocking upload",
-    "Translation sprint: mr/ta/bn core-flow coverage 8% → 18% + new community issue template",
-    "Smoke CI now also runs the OCR Bench (PSM 3 vs 6) end-to-end on every push",
-    "v1.6.0"
+    "Margin Doctor quick-fill presets: Inkjet (HP/Epson), Laser and Extra-safe hardware borders — one tap before you even print the worksheet",
+    "Pages grid is now virtualized: 500+ page decks mount only the visible rows (drag, per-page color tweaks and lazy thumbnails all keep working)",
+    "Example dialog reuses the shared PDF document cache — reopening the before/after demo no longer re-fetches or re-parses the samples",
+    "Translate-a-thon launched (issue #20): mr/ta/bn claim-a-section workflow linked from the README",
+    "v1.6.1"
   ]
 }

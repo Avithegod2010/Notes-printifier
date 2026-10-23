@@ -665,6 +665,10 @@ export const DICT: Record<string, [string, string]> = {
 
   // Margin Doctor — measured printer borders applied per edge
   'ly.md.hint': ['Measured your borders on the test sheet? Tune the output margins here.', 'टेस्ट शीट पर किनारे नाप लिए? आउटपुट मार्जिन यहाँ ठीक करें।'],
+  'ly.md.presets': ['Quick fill — typical printer borders', 'झटपट भरें — आम प्रिंटर बॉर्डर'],
+  'ly.md.preset.inkjet': ['Inkjet (HP/Epson)', 'इंकजेट (HP/Epson)'],
+  'ly.md.preset.laser': ['Laser', 'लेज़र'],
+  'ly.md.preset.safe': ['Extra safe', 'अति सुरक्षित'],
   'ly.md.open': ['Margin Doctor', 'मार्जिन डॉक्टर'],
   'ly.md.title': ['Margin Doctor', 'मार्जिन डॉक्टर'],
   'ly.md.sub': [

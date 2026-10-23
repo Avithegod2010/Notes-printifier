@@ -12,7 +12,7 @@
 [![CodeQL](https://img.shields.io/badge/🔎_CodeQL-enabled-14b8a6?style=for-the-badge)](../../actions)
 [![English / हिन्दी](https://img.shields.io/badge/🗣️_English%20%2F%20हिन्दी-bilingual-f472b6?style=for-the-badge)](#-features)
 
-**Translation progress** ([help translate →](MISSING_TRANSLATIONS.md)):
+**Translation progress** ([help translate →](MISSING_TRANSLATIONS.md) · [📣 Translate-a-thon →](https://github.com/Avithegod2010/Notes-printifier/issues/20)):
 [![हिन्दी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.hi&suffix=%25&label=%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80&color=brightgreen)](MISSING_TRANSLATIONS.md)
 [![मराठी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.mr&suffix=%25&label=%E0%A4%AE%E0%A4%B0%E0%A4%BE%E0%A4%A0%E0%A5%80&color=orange)](MISSING_TRANSLATIONS.md)
 [![தமிழ்](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.ta&suffix=%25&label=%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D&color=orange)](MISSING_TRANSLATIONS.md)
@@ -152,6 +152,11 @@ assets, notes on what changed. See [VERSIONING.md](VERSIONING.md) for the ritual
 PRs welcome! Keep it typed (`bunx tsc --noEmit`), linted (`bun run lint`), and remember: anything
 that ships to the static site must work without a server. Bilingual strings live in
 `src/lib/i18n.ts` as `key: ['English', 'हिन्दी']` pairs.
+
+🌍 **Translator?** Join the [Translate-a-thon](https://github.com/Avithegod2010/Notes-printifier/issues/20) —
+claim a section for मराठी / தமிழ் / বাংলা (or a new language) via the
+[translation issue template](https://github.com/Avithegod2010/Notes-printifier/issues/new?template=translation.md).
+Partial PRs welcome — untranslated keys fall back to English automatically.
 
 ## ⚖️ License
 

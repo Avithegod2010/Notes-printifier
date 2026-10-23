@@ -3,6 +3,8 @@
 
 # Missing translations — help make Printifier multilingual! 🌍
 
+> 📣 **Translate-a-thon is live** — claim a language + section in [issue #20](https://github.com/Avithegod2010/Notes-printifier/issues/20) so nobody duplicates work.
+
 Printifier's UI is fully English + हिन्दी. मराठी, தமிழ் and বাংলা are
 **partial** — the most visible strings are translated and everything else
 falls back to English (never to a raw key, the app always works).

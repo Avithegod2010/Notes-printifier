@@ -124,6 +124,19 @@ function formatMB(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/**
+ * Margin Doctor quick-fill presets — published hardware-border specs per
+ * printer class (HP DeskJet/OfficeJet: 3 mm sides/top, up to ~12.7 mm bottom
+ * driver zone; Epson: 3 mm, 14 mm duplex bottom; laser class: ~4.2 mm ≈ 1/6″
+ * all around). Starting points so the Doctor is useful BEFORE the physical
+ * test print — the worksheet numbers (typed into the 4 inputs) always win.
+ */
+const CALIB_PRESETS: Array<{ key: string; calib: MarginCalib }> = [
+  { key: 'ly.md.preset.inkjet', calib: { t: 3, r: 3, b: 12, l: 3 } },
+  { key: 'ly.md.preset.laser', calib: { t: 4.2, r: 4.2, b: 4.2, l: 4.2 } },
+  { key: 'ly.md.preset.safe', calib: { t: 6, r: 6, b: 12, l: 6 } },
+];
+
 interface Estimate {
   estBytes: number;
   inkSavedPct: number;
@@ -820,6 +833,26 @@ export function LayoutStep() {
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                         {t('ly.md.sub')}
                       </p>
+                      {/* quick-fill printer presets — one tap loads typical
+                          hardware borders; the 4 inputs (worksheet numbers)
+                          stay the source of truth */}
+                      <div className="mt-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {t('ly.md.presets')}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {CALIB_PRESETS.map((p) => (
+                            <button
+                              key={p.key}
+                              type="button"
+                              onClick={() => setCalibDraft({ ...p.calib })}
+                              className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-emerald-400/40 hover:text-foreground"
+                            >
+                              {t(p.key)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <div className="mt-3 grid grid-cols-4 gap-2">
                         {(
                           [

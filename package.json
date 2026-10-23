@@ -1,6 +1,6 @@
 {
   "name": "notes-printifier",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "private": true,
   "description": "Turn lecture PDFs into paper- and ink-saving print-ready PDFs — 100% client-side, bilingual (EN/हिन्दी), installable as a PWA and an offline Android app.",
   "license": "MIT",
@@ -35,6 +35,7 @@
     "@radix-ui/react-slot": "^1.5.0",
     "@radix-ui/react-switch": "^1.4.1",
     "@radix-ui/react-toast": "^1.3.1",
+    "@tanstack/react-virtual": "^3.14.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
