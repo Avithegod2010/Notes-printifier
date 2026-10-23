@@ -36,9 +36,9 @@ const SWR_PATH_PATTERNS = [
   /^\/pdf\.worker\.min\.mjs$/,
   /^\/sample-.+\.pdf$/,
   // OCR traineddata + Unicode text-layer fonts — cached after first use so
-  // Hindi/Tamil OCR keeps working fully offline.
+  // Indic OCR (Hindi/Tamil/Gujarati/Punjabi) keeps working fully offline.
   /^\/tesseract\/.+\.traineddata\.gz$/,
-  /^\/fonts\/NotoSans(Devanagari|Tamil)-Regular\.ttf$/,
+  /^\/fonts\/NotoSans(Devanagari|Tamil|Gujarati|Gurmukhi)-Regular\.ttf$/,
 ];
 
 self.addEventListener('install', (event) => {

@@ -44,7 +44,7 @@ const MAX_OCR_SLIDES = 120; // hard cap — beyond this the wait isn't worth it
  * combos (e.g. ['eng','hin']) straight through; the matching .traineddata.gz
  * files ship self-hosted in /public/tesseract so OCR stays fully offline.
  */
-export type OcrLang = 'eng' | 'hin' | 'tam';
+export type OcrLang = 'eng' | 'hin' | 'tam' | 'guj' | 'pan';
 
 /**
  * Per-slide OCR quality report — feeds the result-page confidence card
@@ -69,11 +69,12 @@ function sanitize(text: string): string {
 // Unicode text layer — script-aware invisible fonts.
 //
 // The old layer drew every word with Helvetica, which is WinAnsi-only, so any
-// Devanagari/Tamil word had to be dropped (invisible, but also unsearchable).
-// Now: Latin words still use Helvetica, while Devanagari/Tamil words draw
-// with self-hosted Noto Sans fonts (registered via @pdf-lib/fontkit). The
-// invisible layer stores real Unicode code points, so Ctrl+F finds Hindi and
-// Tamil text even though not a single visible pixel changes.
+// Indic word had to be dropped (invisible, but also unsearchable).
+// Now: Latin words still use Helvetica, while Indic words (Devanagari, Tamil,
+// Gujarati, Gurmukhi) draw with self-hosted Noto Sans fonts (registered via
+// @pdf-lib/fontkit). The invisible layer stores real Unicode code points, so
+// Ctrl+F finds Hindi, Tamil, Gujarati and Punjabi text even though not a
+// single visible pixel changes.
 // ---------------------------------------------------------------------------
 
 /** Script detection — first match wins; unknown scripts fall back to Helvetica. */
@@ -83,10 +84,18 @@ function isDevanagari(text: string): boolean {
 function isTamil(text: string): boolean {
   return /[\u0B80-\u0BFF]/.test(text);
 }
+function isGujarati(text: string): boolean {
+  return /[\u0A80-\u0AFF]/.test(text);
+}
+function isGurmukhi(text: string): boolean {
+  return /[\u0A00-\u0A7F]/.test(text);
+}
 
 const FONT_PATHS = {
   deva: '/fonts/NotoSansDevanagari-Regular.ttf',
   tamil: '/fonts/NotoSansTamil-Regular.ttf',
+  gujr: '/fonts/NotoSansGujarati-Regular.ttf',
+  guru: '/fonts/NotoSansGurmukhi-Regular.ttf',
 } as const;
 
 const fontBytesCache = new Map<string, ArrayBuffer>();
@@ -413,7 +422,8 @@ export async function buildRepaintCanvases(
  * Maps OCR word fractions through each slide's final placement rect.
  *
  * Script-aware: Latin words draw with Helvetica (built into every PDF
- * viewer); Devanagari/Tamil words draw with self-hosted Noto fonts embedded
+ * viewer); Indic words (Devanagari, Tamil, Gujarati, Gurmukhi) draw with
+ * self-hosted Noto fonts embedded
  * via fontkit so the Unicode text survives into the PDF (searchable/copyable)
  * even though it renders at opacity 0. Font files are fetched lazily — a
  * pure-English job never downloads a byte of them.
@@ -431,34 +441,41 @@ export async function addOcrTextLayer(
   const transparent = rgb(0, 0, 0);
 
   // Unicode fonts, embedded only when the OCR words actually need them.
-  const wantDeva = needsScriptFont(wordsByKey, isDevanagari);
-  const wantTamil = needsScriptFont(wordsByKey, isTamil);
-  let devaFont: Awaited<ReturnType<typeof doc.embedFont>> | null = null;
-  let tamilFont: Awaited<ReturnType<typeof doc.embedFont>> | null = null;
-  if (wantDeva || wantTamil) {
+  // Each Indic script maps to its self-hosted Noto face; fontkit is
+  // registered once and every wanted font embeds independently — one
+  // unavailable face must not sink the others.
+  type ScriptFontKind = keyof typeof FONT_PATHS;
+  const SCRIPT_FONTS: ReadonlyArray<{
+    kind: ScriptFontKind;
+    test: (s: string) => boolean;
+  }> = [
+    { kind: 'deva', test: isDevanagari },
+    { kind: 'tamil', test: isTamil },
+    { kind: 'gujr', test: isGujarati },
+    { kind: 'guru', test: isGurmukhi },
+  ];
+  const embedded = new Map<ScriptFontKind, Awaited<ReturnType<typeof doc.embedFont>>>();
+  const wanted = SCRIPT_FONTS.filter((s) => needsScriptFont(wordsByKey, s.test));
+  if (wanted.length > 0) {
     try {
       const fontkit = (await import('@pdf-lib/fontkit')).default;
       doc.registerFontkit(fontkit);
-      if (wantDeva) {
-        const bytes = await getFontBytes('deva');
-        try {
-          devaFont = await doc.embedFont(bytes, { subset: true });
-        } catch {
-          devaFont = await doc.embedFont(bytes); // unsubset fallback
-        }
-      }
-      if (wantTamil) {
-        const bytes = await getFontBytes('tamil');
-        try {
-          tamilFont = await doc.embedFont(bytes, { subset: true });
-        } catch {
-          tamilFont = await doc.embedFont(bytes);
-        }
-      }
     } catch (err) {
-      // Font embedding is best-effort: Devanagari/Tamil words will fall back
-      // to Helvetica (and be skipped per-word) — Latin text still lands.
-      console.warn('[ocr] Unicode font embedding failed:', err);
+      console.warn('[ocr] fontkit unavailable:', err);
+    }
+    for (const s of wanted) {
+      try {
+        const bytes = await getFontBytes(s.kind);
+        try {
+          embedded.set(s.kind, await doc.embedFont(bytes, { subset: true }));
+        } catch {
+          embedded.set(s.kind, await doc.embedFont(bytes)); // unsubset fallback
+        }
+      } catch (err) {
+        // best-effort: that script's words fall back to Helvetica (and are
+        // skipped per-word) — Latin and the other scripts still land.
+        console.warn('[ocr] Unicode font unavailable:', s.kind, err);
+      }
     }
   }
 
@@ -477,11 +494,14 @@ export async function addOcrTextLayer(
       const x = p.x + w.fx0 * p.w;
       // fy is measured from the TOP of the slide; PDF origin is bottom-left
       const y = p.y + (1 - w.fy1) * p.h;
-      const wordFont = isDevanagari(text)
-        ? devaFont
-        : isTamil(text)
-          ? tamilFont
-          : font;
+      let scriptKind: ScriptFontKind | null = null;
+      for (const s of SCRIPT_FONTS) {
+        if (s.test(text)) {
+          scriptKind = s.kind;
+          break;
+        }
+      }
+      const wordFont = scriptKind ? embedded.get(scriptKind) ?? null : font;
       if (!wordFont) continue; // script needs a font we couldn't embed
       try {
         page.drawText(text, {

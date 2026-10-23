@@ -1,11 +1,11 @@
 {
-  "version": "1.6.2",
-  "updated": "2026-10-24",
+  "version": "1.6.3",
+  "updated": "2026-10-23",
   "notes": [
-    "Two new UI languages: ગુજરાતી (Gujarati) and ਪੰਜਾਬੀ (Punjabi) — 133 core-flow strings each, riding the same EXTRA dict + progress badges",
-    "Margin Doctor: paste your worksheet numbers as one line (\"L3 R4 T5 B12\" or \"3 4 5 12\") and all four inputs fill instantly",
-    "Thumb-render semaphore: huge decks rasterize at most 3 pages at a time — fast-scrolling a 500+ page grid stays smooth",
-    "Translate-a-thon progress: issue #20 setup note posted; pin/convert needs one manual click (PAT scope)",
-    "v1.6.2"
+    "New: Gujarati + Punjabi OCR — searchable, copyable PDFs now cover five Indic scripts (self-hosted guj/pan traineddata, still lazy-fetched and fully offline)",
+    "The welcome tour now speaks all seven UI languages — मराठी, தமிழ், বাংলা, ગુજરાતી and ਪੰਜਾਬੀ users no longer get English screens",
+    "OCR language picker: new English + ગુજરાતી and English + ਪੰਜਾਬੀ combos; the All preset now runs English + हिन्दी + தமிழ் + ગુજરાતી + ਪੰਜਾਬੀ in one pass",
+    "Invisible text layer embeds Noto Gujarati/Gurmukhi fonts, so Ctrl+F finds Punjabi and Gujarati words in scanned PDFs",
+    "Saved OCR language presets migrate automatically; the service worker caches the two new fonts for offline use"
   ]
 }

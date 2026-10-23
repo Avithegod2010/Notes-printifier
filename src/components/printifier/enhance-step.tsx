@@ -79,6 +79,28 @@ const MODE_HINT_KEY: Record<ColorMode, string> = {
 
 const ZOOM_STEPS = [1, 1.5, 2, 2.5, 3] as const;
 
+/** OCR recognition presets offered in the language picker (v1.6.3: + ગુજરાતી, ਪੰਜਾਬੀ). */
+const OCR_LANG_PRESETS = [
+  'eng',
+  'eng+hin',
+  'eng+tam',
+  'eng+guj',
+  'eng+pan',
+  'eng+hin+tam+guj+pan',
+] as const;
+
+/**
+ * Select value for the OCR language picker. Older saves may hold a preset
+ * that no longer exists (e.g. 'eng+hin+tam' pre-v1.6.3) — migrate those to
+ * the current "all languages" combo so the trigger never renders empty.
+ */
+function normalizeOcrLangs(langs: string[] | undefined): string {
+  const v = (langs ?? ['eng']).join('+');
+  return (OCR_LANG_PRESETS as readonly string[]).includes(v)
+    ? v
+    : 'eng+hin+tam+guj+pan';
+}
+
 /**
  * Tiny visual glyph for each color-mode tile. Pure CSS swatches keep the
  * picker square + compact; the "invert" tile gets a light "A" on a dark
@@ -910,15 +932,16 @@ export function EnhanceStep() {
                     />
                   </div>
                   <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
-                  {/* Recognition language — more traineddata = better Hindi /
-                      Tamil decks. Self-hosted, so it stays fully offline. */}
+                  {/* Recognition language — more traineddata = better Hindi,
+                      Tamil, Gujarati and Punjabi decks. Self-hosted, so it
+                      stays fully offline. */}
                   {filters.searchable && (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                       <Label htmlFor="ocr-langs" className="text-xs font-medium text-muted-foreground">
                         {t('en.ocrLang')}
                       </Label>
                       <Select
-                        value={(filters.ocrLangs ?? ['eng']).join('+')}
+                        value={normalizeOcrLangs(filters.ocrLangs)}
                         onValueChange={(v) =>
                           setFilters({ ocrLangs: v.split('+') as FilterSettings['ocrLangs'] })
                         }
@@ -929,8 +952,10 @@ export function EnhanceStep() {
                         <SelectContent>
                           <SelectItem value="eng">English</SelectItem>
                           <SelectItem value="eng+hin">English + हिन्दी</SelectItem>
+                          <SelectItem value="eng+guj">English + ગુજરાતી</SelectItem>
+                          <SelectItem value="eng+pan">English + ਪੰਜਾਬੀ</SelectItem>
                           <SelectItem value="eng+tam">English + தமிழ்</SelectItem>
-                          <SelectItem value="eng+hin+tam">{t('en.ocrLang.all')}</SelectItem>
+                          <SelectItem value="eng+hin+tam+guj+pan">{t('en.ocrLang.all')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

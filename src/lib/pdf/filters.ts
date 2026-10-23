@@ -101,7 +101,7 @@ export interface FilterSettings {
   logoRegions?: LogoRegion[];
   /**
    * Tesseract recognition languages for the searchable text layer — e.g.
-   * ['eng'], ['eng','hin'], ['eng','tam']. Optional for the same
+   * ['eng'], ['eng','hin'], ['eng','guj'], ['eng','pan']. Optional for the same
    * preset-literal reason as deskew/headerTrim; runtime defaults to ['eng'].
    * The .traineddata.gz files are self-hosted in /public/tesseract.
    */
