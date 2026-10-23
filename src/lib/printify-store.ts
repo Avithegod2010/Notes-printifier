@@ -103,6 +103,36 @@ const pdfDocs = new Map<number, Promise<PdfDocument>>();
 /** Page ids currently being rasterized — dedupes IntersectionObserver bursts. */
 const thumbJobs = new Set<string>();
 
+/**
+ * Thumbnail render semaphore — caps CONCURRENT pdf.js rasterizations across
+ * ALL ensureThumbs calls (each IntersectionObserver batch spawns its own
+ * call). On a 500-page deck, a fast scroll used to fire dozens of parallel
+ * renders on the main thread and the grid stuttered; now at most
+ * THUMB_CONCURRENCY render at once, the rest queue FIFO (scroll order =
+ * arrival order, so what's on screen fills first). Rasterization runs on
+ * the pdf.js worker, but the canvas blit + JPEG encode are main-thread —
+ * that's the part the cap protects.
+ */
+const THUMB_CONCURRENCY = 3;
+let thumbActive = 0;
+const thumbWaiters: Array<() => void> = [];
+
+/** Acquire a render slot. Resolves with the release function. */
+async function acquireThumbSlot(): Promise<() => void> {
+  if (thumbActive < THUMB_CONCURRENCY) {
+    thumbActive++;
+    return releaseThumbSlot;
+  }
+  await new Promise<void>((resolve) => thumbWaiters.push(resolve));
+  thumbActive++;
+  return releaseThumbSlot;
+}
+
+function releaseThumbSlot(): void {
+  thumbActive--;
+  thumbWaiters.shift()?.();
+}
+
 function getPdfDoc(docId: number): Promise<PdfDocument> | null {
   const buf = docBuffers.get(docId);
   if (!buf) return null;
@@ -829,6 +859,9 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
           if (!doc) continue;
           const fixes = new Map<string, string>();
           for (const item of items) {
+            // One rasterization slot per page — bounded main-thread blit/encode
+            // work no matter how many IO batches land at once.
+            const release = await acquireThumbSlot();
             try {
               let canvas = await renderPageToCanvas(doc, item.pageNumber, {
                 targetWidth: 300,
@@ -851,6 +884,8 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
             } catch {
               // this page failed to rasterize — placeholder stays, a later
               // intersection retry can pick it up again
+            } finally {
+              release();
             }
           }
           if (fixes.size > 0) {

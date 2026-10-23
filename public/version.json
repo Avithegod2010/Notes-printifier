@@ -1,11 +1,11 @@
 {
-  "version": "1.6.1",
+  "version": "1.6.2",
   "updated": "2026-10-24",
   "notes": [
-    "Margin Doctor quick-fill presets: Inkjet (HP/Epson), Laser and Extra-safe hardware borders — one tap before you even print the worksheet",
-    "Pages grid is now virtualized: 500+ page decks mount only the visible rows (drag, per-page color tweaks and lazy thumbnails all keep working)",
-    "Example dialog reuses the shared PDF document cache — reopening the before/after demo no longer re-fetches or re-parses the samples",
-    "Translate-a-thon launched (issue #20): mr/ta/bn claim-a-section workflow linked from the README",
-    "v1.6.1"
+    "Two new UI languages: ગુજરાતી (Gujarati) and ਪੰਜਾਬੀ (Punjabi) — 133 core-flow strings each, riding the same EXTRA dict + progress badges",
+    "Margin Doctor: paste your worksheet numbers as one line (\"L3 R4 T5 B12\" or \"3 4 5 12\") and all four inputs fill instantly",
+    "Thumb-render semaphore: huge decks rasterize at most 3 pages at a time — fast-scrolling a 500+ page grid stays smooth",
+    "Translate-a-thon progress: issue #20 setup note posted; pin/convert needs one manual click (PAT scope)",
+    "v1.6.2"
   ]
 }
