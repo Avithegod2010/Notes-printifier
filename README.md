@@ -17,6 +17,8 @@
 [![मराठी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.mr&suffix=%25&label=%E0%A4%AE%E0%A4%B0%E0%A4%BE%E0%A4%A0%E0%A5%80&color=orange)](MISSING_TRANSLATIONS.md)
 [![தமிழ்](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.ta&suffix=%25&label=%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D&color=orange)](MISSING_TRANSLATIONS.md)
 [![বাংলা](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.bn&suffix=%25&label=%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE&color=orange)](MISSING_TRANSLATIONS.md)
+[![ગુજરાતી](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.gu&suffix=%25&label=%E0%AA%97%E0%AB%81%E0%AA%9C%E0%AA%B0%E0%AA%BE%E0%AA%A4%E0%AB%80&color=orange)](MISSING_TRANSLATIONS.md)
+[![ਪੰਜਾਬੀ](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.pa&suffix=%25&label=%E0%A8%AA%E0%A9%B0%E0%A8%9C%E0%A8%BE%E0%A8%AC%E0%A9%80&color=orange)](MISSING_TRANSLATIONS.md)
 
 </div>
 

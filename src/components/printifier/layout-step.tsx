@@ -137,6 +137,34 @@ const CALIB_PRESETS: Array<{ key: string; calib: MarginCalib }> = [
   { key: 'ly.md.preset.safe', calib: { t: 6, r: 6, b: 12, l: 6 } },
 ];
 
+/**
+ * Parse pasted worksheet numbers into a MarginCalib.
+ * Accepts any of: "L3 R4 T5 B12" · "Left 3, Right 4, Top 5, Bottom 12" ·
+ * "3/4/5/12" · "3mm 4mm 5mm 12mm" · bare "3 4 5 12" (worksheet order:
+ * Left Right Top Bottom — the same order the calibration sheet prints).
+ * Returns null when nothing sensible is found.
+ */
+export function parseCalibText(text: string): MarginCalib | null {
+  const norm = text.toLowerCase();
+  const pairs: Partial<Record<'l' | 'r' | 't' | 'b', number>> = {};
+  const pairRe = /\b(left|right|top|bottom|l|r|t|b)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:mm)?/g;
+  let m: RegExpExecArray | null;
+  while ((m = pairRe.exec(norm))) {
+    const word = m[1];
+    const short = word.length > 1 ? word[0] : word;
+    pairs[short as 'l' | 'r' | 't' | 'b'] = parseFloat(m[2]);
+  }
+  if (Object.keys(pairs).length > 0) {
+    return { l: pairs.l ?? 0, r: pairs.r ?? 0, t: pairs.t ?? 0, b: pairs.b ?? 0 };
+  }
+  const nums = norm.match(/\d+(?:\.\d+)?/g);
+  if (nums && nums.length === 4) {
+    const [l, r, t, b] = nums.map(Number);
+    return { l, r, t, b };
+  }
+  return null;
+}
+
 interface Estimate {
   estBytes: number;
   inkSavedPct: number;
@@ -185,9 +213,21 @@ export function LayoutStep() {
   // sheet margin so nothing lands in the printer's unprintable zone.
   const [calibDraft, setCalibDraft] = useState<MarginCalib>(EMPTY_CALIB);
   const [calibOpen, setCalibOpen] = useState(false);
+  /** Raw text from the "paste worksheet numbers" field. */
+  const [calibPaste, setCalibPaste] = useState('');
   const openMarginDoctor = () => {
     setCalibDraft(layout.calib ? { ...EMPTY_CALIB, ...layout.calib } : { ...EMPTY_CALIB });
+    setCalibPaste('');
     setCalibOpen(true);
+  };
+  const applyCalibPaste = () => {
+    const parsed = parseCalibText(calibPaste);
+    if (!parsed) {
+      toast({ description: t('ly.md.pasteBad') });
+      return;
+    }
+    setCalibDraft(parsed);
+    toast({ description: t('ly.md.pasteOk') });
   };
   const applyCalib = () => {
     const clean = (v: string): number => {
@@ -885,6 +925,34 @@ export function LayoutStep() {
                       <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
                         {t('ly.md.note')}
                       </p>
+                      {/* paste worksheet numbers — one line from the printed
+                          calibration sheet fills all four inputs */}
+                      <div className="mt-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {t('ly.md.paste')}
+                        </p>
+                        <div className="mt-1.5 flex gap-1.5">
+                          <Input
+                            value={calibPaste}
+                            onChange={(e) => setCalibPaste(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') applyCalibPaste();
+                            }}
+                            placeholder={t('ly.md.pastePh')}
+                            aria-label={t('ly.md.paste')}
+                            className="h-8 flex-1 text-xs"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 shrink-0"
+                            onClick={applyCalibPaste}
+                          >
+                            {t('ly.md.pasteBtn')}
+                          </Button>
+                        </div>
+                      </div>
                       <div className="mt-3 flex gap-2">
                         <Button
                           type="button"

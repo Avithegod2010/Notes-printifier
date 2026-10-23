@@ -3,8 +3,6 @@
 
 # Missing translations — help make Printifier multilingual! 🌍
 
-> 📣 **Translate-a-thon is live** — claim a language + section in [issue #20](https://github.com/Avithegod2010/Notes-printifier/issues/20) so nobody duplicates work.
-
 Printifier's UI is fully English + हिन्दी. मराठी, தமிழ் and বাংলা are
 **partial** — the most visible strings are translated and everything else
 falls back to English (never to a raw key, the app always works).
@@ -35,7 +33,7 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 622 missing (133/755 done, 18%)
+## मराठी (Marathi) — 626 missing (133/759 done, 18%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
@@ -346,6 +344,10 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
 | `ly.md.reset` | Reset |
 | `ly.md.right` | Right |
 | `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
@@ -664,7 +666,7 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## தமிழ் (Tamil) — 622 missing (133/755 done, 18%)
+## தமிழ் (Tamil) — 626 missing (133/759 done, 18%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
@@ -975,6 +977,10 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
 | `ly.md.reset` | Reset |
 | `ly.md.right` | Right |
 | `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
@@ -1293,7 +1299,7 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## বাংলা (Bengali) — 622 missing (133/755 done, 18%)
+## বাংলা (Bengali) — 626 missing (133/759 done, 18%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
@@ -1604,6 +1610,1276 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
+| `ly.md.reset` | Reset |
+| `ly.md.right` | Right |
+| `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
+| `ly.md.title` | Margin Doctor |
+| `ly.md.top` | Top |
+| `ly.metaHint` | Title and author written into the output file’s metadata. |
+| `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
+| `ly.outPages` | Output pages |
+| `ly.paperSaved` | Paper saved |
+| `ly.perSheet` | Slides per sheet |
+| `ly.processing` | Processing page {d} of {t}… keep this tab open. |
+| `ly.processingBg` | Processing runs in the background — the app stays responsive. |
+| `ly.q.high` | High |
+| `ly.q.highD` | Crisp text · 210 DPI |
+| `ly.q.low` | Low |
+| `ly.q.lowD` | Smallest file · 96 DPI |
+| `ly.q.med` | Medium |
+| `ly.q.medD` | Balanced · 150 DPI |
+| `ly.qualityNote` | Final PDF is generated in high quality — previews above are low-res. |
+| `ly.recipeQr` | Recipe QR on print |
+| `ly.recipeQrHint` | Print a small QR in the footer band — scanning it re-opens the site with these exact settings (no server needed). |
+| `ly.sizeTarget` | Target file size |
+| `ly.sizeTargetHint` | Quality is lowered automatically until the PDF fits — for email limits and print-shop uploads. |
+| `ly.sizeTargetOff` | Off |
+| `ly.sizeTargetOn` | Under {n} MB |
+| `ly.sizeTargetOver` | Estimated above target — quality will be reduced while processing. |
+| `ly.sizeTargetPh` | e.g. 5 |
+| `ly.stampNote` | Printed small at the bottom-right of every sheet. |
+| `ly.stampOpt` | optional |
+| `ly.stampPh` | e.g. Aarav · 12-A · Roll 42 |
+| `ly.suggested` | Suggested for this PDF: {label} |
+| `ly.testFail` | Could not build the test sheet — try again. |
+| `ly.testHint` | Not sure how thick your printer's unprintable border is? Print a true-size calibration sheet. |
+| `ly.testNeedFixed` | Pick a fixed paper size (A4/Letter/…) first — original/custom sizes can't be calibrated. |
+| `ly.testOpened` | Test sheet opened in a new tab — print it at 100% scale. |
+| `ly.testPage` | Margin test page |
+| `menu.open` | Open menu |
+| `menu.title` | Menu |
+| `nav.calc` | Calculator |
+| `nav.install` | Install app |
+| `pat.circuit` | Circuit |
+| `pat.diag` | Diagonal |
+| `pat.dots` | Dots |
+| `pat.grid` | Grid |
+| `pat.hex` | Hex |
+| `pat.none` | Plain |
+| `pat.pick` | Backdrop pattern |
+| `pat.plus` | Plus marks |
+| `pat.topo` | Topographic |
+| `pat.waves` | Waves |
+| `pat.weave` | Weave |
+| `pr.builtin.balanced` | Balanced |
+| `pr.builtin.balancedD` | The everyday default — smart color mode, 4 slides per sheet, medium quality. |
+| `pr.builtin.economy` | Economy |
+| `pr.builtin.economyD` | Maximum savings — black & white, 6 slides per sheet, trimmed margins, draft quality. |
+| `pr.builtin.exam` | Exam cram |
+| `pr.builtin.examD` | Readability first — original colors, handwriting boost, 2 slides per sheet, high quality. |
+| `pr.incoming.applied` | Preset “{n}” applied |
+| `pr.incoming.apply` | Apply preset |
+| `pr.incoming.bad` | That preset link is broken or expired |
+| `pr.incoming.later` | Not now |
+| `pr.incomingBody` | “{n}” was shared with you. Apply it now? You can save it to your presets afterwards. |
+| `pr.incomingTitle` | Shared preset |
+| `pr.qr` | QR code |
+| `pr.qr.copied` | Link copied |
+| `pr.qr.copy` | Copy link |
+| `pr.qr.fail` | Could not draw the QR code |
+| `pr.qr.sub` | Point another phone’s camera at the code — the preset opens in its browser. |
+| `pr.qr.title` | Scan to load this preset |
+| `pr.recipeApplied` | Recipe applied from link ✓ |
+| `pr.recipeBad` | That recipe link is invalid |
+| `pr.shareLink` | Copy share link |
+| `pr.shareLink.busy` | Creating link… |
+| `pr.shareLink.copied` | Share link copied — anyone with it can apply this preset |
+| `pr.shareLink.fail` | Could not create the share link (offline?) |
+| `rs.assume` | rough estimate: ~₹1 per sheet of paper, ink by measured coverage |
+| `rs.assume2` | At your rates: ₹{p}/sheet paper · ₹{i}/full-ink page |
+| `rs.autoInverted` | Smart mode inverted {n} of {t} dark pages automatically |
+| `rs.bookletBody` | in the print dialog choose landscape + duplex with “flip on short edge”. Print the whole file, stack the sheets in order, fold once in the middle (the separator line is your fold guide) — done. |
+| `rs.bookletTitle` | Booklet printing: |
+| `rs.cost.edit` | Edit ₹ rates |
+| `rs.cost.hint` | Ask your print shop once — every ₹ number becomes exact. |
+| `rs.cost.ink` | Ink cost per full-coverage page (₹) |
+| `rs.cost.paper` | Paper cost per sheet (₹) |
+| `rs.cost.reset` | Reset to defaults |
+| `rs.cost.save` | Save rates |
+| `rs.cost.saved` | Print rates saved |
+| `rs.cost.title` | Your print costs |
+| `rs.duplexBody` | Split into odd/even files: print the odd file, flip the stack, print the even file on the back. |
+| `rs.duplexBtn` | Create odd & even files |
+| `rs.duplexTitle` | No duplex printer? |
+| `rs.even` | Even sheets ({n}) |
+| `rs.histEmpty` | Process a file — your history will appear here. |
+| `rs.histNote` | Last {n} job{s} on this device |
+| `rs.histTitle` | Your savings so far |
+| `rs.img.body` | Save every page of the result as a PNG — one file, or a ZIP when there are many. |
+| `rs.img.done` | {n} images ready |
+| `rs.img.dpi` | Image resolution |
+| `rs.img.fail` | Image export failed |
+| `rs.impactCo2` | CO₂ saved |
+| `rs.impactJobs` | conversions |
+| `rs.impactMoney` | saved |
+| `rs.impactNote` | Counts every conversion on this device. One tree ≈ 8,333 sheets · one sheet ≈ 5 g CO₂ — friendly estimates, stored only on your phone. |
+| `rs.impactReset` | Reset counter |
+| `rs.impactSheets` | sheets saved |
+| `rs.impactTitle` | Your impact so far |
+| `rs.impactTrees` | trees |
+| `rs.iosBody` | iOS can’t display PDFs inside the page — but your file is ready. Tap Open to view it full-screen, or Download to save it for printing. |
+| `rs.larger` | {n}% larger (quality boost) |
+| `rs.listen` | Listen |
+| `rs.listenFail` | Could not generate audio |
+| `rs.loading` | Generating audio… |
+| `rs.mode` | mode: {m} |
+| `rs.ocrNote` | Searchable text layer added — try Ctrl+F / search in your PDF viewer. |
+| `rs.ocrRep.avg` | {n}% avg confidence |
+| `rs.ocrRep.good` | Recognition looks clean — the searchable layer should be accurate. |
+| `rs.ocrRep.low` | Low confidence — these pages were probably handwriting, photos or a language the OCR does not cover. |
+| `rs.ocrRep.mid` | Some pages look like handwriting or rough scans — search still works, but expect a few misread words. |
+| `rs.ocrRep.page` | Page {n} — {c}% confidence |
+| `rs.ocrRep.title` | OCR quality report |
+| `rs.ocrRep.tryBlock` | Tip: switch Recognition mode to “Single block” in Enhance for handwriting-style pages. |
+| `rs.odd` | Odd sheets ({n}) |
+| `rs.print` | Print now |
+| `rs.qr.copied` | Recipe link copied |
+| `rs.qr.copy` | Copy link |
+| `rs.qr.copyFail` | Could not copy — long-press the QR instead |
+| `rs.qr.save` | Save QR |
+| `rs.qr.sub` | Scan to print with these exact settings again — classmates can reuse your whole recipe. |
+| `rs.qr.title` | Recipe QR |
+| `rs.receipt.btn` | Save receipt card |
+| `rs.receipt.fail` | Could not build the receipt card |
+| `rs.receipt.footnote` | Made with Notes Printifier — free, private, in-browser |
+| `rs.receipt.money` | Money saved |
+| `rs.receipt.pagesIn` | Slides in → sheets out |
+| `rs.receipt.saved` | Receipt saved as PNG |
+| `rs.receipt.shared` | Receipt shared |
+| `rs.receipt.sub` | Ink-saving print receipt |
+| `rs.repainted` | {n} pages re-typeset |
+| `rs.saved` | You saved about {rs} |
+| `rs.savedDetail` | {n} sheet(s) of paper + ink |
+| `rs.share.fail` | Could not share the PDF |
+| `rs.share.fallback` | PDF downloaded — attach it in the chat that just opened |
+| `rs.share.text` | Here is the print-ready PDF — made with Notes Printifier |
+| `rs.sizeTargetAlready` | Already under the {n} MB target — no extra compression needed |
+| `rs.sizeTargetFit` | Compressed in {p} extra pass(es) to fit under {n} MB |
+| `rs.smaller` | {n}% smaller than source |
+| `rs.split.body` | Cut the output into fixed-size parts — handy for shared printers or per-chapter files. |
+| `rs.split.done` | {n} parts ready |
+| `rs.split.est` | ≈ {size} per part · {n} parts (estimate) |
+| `rs.split.fail` | Split failed |
+| `rs.split.ph` | Pages per part |
+| `rs.stop` | Stop |
+| `rs.sub` | Download it and hit print — your wallet and the planet thank you. |
+| `rs.tg` | Telegram |
+| `rs.tg.aria` | Send the converted PDF to Telegram |
+| `rs.wa` | WhatsApp |
+| `rs.wa.aria` | Send the converted PDF to WhatsApp |
+| `rs.wa.shared` | Shared! |
+| `sf.body` | This feature runs on Printifier’s small server brain, which this static hosting can’t provide. The core tools — layouts, ink-saving, booklet, presets, download & share — all run 100% in your browser and work right here. |
+| `sf.feature.preset` | Shared preset link |
+| `sf.feature.stats` | Community stats |
+| `sf.howToGet` | Want the full experience? Run Printifier on your own machine (bun install → bun run dev), use the Android app for the core tools offline, or wait for the hosted-server release — the code is ready, see the README. |
+| `sf.ok` | Got it |
+| `sf.title` | “{f}” needs the Printifier server |
+| `sf.whyBtn` | Why? |
+| `sf.whyHosting` | This site is hosted on GitHub Pages: free, fast, static file hosting with no backend. AI advice, speech, and cloud sync all need a live server process, so on this mirror they are switched off at the source — not hidden, just honest. |
+| `sf.whyWorks` | Everything else is pure browser magic: page picker, ink-saving enhancement, OCR, N-up layouts, booklet, presets, download, WhatsApp/Telegram share — it all works here, even offline. |
+| `show.auto` | Live demo · auto-replaying |
+| `show.stage` | The transformation |
+| `skip` | Skip to content |
+| `st.files` | Files optimized |
+| `st.money` | Money saved |
+| `st.note` | Anonymous, aggregated stats — no accounts, no tracking, no file uploads. ₹ estimate assumes ~₹1/sheet paper + ink. |
+| `st.pagesCompacted` | Pages compacted |
+| `st.paper` | Less paper used |
+| `st.shared.importing` | Downloading shared PDF… |
+| `st.shared.ok` | Shared PDF added ✓ |
+| `step.aria` | Processing steps |
+| `th.blueprint` | Blueprint |
+| `th.chai` | Chai Time |
+| `th.crimson` | Crimson Dusk |
+| `th.cyber` | Cyber Neon |
+| `th.ember` | Solar Ember |
+| `th.festive` | Festive Night |
+| `th.kraft` | Kraft Paper |
+| `th.matrix` | Emerald Terminal |
+| `th.mint` | Fresh Mint |
+| `th.noir` | Noir Mono |
+| `th.nord` | Nordic Frost |
+| `th.ocean` | Deep Ocean |
+| `th.ohp` | OHP Glow |
+| `th.paper` | Paper Light |
+| `th.pick` | Theme |
+| `th.pickSub` | Pick a look — saved on this device. |
+| `th.rose` | Rose Quartz |
+| `th.sand` | Desert Sand |
+| `th.violet` | Midnight Violet |
+| `th.xerox` | Xerox Mono |
+| `tour.aria` | Welcome tour |
+| `tour.back` | Back |
+| `tour.next` | Next |
+| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
+| `tour.s1.c1` | N-up layouts |
+| `tour.s1.c2` | Ink saver |
+| `tour.s1.c3` | Booklet mode |
+| `tour.s1.c4` | 100% private |
+| `tour.s1.t` | Welcome to Printifier |
+| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
+| `tour.s2.dark` | Dark |
+| `tour.s2.hint` | Hover to see it live — tap to keep it |
+| `tour.s2.light` | Light |
+| `tour.s2.live` | Live preview |
+| `tour.s2.patterns` | Backdrop pattern |
+| `tour.s2.t` | Make it yours |
+| `tour.s3.after` | After · {n} pages |
+| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
+| `tour.s3.before` | Before · {n} sheets |
+| `tour.s3.full` | Browse the full before & after |
+| `tour.s3.ink` | −~87% ink |
+| `tour.s3.load` | Load this PDF & try it |
+| `tour.s3.pages` | −{n}% pages |
+| `tour.s3.t` | A real example |
+| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
+| `tour.s4.cta` | Try it yourself |
+| `tour.s4.s1` | Upload your PDF |
+| `tour.s4.s2` | Enhance & lay out |
+| `tour.s4.s3` | Print or share it |
+| `tour.s4.sample` | Load the sample PDF |
+| `tour.s4.t` | Your turn |
+| `tour.skip` | Skip |
+| `tour.stepN` | Step {n} of {m} |
+| `trust.free` | Free forever |
+| `trust.offline` | Works offline |
+| `trust.private` | 100% private |
+| `uc.class.d` | Merge every subject’s PDFs, keep just the pages that matter, print once a week. |
+| `uc.class.t` | Daily class notes |
+| `uc.coach.d` | Hand out bright, compact handouts instead of dark, ink-draining photocopies. |
+| `uc.coach.t` | Coaching & teaching |
+| `uc.exam.d` | A 100-slide deck becomes a 12-sheet booklet you can revise on the bus. |
+| `uc.exam.t` | Exam crunch |
+| `uc.eyebrow` | Who it’s for |
+| `uc.sub` | From last-minute exam prep to entire semesters of class notes. |
+| `uc.title` | Built for every study style |
+| `up.aria` | Upload PDF files |
+| `up.batch` | Batch queue |
+| `up.batch.cancel` | Cancel |
+| `up.batch.current` | Current settings |
+| `up.batch.dl` | Download |
+| `up.batch.dlAll` | Download all |
+| `up.batch.dlZip` | Download all as .zip |
+| `up.batch.done` | All {n} files ready 🎉 |
+| `up.batch.failed` | Failed |
+| `up.batch.job` | File {i} of {n} |
+| `up.batch.page` | page {d}/{t} |
+| `up.batch.pages` | {n} pages |
+| `up.batch.preset` | Preset |
+| `up.batch.run` | Process {n} files |
+| `up.batch.saved` | {rs} saved on this queue |
+| `up.batch.sub` | Pick a preset per file — each file becomes its own PDF. |
+| `up.batch.zipBusy` | Packing .zip… |
+| `up.cloud` | Import from cloud |
+| `up.cloudBusy` | Fetching from cloud… |
+| `up.cloudFail` | Could not fetch that link. For Drive files, set sharing to “Anyone with the link”. |
+| `up.cloudGo` | Import |
+| `up.cloudHint` | Paste a Google Drive / Dropbox / direct PDF link |
+| `up.cloudNote` | The file is fetched once by our server and sent straight to your browser — nothing is stored. |
+| `up.cloudOnlyWeb` | Cloud import needs the website (not available offline). |
+| `up.cloudUrl` | https://drive.google.com/file/d/… |
+| `up.files` | files ·  |
+| `up.folder` | Folder |
+| `up.folderAria` | Import a whole folder of PDFs |
+| `up.folderSub` | Teacher mode: pick a folder — every PDF inside is added. |
+| `up.impactJobs` | {n} conversions |
+| `up.impactRupees` | {rs} saved |
+| `up.impactSheets` | {n} sheets saved |
+| `up.impactTitle` | Your impact so far |
+| `up.impactTrees` | ≈ {n} trees |
+| `up.multi` | Multiple PDFs supported — pages are merged in order |
+| `up.pagesTotal` |  pages total |
+| `up.prep` | Preparing previews… |
+| `up.privacy` | 🔒 Files never leave your device — everything runs locally in your browser |
+| `up.recent` | Recent conversions |
+| `up.recentNote` | stored only on this device |
+| `up.rendering` | Rendering page previews… |
+| `up.reprint` | Re-printify |
+| `up.reprintHint` | Re-run the original files with different settings |
+| `up.sample` | Try a sample lecture PDF |
+| `up.top` | Back to top |
+| `upd.body` | A newer version of Notes Printifier is ready. Refresh to get it. |
+| `upd.later` | Later |
+| `upd.reload` | Refresh now |
+| `upd.title` | Update available — v{v} |
+| `vc.applied` | Applied: {n} |
+| `vc.fail` | Could not hear a command |
+| `vc.heard` | Heard: “{n}” |
+| `vc.hint` | Try: “four up”, “grayscale”, “save ink”, “booklet”, “searchable” |
+| `vc.nomic` | Microphone not available — use the website in a normal browser |
+| `vc.processing` | Understanding… |
+| `vc.start` | Speak a command |
+| `vc.stop` | Listening… tap to stop |
+| `vc.title` | Voice settings |
+| `ws.confetti` | Confetti on finish |
+| `ws.confetti.off` | Off |
+| `ws.confetti.on` | On |
+| `ws.corners` | Corners |
+| `ws.corners.round` | Rounded |
+| `ws.corners.sharp` | Sharp |
+| `ws.density` | Density |
+| `ws.density.comfy` | Comfy |
+| `ws.density.compact` | Compact |
+| `ws.motion` | Motion |
+| `ws.motion.calm` | Calm |
+| `ws.motion.full` | Full |
+| `ws.sub` | Density, corners, motion & more — saved on this device. |
+| `ws.title` | Theme Workshop |
+| `ws.wheel` | Wheel damping |
+| `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
+
+## ગુજરાતી (Gujarati) — 626 missing (133/759 done, 18%)
+
+Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA.gu`:
+
+| Key | English text |
+| --- | --- |
+| `bg.fifty` | Workhorse |
+| `bg.fiftyD` | Finish 50 conversions |
+| `bg.first` | First Print |
+| `bg.firstD` | Finish your first conversion |
+| `bg.locked` | Locked |
+| `bg.s1000` | Forest Legend |
+| `bg.s1000D` | Save 1,000 sheets |
+| `bg.s250` | Grove Keeper |
+| `bg.s250D` | Save 250 sheets |
+| `bg.s50` | Paper Saver |
+| `bg.s50D` | Save 50 sheets |
+| `bg.sub` | Collect them as you save paper |
+| `bg.ten` | Regular |
+| `bg.tenD` | Finish 10 conversions |
+| `bg.title` | Badges |
+| `bg.w2` | Warm-up |
+| `bg.w2D` | 2-week streak |
+| `bg.w4` | Habit |
+| `bg.w4D` | 4-week streak |
+| `bg.w8` | Unstoppable |
+| `bg.w8D` | 8-week streak |
+| `calc.eyebrow` | Savings calculator |
+| `calc.match` | Same notes, ⅓ the sheets |
+| `calc.note` | Estimate assumes ~₹1 per sheet of paper and ~₹1.3 per full-ink page. Actual savings depend on your printer and slides. |
+| `calc.pages` | Lecture pages you print each week |
+| `calc.pagesUnit` | pages / week |
+| `calc.printifier` | Printifier |
+| `calc.rupeesSaved` | rupees saved a year |
+| `calc.sheetsSaved` | sheets saved a year |
+| `calc.sheetsYear` | sheets / year |
+| `calc.style` | How you print today |
+| `calc.styleDark` | Dark slides — 1 per sheet, full ink |
+| `calc.styleGray` | 2 slides per sheet, grayscale |
+| `calc.styleTwo` | 2 slides per sheet, plain print |
+| `calc.sub` | Drag the sliders to match your printing habits — see your year in paper and rupees. |
+| `calc.title` | How much could YOU save? |
+| `calc.today` | Today |
+| `calc.with` | With Notes Printifier |
+| `calc.withDesc` | 3 slides/sheet · ink-saver · smart invert |
+| `cp.actions` | Actions |
+| `cp.doctor` | Ask the Print Doctor |
+| `cp.flip` | Light / dark flip |
+| `cp.impact` | View your impact |
+| `cp.lang` | Switch to हिन्दी |
+| `cp.navigate` | Go to |
+| `cp.none` | No matching commands |
+| `cp.open` | Command menu |
+| `cp.patterns` | Patterns |
+| `cp.ph` | Type a command or search… |
+| `cp.presetApplied` | Preset “{n}” applied |
+| `cp.presets` | Presets |
+| `cp.process` | Process now |
+| `cp.processHint` | Compose the selected pages into a print-ready PDF |
+| `cp.reset` | Reset everything |
+| `cp.resetDone` | Everything reset |
+| `cp.settings` | Settings |
+| `cp.shortcuts` | Keyboard shortcuts |
+| `cp.themes` | Themes |
+| `cp.top` | Back to top |
+| `cp.tour` | Replay the intro tour |
+| `cp.upload` | Upload new PDFs |
+| `db.co2` | CO₂ avoided |
+| `db.empty` | Process your first PDF and your savings will appear here. |
+| `db.eyebrow` | Impact dashboard |
+| `db.jobs` | Conversions |
+| `db.reset` | Reset all impact data |
+| `db.resetDone` | Impact data cleared |
+| `db.rupees` | Money saved |
+| `db.sheets` | Sheets saved |
+| `db.sub` | Private, on-device totals — visible only to you. |
+| `db.thisweek` | This week |
+| `db.title` | Your print savings |
+| `db.trees` | Tree equivalent |
+| `db.week` | wk {n} |
+| `db.weeks` | Last 8 weeks |
+| `dr.again` | Ask again |
+| `dr.applied` | Doctor’s suggestion applied |
+| `dr.apply` | Apply suggestion |
+| `dr.ask` | Ask the Doctor |
+| `dr.bench.applied` | Recognition mode set to PSM {psm} |
+| `dr.bench.fail` | Benchmark failed — try another page. |
+| `dr.bench.mode` | Mode |
+| `dr.bench.page` | Page {n} of “{name}” |
+| `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
+| `dr.bench.winner` | PSM {psm} reads this page better |
+| `dr.fail` | The Doctor is unavailable right now |
+| `dr.goal` | Goal |
+| `dr.goal.balanced` | Balanced |
+| `dr.goal.ink` | Save ink |
+| `dr.goal.pages` | Fewer pages |
+| `dr.goal.readability` | Easy to read |
+| `dr.offline` | Offline advice |
+| `dr.sub` | AI reads your document and settings, then suggests the sweet spot. |
+| `dr.thinking` | Doctor is thinking… |
+| `dr.tip` | Doctor says |
+| `dr.title` | Print Doctor |
+| `en.adv` | Advanced |
+| `en.adv.on` | {n}/5 on |
+| `en.adv.sub` | Stains · Trim · Deskew · OCR · Doctor |
+| `en.badge.new` | New |
+| `en.cmp.aria` | Drag to compare before and after |
+| `en.cmp.side` | Side by side |
+| `en.cmp.wipe` | Compare |
+| `en.deskew.badge` | Auto-rotation applied |
+| `en.logo` | Remove logo / watermark |
+| `en.logo.aria` | Header strip removal height |
+| `en.logo.band` | Or shave the top band |
+| `en.logo.clear` | Clear areas |
+| `en.logo.d` | Box the logo directly on the page — any corner (like a top-right watermark) — and it is erased from every page. Or shave the top band with the slider below. |
+| `en.logo.off` | Off |
+| `en.logo.pick` | Select area on page |
+| `en.logo.pick.done` | Done picking |
+| `en.logo.pick.hint` | Drag a box over the logo on the ORIGINAL page (left) — it gets erased on every page at that spot. The After preview shows the result. |
+| `en.logo.region.del` | Remove this area |
+| `en.logo.regions` | {n} area(s) |
+| `en.mode.auto` | Smart |
+| `en.mode.auto.h` | Dark slides inverted, light pages kept light |
+| `en.mode.bw` | B&W |
+| `en.mode.bw.h` | Maximum ink saving |
+| `en.mode.grayscale` | Grayscale |
+| `en.mode.grayscale.h` | Remove all color |
+| `en.mode.invert` | Invert |
+| `en.mode.invert.h` | Dark slides → white pages |
+| `en.mode.original` | Original |
+| `en.mode.original.h` | Keep colors, clean background stains |
+| `en.ocr.page` | page {n} of {t} |
+| `en.ocr.running` | Adding searchable text (OCR)… |
+| `en.ocrPsm` | Recognition mode |
+| `en.ocrPsm.auto` | Auto — slides & mixed layouts |
+| `en.ocrPsm.block` | Single block — handwriting & notes |
+| `en.ocrPsm.hint` | Single block treats the page as one text column — often rescues handwriting and single-column scans that Auto fragments. |
+| `en.overlay` | Erased |
+| `en.overlay.aria` | Highlight the pixels the filters erase (red) |
+| `en.overlay.hint` | Red = removed by your filters |
+| `en.presets.apply` | Apply |
+| `en.presets.builtinNote` | Start with a built-in recipe, then fine-tune below. |
+| `en.presets.import` | Import |
+| `en.presets.importFail` | That file is not a valid preset export. |
+| `en.presets.imported` | Imported {n} preset{s} |
+| `en.presets.name` | Preset name (e.g. PW dark slides) |
+| `en.presets.none` | No presets yet — tune Enhance & Layout, then save one. |
+| `en.presets.save` | Save current as preset |
+| `en.presets.saved` | Saved! |
+| `en.presets.share` | Share |
+| `en.presets.shareNote` | Share your presets with classmates |
+| `en.preview.full` | Full preview |
+| `en.preview.ink` | ~{n}% ink |
+| `en.preview.note` | Preview shows the first selected page — filters apply to every page. |
+| `en.preview.page` | Page {n} of {t} (selected pages) |
+| `en.preview.pick` | Preview page {n} of {t} |
+| `en.preview.saves` | This filter combo reduces ink coverage by about {n}% on this page |
+| `en.recommended` | Recommended |
+| `en.stains.inv` | Recommended — clears the blue/cyan cast that dark brown & navy slide backgrounds pick up when inverted, plus inverted red key fills. Handwriting and diagrams stay. |
+| `en.stains.light` | Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes. |
+| `en.zoom.fit` | Reset zoom |
+| `en.zoom.in` | Zoom in |
+| `en.zoom.out` | Zoom out |
+| `en.zoom.pct` | {n}× |
+| `faq.eyebrow` | Questions & answers |
+| `faq.sub` | Everything you might wonder before hitting print. |
+| `faq.title` | FAQ |
+| `faq1.a` | No. Everything — parsing, filters and PDF generation — runs locally in your browser. Your notes never leave your device, and it works even if you go offline after loading the page. |
+| `faq1.q` | Are my files uploaded to a server? |
+| `faq2.a` | Typical dark-background lecture slides shrink by 60–85% ink with Invert + Ink Saver, and stacking 3–4 slides per sheet cuts paper by 60–75%. Your exact numbers are shown after processing. |
+| `faq2.q` | How much paper and ink can I actually save? |
+| `faq3.a` | Dark-themed lecture decks (Physics Wallah style), scanned notes and text-heavy presentations. For clean white handouts, try Grayscale or B&W with a 30–50% Ink Saver instead of Invert. |
+| `faq3.q` | Which PDFs work best? |
+| `faq4.a` | Yes — phone, tablet, laptop or desktop. The whole tool runs in any modern browser (Chrome, Safari, Edge, Firefox) with nothing to install. Big files take a little longer on older phones, so keep the tab open while it processes. |
+| `faq4.q` | Does it work on any device? |
+| `faq5.a` | iOS Safari cannot display PDFs inside the page. Tap “Open” to view the PDF in a full tab, or just tap “Download” — the file itself is complete and prints perfectly. |
+| `faq5.q` | Why does the inline preview look blank on my iPhone? |
+| `faq6.a` | By default it is a high-quality image-based PDF (that is what makes the ink savings possible) — but turn on “Searchable PDF (OCR)” in Enhance and an invisible text layer is added, so search, select and copy all work. Page numbers and separators are always real vector elements. |
+| `faq6.q` | Is the output PDF searchable or re-editable? |
+| `faq7.a` | Yes! Download the APK from the footer — the Stable build is frozen and beginner-safe, while the Beta build gets new features first. Both work fully offline and PDFs you download are saved straight to your phone. |
+| `faq7.q` | Is there an Android app? |
+| `faq8.a` | Yes — tap “Import from cloud” on the upload screen and paste the share link (set the file to “Anyone with the link”). The server fetches it once and streams it straight to your browser; nothing is stored. |
+| `faq8.q` | Can I import a PDF from Google Drive or Dropbox? |
+| `feat.booklet.d` | Fold-in-half booklet order for duplex printing. |
+| `feat.booklet.t` | Booklet Mode |
+| `feat.eyebrow` | Features |
+| `feat.gray.d` | Strip color for maximum contrast. |
+| `feat.gray.t` | Grayscale & B&W |
+| `feat.grid.d` | Up to 16 slides on a single sheet. |
+| `feat.grid.t` | N-up Grid |
+| `feat.ink.d` | Backgrounds pushed to pure white. |
+| `feat.ink.t` | Ink Saver |
+| `feat.invert.d` | Dark slides become bright, printable pages. |
+| `feat.invert.t` | Invert Colors |
+| `feat.local.d` | PDFs never leave your browser. |
+| `feat.local.t` | 100% Local |
+| `feat.num.d` | Numbered output for easy collating. |
+| `feat.num.t` | Page Numbers |
+| `feat.quality.d` | Balance file size vs. crispness. |
+| `feat.quality.t` | Quality Control |
+| `feat.sep.d` | Clean cut lines between slides. |
+| `feat.sep.t` | Separation Lines |
+| `feat.sub` | Inspired by the tools you love — rebuilt for the web, completely free. |
+| `feat.title` | Everything a student needs |
+| `feat.wm.d` | Print your name or roll number on every sheet. |
+| `feat.wm.t` | Name Stamp |
+| `feat.zip.d` | A whole batch arrives as one tidy .zip file. |
+| `feat.zip.t` | ZIP Batch Export |
+| `ft.beta` | Beta — new features first |
+| `ft.copyright` | © {y} Notes Printifier — built for students, by students. |
+| `ft.get` | Get the app |
+| `ft.links` | Explore |
+| `ft.local` | All processing happens locally in your browser |
+| `ft.made` | Made for students who print smart. |
+| `ft.replay` | Replay the guide |
+| `ft.replayHint` | The 4-step walkthrough, anytime |
+| `ft.stable` | Android app — Stable v1.0 |
+| `ft.tagline` | The free, private way to turn lecture PDFs into printer-friendly notes. |
+| `ft.webapp` | Or just use it in your browser — nothing to install. |
+| `hero.after` | 3 slides/sheet · 14 bright pages |
+| `hero.badge3` | Works on any device |
+| `hero.before` | 41 dark slides · 41 sheets |
+| `hero.chip.grid` | 3× slides/sheet |
+| `hero.chip.ink` | −80% ink |
+| `hero.chip.sheets` | ~9 sheets saved |
+| `hero.example` | See a real example |
+| `hero.howlink` | or see how it works |
+| `hero.sub` | Turn lecture notes into printable notes by reducing ink and pages — perfect for exam-time printing. |
+| `hero.title1` | Make Your Lecture Notes |
+| `hero.title2` | Print-Ready |
+| `how.cta` | Try it now — it’s free |
+| `how.ctaHint` | No signup · nothing leaves your device |
+| `how.eyebrow` | 3 simple steps |
+| `how.s1.d` | Drop one or many lecture PDFs. Pages load instantly as previews — nothing is uploaded to a server. |
+| `how.s1.t` | Upload your PDFs |
+| `how.s2.d` | Keep only the pages you need, invert dark slides to white, then stack up to 16 slides per sheet. |
+| `how.s2.t` | Pick, enhance & lay out |
+| `how.s3.d` | Get a bright, compact, numbered PDF ready for your printer — with stats on paper and ink saved. |
+| `how.s3.t` | Download & print |
+| `how.sub` | Three steps, about a minute — no account required. |
+| `how.title` | How It Works |
+| `im.streak.max` | Top tier reached — legend! |
+| `im.streak.next` | {n} sheets to {tier} |
+| `im.streak.none` | Convert once a week to keep the streak alive |
+| `im.streak.thisweek` | {n} this week |
+| `im.streak.title` | Streak & milestones |
+| `im.streak.weeks` | {n}-week streak |
+| `im.tier.bronze` | Bronze |
+| `im.tier.diamond` | Diamond |
+| `im.tier.gold` | Gold |
+| `im.tier.legend` | Legend |
+| `im.tier.platinum` | Platinum |
+| `im.tier.silver` | Silver |
+| `kb.esc` | Close dialogs |
+| `kb.flip` | Light / dark flip |
+| `kb.k` | Command menu |
+| `kb.open` | Shortcuts |
+| `kb.q` | This help |
+| `kb.title` | Keyboard shortcuts |
+| `labs.badge` | experimental |
+| `labs.body` | Fresh features that are still cooking. They only affect this device and you can switch them off anytime — the core tool stays untouched. |
+| `labs.more` | More experiments coming: smart per-page invert, saved presets, handwriting boost… |
+| `labs.remember` | Remember my settings |
+| `labs.rememberD` | Keeps your Enhance & Layout choices on this device for your next visit. |
+| `labs.repaint` | Text repaint (OCR) |
+| `labs.repaintD` | Experimental: OCRs each page and re-typesets recognized text as crisp black-on-white instead of a re-compressed scan. Sharp output, tiny files; handwriting and complex diagrams automatically fall back to the original image. |
+| `labs.title` | Labs |
+| `ly.adv.on` | {n} on |
+| `ly.adv.sub` | Budget · Slide nos. · Cover · Booklet |
+| `ly.bookletNote` | Booklet: print 2-up duplex with “flip on short edge”, then fold — the separator line is your fold guide. |
+| `ly.budget.fit` | Fits: {n} sheets at {per} slides per sheet ✓ |
+| `ly.budget.go` | Auto-fit |
+| `ly.budget.none` | Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway. |
+| `ly.budget.ph` | e.g. 25 |
+| `ly.budget.sub` | Xerox shop charges per sheet? Set a sheet limit and we pick the tightest layout that fits. |
+| `ly.budget.title` | Print budget |
+| `ly.compEmail` | Email · 25 MB |
+| `ly.compForms` | Forms · 5 MB |
+| `ly.compOff` | No cap |
+| `ly.compPreset` | Quick caps |
+| `ly.compWhatsApp` | WhatsApp · 16 MB |
+| `ly.cover` | Cover page |
+| `ly.cover.contents` | Contents |
+| `ly.cover.footnote` | Merged print-ready PDF · notesprintifier |
+| `ly.cover.pages` | {n} pages |
+| `ly.coverSub` | Title page listing every merged file |
+| `ly.dpi.aria` | Render resolution (DPI) |
+| `ly.dpi.custom` | Custom |
+| `ly.dpi.hint` | Higher = sharper text but a bigger file. The presets above set this automatically — drag to override. |
+| `ly.dpi.reset` | Use preset |
+| `ly.dpi.value` | {n} DPI |
+| `ly.duplexPad` | Duplex pad |
+| `ly.duplexPadSub` | Adds one blank page when the count is odd, so double-sided backs line up. |
+| `ly.estCost` | saves about {rs} in paper + ink |
+| `ly.estInk` | ~{n}% ink saved |
+| `ly.estSampling` | estimating from {n} sample pages… |
+| `ly.estSize` | ≈ {size} output file |
+| `ly.estimate` | Estimated output |
+| `ly.footerNote` | Printed small at the bottom-left of every sheet. |
+| `ly.footerOpt` | (optional) |
+| `ly.inPages` | Input pages |
+| `ly.liveBadge` | LIVE |
+| `ly.liveSub` | Real filters on the first sheet |
+| `ly.md.active` | Margin calibration active (T/R/B/L mm) |
+| `ly.md.applied` | Margin calibration applied — every output respects your borders now. |
+| `ly.md.apply` | Apply calibration |
+| `ly.md.bottom` | Bottom |
+| `ly.md.hint` | Measured your borders on the test sheet? Tune the output margins here. |
+| `ly.md.left` | Left |
+| `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
+| `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
+| `ly.md.reset` | Reset |
+| `ly.md.right` | Right |
+| `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
+| `ly.md.title` | Margin Doctor |
+| `ly.md.top` | Top |
+| `ly.metaHint` | Title and author written into the output file’s metadata. |
+| `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
+| `ly.outPages` | Output pages |
+| `ly.paperSaved` | Paper saved |
+| `ly.perSheet` | Slides per sheet |
+| `ly.processing` | Processing page {d} of {t}… keep this tab open. |
+| `ly.processingBg` | Processing runs in the background — the app stays responsive. |
+| `ly.q.high` | High |
+| `ly.q.highD` | Crisp text · 210 DPI |
+| `ly.q.low` | Low |
+| `ly.q.lowD` | Smallest file · 96 DPI |
+| `ly.q.med` | Medium |
+| `ly.q.medD` | Balanced · 150 DPI |
+| `ly.qualityNote` | Final PDF is generated in high quality — previews above are low-res. |
+| `ly.recipeQr` | Recipe QR on print |
+| `ly.recipeQrHint` | Print a small QR in the footer band — scanning it re-opens the site with these exact settings (no server needed). |
+| `ly.sizeTarget` | Target file size |
+| `ly.sizeTargetHint` | Quality is lowered automatically until the PDF fits — for email limits and print-shop uploads. |
+| `ly.sizeTargetOff` | Off |
+| `ly.sizeTargetOn` | Under {n} MB |
+| `ly.sizeTargetOver` | Estimated above target — quality will be reduced while processing. |
+| `ly.sizeTargetPh` | e.g. 5 |
+| `ly.stampNote` | Printed small at the bottom-right of every sheet. |
+| `ly.stampOpt` | optional |
+| `ly.stampPh` | e.g. Aarav · 12-A · Roll 42 |
+| `ly.suggested` | Suggested for this PDF: {label} |
+| `ly.testFail` | Could not build the test sheet — try again. |
+| `ly.testHint` | Not sure how thick your printer's unprintable border is? Print a true-size calibration sheet. |
+| `ly.testNeedFixed` | Pick a fixed paper size (A4/Letter/…) first — original/custom sizes can't be calibrated. |
+| `ly.testOpened` | Test sheet opened in a new tab — print it at 100% scale. |
+| `ly.testPage` | Margin test page |
+| `menu.open` | Open menu |
+| `menu.title` | Menu |
+| `nav.calc` | Calculator |
+| `nav.install` | Install app |
+| `pat.circuit` | Circuit |
+| `pat.diag` | Diagonal |
+| `pat.dots` | Dots |
+| `pat.grid` | Grid |
+| `pat.hex` | Hex |
+| `pat.none` | Plain |
+| `pat.pick` | Backdrop pattern |
+| `pat.plus` | Plus marks |
+| `pat.topo` | Topographic |
+| `pat.waves` | Waves |
+| `pat.weave` | Weave |
+| `pr.builtin.balanced` | Balanced |
+| `pr.builtin.balancedD` | The everyday default — smart color mode, 4 slides per sheet, medium quality. |
+| `pr.builtin.economy` | Economy |
+| `pr.builtin.economyD` | Maximum savings — black & white, 6 slides per sheet, trimmed margins, draft quality. |
+| `pr.builtin.exam` | Exam cram |
+| `pr.builtin.examD` | Readability first — original colors, handwriting boost, 2 slides per sheet, high quality. |
+| `pr.incoming.applied` | Preset “{n}” applied |
+| `pr.incoming.apply` | Apply preset |
+| `pr.incoming.bad` | That preset link is broken or expired |
+| `pr.incoming.later` | Not now |
+| `pr.incomingBody` | “{n}” was shared with you. Apply it now? You can save it to your presets afterwards. |
+| `pr.incomingTitle` | Shared preset |
+| `pr.qr` | QR code |
+| `pr.qr.copied` | Link copied |
+| `pr.qr.copy` | Copy link |
+| `pr.qr.fail` | Could not draw the QR code |
+| `pr.qr.sub` | Point another phone’s camera at the code — the preset opens in its browser. |
+| `pr.qr.title` | Scan to load this preset |
+| `pr.recipeApplied` | Recipe applied from link ✓ |
+| `pr.recipeBad` | That recipe link is invalid |
+| `pr.shareLink` | Copy share link |
+| `pr.shareLink.busy` | Creating link… |
+| `pr.shareLink.copied` | Share link copied — anyone with it can apply this preset |
+| `pr.shareLink.fail` | Could not create the share link (offline?) |
+| `rs.assume` | rough estimate: ~₹1 per sheet of paper, ink by measured coverage |
+| `rs.assume2` | At your rates: ₹{p}/sheet paper · ₹{i}/full-ink page |
+| `rs.autoInverted` | Smart mode inverted {n} of {t} dark pages automatically |
+| `rs.bookletBody` | in the print dialog choose landscape + duplex with “flip on short edge”. Print the whole file, stack the sheets in order, fold once in the middle (the separator line is your fold guide) — done. |
+| `rs.bookletTitle` | Booklet printing: |
+| `rs.cost.edit` | Edit ₹ rates |
+| `rs.cost.hint` | Ask your print shop once — every ₹ number becomes exact. |
+| `rs.cost.ink` | Ink cost per full-coverage page (₹) |
+| `rs.cost.paper` | Paper cost per sheet (₹) |
+| `rs.cost.reset` | Reset to defaults |
+| `rs.cost.save` | Save rates |
+| `rs.cost.saved` | Print rates saved |
+| `rs.cost.title` | Your print costs |
+| `rs.duplexBody` | Split into odd/even files: print the odd file, flip the stack, print the even file on the back. |
+| `rs.duplexBtn` | Create odd & even files |
+| `rs.duplexTitle` | No duplex printer? |
+| `rs.even` | Even sheets ({n}) |
+| `rs.histEmpty` | Process a file — your history will appear here. |
+| `rs.histNote` | Last {n} job{s} on this device |
+| `rs.histTitle` | Your savings so far |
+| `rs.img.body` | Save every page of the result as a PNG — one file, or a ZIP when there are many. |
+| `rs.img.done` | {n} images ready |
+| `rs.img.dpi` | Image resolution |
+| `rs.img.fail` | Image export failed |
+| `rs.impactCo2` | CO₂ saved |
+| `rs.impactJobs` | conversions |
+| `rs.impactMoney` | saved |
+| `rs.impactNote` | Counts every conversion on this device. One tree ≈ 8,333 sheets · one sheet ≈ 5 g CO₂ — friendly estimates, stored only on your phone. |
+| `rs.impactReset` | Reset counter |
+| `rs.impactSheets` | sheets saved |
+| `rs.impactTitle` | Your impact so far |
+| `rs.impactTrees` | trees |
+| `rs.iosBody` | iOS can’t display PDFs inside the page — but your file is ready. Tap Open to view it full-screen, or Download to save it for printing. |
+| `rs.larger` | {n}% larger (quality boost) |
+| `rs.listen` | Listen |
+| `rs.listenFail` | Could not generate audio |
+| `rs.loading` | Generating audio… |
+| `rs.mode` | mode: {m} |
+| `rs.ocrNote` | Searchable text layer added — try Ctrl+F / search in your PDF viewer. |
+| `rs.ocrRep.avg` | {n}% avg confidence |
+| `rs.ocrRep.good` | Recognition looks clean — the searchable layer should be accurate. |
+| `rs.ocrRep.low` | Low confidence — these pages were probably handwriting, photos or a language the OCR does not cover. |
+| `rs.ocrRep.mid` | Some pages look like handwriting or rough scans — search still works, but expect a few misread words. |
+| `rs.ocrRep.page` | Page {n} — {c}% confidence |
+| `rs.ocrRep.title` | OCR quality report |
+| `rs.ocrRep.tryBlock` | Tip: switch Recognition mode to “Single block” in Enhance for handwriting-style pages. |
+| `rs.odd` | Odd sheets ({n}) |
+| `rs.print` | Print now |
+| `rs.qr.copied` | Recipe link copied |
+| `rs.qr.copy` | Copy link |
+| `rs.qr.copyFail` | Could not copy — long-press the QR instead |
+| `rs.qr.save` | Save QR |
+| `rs.qr.sub` | Scan to print with these exact settings again — classmates can reuse your whole recipe. |
+| `rs.qr.title` | Recipe QR |
+| `rs.receipt.btn` | Save receipt card |
+| `rs.receipt.fail` | Could not build the receipt card |
+| `rs.receipt.footnote` | Made with Notes Printifier — free, private, in-browser |
+| `rs.receipt.money` | Money saved |
+| `rs.receipt.pagesIn` | Slides in → sheets out |
+| `rs.receipt.saved` | Receipt saved as PNG |
+| `rs.receipt.shared` | Receipt shared |
+| `rs.receipt.sub` | Ink-saving print receipt |
+| `rs.repainted` | {n} pages re-typeset |
+| `rs.saved` | You saved about {rs} |
+| `rs.savedDetail` | {n} sheet(s) of paper + ink |
+| `rs.share.fail` | Could not share the PDF |
+| `rs.share.fallback` | PDF downloaded — attach it in the chat that just opened |
+| `rs.share.text` | Here is the print-ready PDF — made with Notes Printifier |
+| `rs.sizeTargetAlready` | Already under the {n} MB target — no extra compression needed |
+| `rs.sizeTargetFit` | Compressed in {p} extra pass(es) to fit under {n} MB |
+| `rs.smaller` | {n}% smaller than source |
+| `rs.split.body` | Cut the output into fixed-size parts — handy for shared printers or per-chapter files. |
+| `rs.split.done` | {n} parts ready |
+| `rs.split.est` | ≈ {size} per part · {n} parts (estimate) |
+| `rs.split.fail` | Split failed |
+| `rs.split.ph` | Pages per part |
+| `rs.stop` | Stop |
+| `rs.sub` | Download it and hit print — your wallet and the planet thank you. |
+| `rs.tg` | Telegram |
+| `rs.tg.aria` | Send the converted PDF to Telegram |
+| `rs.wa` | WhatsApp |
+| `rs.wa.aria` | Send the converted PDF to WhatsApp |
+| `rs.wa.shared` | Shared! |
+| `sf.body` | This feature runs on Printifier’s small server brain, which this static hosting can’t provide. The core tools — layouts, ink-saving, booklet, presets, download & share — all run 100% in your browser and work right here. |
+| `sf.feature.preset` | Shared preset link |
+| `sf.feature.stats` | Community stats |
+| `sf.howToGet` | Want the full experience? Run Printifier on your own machine (bun install → bun run dev), use the Android app for the core tools offline, or wait for the hosted-server release — the code is ready, see the README. |
+| `sf.ok` | Got it |
+| `sf.title` | “{f}” needs the Printifier server |
+| `sf.whyBtn` | Why? |
+| `sf.whyHosting` | This site is hosted on GitHub Pages: free, fast, static file hosting with no backend. AI advice, speech, and cloud sync all need a live server process, so on this mirror they are switched off at the source — not hidden, just honest. |
+| `sf.whyWorks` | Everything else is pure browser magic: page picker, ink-saving enhancement, OCR, N-up layouts, booklet, presets, download, WhatsApp/Telegram share — it all works here, even offline. |
+| `show.auto` | Live demo · auto-replaying |
+| `show.stage` | The transformation |
+| `skip` | Skip to content |
+| `st.files` | Files optimized |
+| `st.money` | Money saved |
+| `st.note` | Anonymous, aggregated stats — no accounts, no tracking, no file uploads. ₹ estimate assumes ~₹1/sheet paper + ink. |
+| `st.pagesCompacted` | Pages compacted |
+| `st.paper` | Less paper used |
+| `st.shared.importing` | Downloading shared PDF… |
+| `st.shared.ok` | Shared PDF added ✓ |
+| `step.aria` | Processing steps |
+| `th.blueprint` | Blueprint |
+| `th.chai` | Chai Time |
+| `th.crimson` | Crimson Dusk |
+| `th.cyber` | Cyber Neon |
+| `th.ember` | Solar Ember |
+| `th.festive` | Festive Night |
+| `th.kraft` | Kraft Paper |
+| `th.matrix` | Emerald Terminal |
+| `th.mint` | Fresh Mint |
+| `th.noir` | Noir Mono |
+| `th.nord` | Nordic Frost |
+| `th.ocean` | Deep Ocean |
+| `th.ohp` | OHP Glow |
+| `th.paper` | Paper Light |
+| `th.pick` | Theme |
+| `th.pickSub` | Pick a look — saved on this device. |
+| `th.rose` | Rose Quartz |
+| `th.sand` | Desert Sand |
+| `th.violet` | Midnight Violet |
+| `th.xerox` | Xerox Mono |
+| `tour.aria` | Welcome tour |
+| `tour.back` | Back |
+| `tour.next` | Next |
+| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
+| `tour.s1.c1` | N-up layouts |
+| `tour.s1.c2` | Ink saver |
+| `tour.s1.c3` | Booklet mode |
+| `tour.s1.c4` | 100% private |
+| `tour.s1.t` | Welcome to Printifier |
+| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
+| `tour.s2.dark` | Dark |
+| `tour.s2.hint` | Hover to see it live — tap to keep it |
+| `tour.s2.light` | Light |
+| `tour.s2.live` | Live preview |
+| `tour.s2.patterns` | Backdrop pattern |
+| `tour.s2.t` | Make it yours |
+| `tour.s3.after` | After · {n} pages |
+| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
+| `tour.s3.before` | Before · {n} sheets |
+| `tour.s3.full` | Browse the full before & after |
+| `tour.s3.ink` | −~87% ink |
+| `tour.s3.load` | Load this PDF & try it |
+| `tour.s3.pages` | −{n}% pages |
+| `tour.s3.t` | A real example |
+| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
+| `tour.s4.cta` | Try it yourself |
+| `tour.s4.s1` | Upload your PDF |
+| `tour.s4.s2` | Enhance & lay out |
+| `tour.s4.s3` | Print or share it |
+| `tour.s4.sample` | Load the sample PDF |
+| `tour.s4.t` | Your turn |
+| `tour.skip` | Skip |
+| `tour.stepN` | Step {n} of {m} |
+| `trust.free` | Free forever |
+| `trust.offline` | Works offline |
+| `trust.private` | 100% private |
+| `uc.class.d` | Merge every subject’s PDFs, keep just the pages that matter, print once a week. |
+| `uc.class.t` | Daily class notes |
+| `uc.coach.d` | Hand out bright, compact handouts instead of dark, ink-draining photocopies. |
+| `uc.coach.t` | Coaching & teaching |
+| `uc.exam.d` | A 100-slide deck becomes a 12-sheet booklet you can revise on the bus. |
+| `uc.exam.t` | Exam crunch |
+| `uc.eyebrow` | Who it’s for |
+| `uc.sub` | From last-minute exam prep to entire semesters of class notes. |
+| `uc.title` | Built for every study style |
+| `up.aria` | Upload PDF files |
+| `up.batch` | Batch queue |
+| `up.batch.cancel` | Cancel |
+| `up.batch.current` | Current settings |
+| `up.batch.dl` | Download |
+| `up.batch.dlAll` | Download all |
+| `up.batch.dlZip` | Download all as .zip |
+| `up.batch.done` | All {n} files ready 🎉 |
+| `up.batch.failed` | Failed |
+| `up.batch.job` | File {i} of {n} |
+| `up.batch.page` | page {d}/{t} |
+| `up.batch.pages` | {n} pages |
+| `up.batch.preset` | Preset |
+| `up.batch.run` | Process {n} files |
+| `up.batch.saved` | {rs} saved on this queue |
+| `up.batch.sub` | Pick a preset per file — each file becomes its own PDF. |
+| `up.batch.zipBusy` | Packing .zip… |
+| `up.cloud` | Import from cloud |
+| `up.cloudBusy` | Fetching from cloud… |
+| `up.cloudFail` | Could not fetch that link. For Drive files, set sharing to “Anyone with the link”. |
+| `up.cloudGo` | Import |
+| `up.cloudHint` | Paste a Google Drive / Dropbox / direct PDF link |
+| `up.cloudNote` | The file is fetched once by our server and sent straight to your browser — nothing is stored. |
+| `up.cloudOnlyWeb` | Cloud import needs the website (not available offline). |
+| `up.cloudUrl` | https://drive.google.com/file/d/… |
+| `up.files` | files ·  |
+| `up.folder` | Folder |
+| `up.folderAria` | Import a whole folder of PDFs |
+| `up.folderSub` | Teacher mode: pick a folder — every PDF inside is added. |
+| `up.impactJobs` | {n} conversions |
+| `up.impactRupees` | {rs} saved |
+| `up.impactSheets` | {n} sheets saved |
+| `up.impactTitle` | Your impact so far |
+| `up.impactTrees` | ≈ {n} trees |
+| `up.multi` | Multiple PDFs supported — pages are merged in order |
+| `up.pagesTotal` |  pages total |
+| `up.prep` | Preparing previews… |
+| `up.privacy` | 🔒 Files never leave your device — everything runs locally in your browser |
+| `up.recent` | Recent conversions |
+| `up.recentNote` | stored only on this device |
+| `up.rendering` | Rendering page previews… |
+| `up.reprint` | Re-printify |
+| `up.reprintHint` | Re-run the original files with different settings |
+| `up.sample` | Try a sample lecture PDF |
+| `up.top` | Back to top |
+| `upd.body` | A newer version of Notes Printifier is ready. Refresh to get it. |
+| `upd.later` | Later |
+| `upd.reload` | Refresh now |
+| `upd.title` | Update available — v{v} |
+| `vc.applied` | Applied: {n} |
+| `vc.fail` | Could not hear a command |
+| `vc.heard` | Heard: “{n}” |
+| `vc.hint` | Try: “four up”, “grayscale”, “save ink”, “booklet”, “searchable” |
+| `vc.nomic` | Microphone not available — use the website in a normal browser |
+| `vc.processing` | Understanding… |
+| `vc.start` | Speak a command |
+| `vc.stop` | Listening… tap to stop |
+| `vc.title` | Voice settings |
+| `ws.confetti` | Confetti on finish |
+| `ws.confetti.off` | Off |
+| `ws.confetti.on` | On |
+| `ws.corners` | Corners |
+| `ws.corners.round` | Rounded |
+| `ws.corners.sharp` | Sharp |
+| `ws.density` | Density |
+| `ws.density.comfy` | Comfy |
+| `ws.density.compact` | Compact |
+| `ws.motion` | Motion |
+| `ws.motion.calm` | Calm |
+| `ws.motion.full` | Full |
+| `ws.sub` | Density, corners, motion & more — saved on this device. |
+| `ws.title` | Theme Workshop |
+| `ws.wheel` | Wheel damping |
+| `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
+
+## ਪੰਜਾਬੀ (Punjabi) — 626 missing (133/759 done, 18%)
+
+Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA.pa`:
+
+| Key | English text |
+| --- | --- |
+| `bg.fifty` | Workhorse |
+| `bg.fiftyD` | Finish 50 conversions |
+| `bg.first` | First Print |
+| `bg.firstD` | Finish your first conversion |
+| `bg.locked` | Locked |
+| `bg.s1000` | Forest Legend |
+| `bg.s1000D` | Save 1,000 sheets |
+| `bg.s250` | Grove Keeper |
+| `bg.s250D` | Save 250 sheets |
+| `bg.s50` | Paper Saver |
+| `bg.s50D` | Save 50 sheets |
+| `bg.sub` | Collect them as you save paper |
+| `bg.ten` | Regular |
+| `bg.tenD` | Finish 10 conversions |
+| `bg.title` | Badges |
+| `bg.w2` | Warm-up |
+| `bg.w2D` | 2-week streak |
+| `bg.w4` | Habit |
+| `bg.w4D` | 4-week streak |
+| `bg.w8` | Unstoppable |
+| `bg.w8D` | 8-week streak |
+| `calc.eyebrow` | Savings calculator |
+| `calc.match` | Same notes, ⅓ the sheets |
+| `calc.note` | Estimate assumes ~₹1 per sheet of paper and ~₹1.3 per full-ink page. Actual savings depend on your printer and slides. |
+| `calc.pages` | Lecture pages you print each week |
+| `calc.pagesUnit` | pages / week |
+| `calc.printifier` | Printifier |
+| `calc.rupeesSaved` | rupees saved a year |
+| `calc.sheetsSaved` | sheets saved a year |
+| `calc.sheetsYear` | sheets / year |
+| `calc.style` | How you print today |
+| `calc.styleDark` | Dark slides — 1 per sheet, full ink |
+| `calc.styleGray` | 2 slides per sheet, grayscale |
+| `calc.styleTwo` | 2 slides per sheet, plain print |
+| `calc.sub` | Drag the sliders to match your printing habits — see your year in paper and rupees. |
+| `calc.title` | How much could YOU save? |
+| `calc.today` | Today |
+| `calc.with` | With Notes Printifier |
+| `calc.withDesc` | 3 slides/sheet · ink-saver · smart invert |
+| `cp.actions` | Actions |
+| `cp.doctor` | Ask the Print Doctor |
+| `cp.flip` | Light / dark flip |
+| `cp.impact` | View your impact |
+| `cp.lang` | Switch to हिन्दी |
+| `cp.navigate` | Go to |
+| `cp.none` | No matching commands |
+| `cp.open` | Command menu |
+| `cp.patterns` | Patterns |
+| `cp.ph` | Type a command or search… |
+| `cp.presetApplied` | Preset “{n}” applied |
+| `cp.presets` | Presets |
+| `cp.process` | Process now |
+| `cp.processHint` | Compose the selected pages into a print-ready PDF |
+| `cp.reset` | Reset everything |
+| `cp.resetDone` | Everything reset |
+| `cp.settings` | Settings |
+| `cp.shortcuts` | Keyboard shortcuts |
+| `cp.themes` | Themes |
+| `cp.top` | Back to top |
+| `cp.tour` | Replay the intro tour |
+| `cp.upload` | Upload new PDFs |
+| `db.co2` | CO₂ avoided |
+| `db.empty` | Process your first PDF and your savings will appear here. |
+| `db.eyebrow` | Impact dashboard |
+| `db.jobs` | Conversions |
+| `db.reset` | Reset all impact data |
+| `db.resetDone` | Impact data cleared |
+| `db.rupees` | Money saved |
+| `db.sheets` | Sheets saved |
+| `db.sub` | Private, on-device totals — visible only to you. |
+| `db.thisweek` | This week |
+| `db.title` | Your print savings |
+| `db.trees` | Tree equivalent |
+| `db.week` | wk {n} |
+| `db.weeks` | Last 8 weeks |
+| `dr.again` | Ask again |
+| `dr.applied` | Doctor’s suggestion applied |
+| `dr.apply` | Apply suggestion |
+| `dr.ask` | Ask the Doctor |
+| `dr.bench.applied` | Recognition mode set to PSM {psm} |
+| `dr.bench.fail` | Benchmark failed — try another page. |
+| `dr.bench.mode` | Mode |
+| `dr.bench.page` | Page {n} of “{name}” |
+| `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
+| `dr.bench.winner` | PSM {psm} reads this page better |
+| `dr.fail` | The Doctor is unavailable right now |
+| `dr.goal` | Goal |
+| `dr.goal.balanced` | Balanced |
+| `dr.goal.ink` | Save ink |
+| `dr.goal.pages` | Fewer pages |
+| `dr.goal.readability` | Easy to read |
+| `dr.offline` | Offline advice |
+| `dr.sub` | AI reads your document and settings, then suggests the sweet spot. |
+| `dr.thinking` | Doctor is thinking… |
+| `dr.tip` | Doctor says |
+| `dr.title` | Print Doctor |
+| `en.adv` | Advanced |
+| `en.adv.on` | {n}/5 on |
+| `en.adv.sub` | Stains · Trim · Deskew · OCR · Doctor |
+| `en.badge.new` | New |
+| `en.cmp.aria` | Drag to compare before and after |
+| `en.cmp.side` | Side by side |
+| `en.cmp.wipe` | Compare |
+| `en.deskew.badge` | Auto-rotation applied |
+| `en.logo` | Remove logo / watermark |
+| `en.logo.aria` | Header strip removal height |
+| `en.logo.band` | Or shave the top band |
+| `en.logo.clear` | Clear areas |
+| `en.logo.d` | Box the logo directly on the page — any corner (like a top-right watermark) — and it is erased from every page. Or shave the top band with the slider below. |
+| `en.logo.off` | Off |
+| `en.logo.pick` | Select area on page |
+| `en.logo.pick.done` | Done picking |
+| `en.logo.pick.hint` | Drag a box over the logo on the ORIGINAL page (left) — it gets erased on every page at that spot. The After preview shows the result. |
+| `en.logo.region.del` | Remove this area |
+| `en.logo.regions` | {n} area(s) |
+| `en.mode.auto` | Smart |
+| `en.mode.auto.h` | Dark slides inverted, light pages kept light |
+| `en.mode.bw` | B&W |
+| `en.mode.bw.h` | Maximum ink saving |
+| `en.mode.grayscale` | Grayscale |
+| `en.mode.grayscale.h` | Remove all color |
+| `en.mode.invert` | Invert |
+| `en.mode.invert.h` | Dark slides → white pages |
+| `en.mode.original` | Original |
+| `en.mode.original.h` | Keep colors, clean background stains |
+| `en.ocr.page` | page {n} of {t} |
+| `en.ocr.running` | Adding searchable text (OCR)… |
+| `en.ocrPsm` | Recognition mode |
+| `en.ocrPsm.auto` | Auto — slides & mixed layouts |
+| `en.ocrPsm.block` | Single block — handwriting & notes |
+| `en.ocrPsm.hint` | Single block treats the page as one text column — often rescues handwriting and single-column scans that Auto fragments. |
+| `en.overlay` | Erased |
+| `en.overlay.aria` | Highlight the pixels the filters erase (red) |
+| `en.overlay.hint` | Red = removed by your filters |
+| `en.presets.apply` | Apply |
+| `en.presets.builtinNote` | Start with a built-in recipe, then fine-tune below. |
+| `en.presets.import` | Import |
+| `en.presets.importFail` | That file is not a valid preset export. |
+| `en.presets.imported` | Imported {n} preset{s} |
+| `en.presets.name` | Preset name (e.g. PW dark slides) |
+| `en.presets.none` | No presets yet — tune Enhance & Layout, then save one. |
+| `en.presets.save` | Save current as preset |
+| `en.presets.saved` | Saved! |
+| `en.presets.share` | Share |
+| `en.presets.shareNote` | Share your presets with classmates |
+| `en.preview.full` | Full preview |
+| `en.preview.ink` | ~{n}% ink |
+| `en.preview.note` | Preview shows the first selected page — filters apply to every page. |
+| `en.preview.page` | Page {n} of {t} (selected pages) |
+| `en.preview.pick` | Preview page {n} of {t} |
+| `en.preview.saves` | This filter combo reduces ink coverage by about {n}% on this page |
+| `en.recommended` | Recommended |
+| `en.stains.inv` | Recommended — clears the blue/cyan cast that dark brown & navy slide backgrounds pick up when inverted, plus inverted red key fills. Handwriting and diagrams stay. |
+| `en.stains.light` | Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes. |
+| `en.zoom.fit` | Reset zoom |
+| `en.zoom.in` | Zoom in |
+| `en.zoom.out` | Zoom out |
+| `en.zoom.pct` | {n}× |
+| `faq.eyebrow` | Questions & answers |
+| `faq.sub` | Everything you might wonder before hitting print. |
+| `faq.title` | FAQ |
+| `faq1.a` | No. Everything — parsing, filters and PDF generation — runs locally in your browser. Your notes never leave your device, and it works even if you go offline after loading the page. |
+| `faq1.q` | Are my files uploaded to a server? |
+| `faq2.a` | Typical dark-background lecture slides shrink by 60–85% ink with Invert + Ink Saver, and stacking 3–4 slides per sheet cuts paper by 60–75%. Your exact numbers are shown after processing. |
+| `faq2.q` | How much paper and ink can I actually save? |
+| `faq3.a` | Dark-themed lecture decks (Physics Wallah style), scanned notes and text-heavy presentations. For clean white handouts, try Grayscale or B&W with a 30–50% Ink Saver instead of Invert. |
+| `faq3.q` | Which PDFs work best? |
+| `faq4.a` | Yes — phone, tablet, laptop or desktop. The whole tool runs in any modern browser (Chrome, Safari, Edge, Firefox) with nothing to install. Big files take a little longer on older phones, so keep the tab open while it processes. |
+| `faq4.q` | Does it work on any device? |
+| `faq5.a` | iOS Safari cannot display PDFs inside the page. Tap “Open” to view the PDF in a full tab, or just tap “Download” — the file itself is complete and prints perfectly. |
+| `faq5.q` | Why does the inline preview look blank on my iPhone? |
+| `faq6.a` | By default it is a high-quality image-based PDF (that is what makes the ink savings possible) — but turn on “Searchable PDF (OCR)” in Enhance and an invisible text layer is added, so search, select and copy all work. Page numbers and separators are always real vector elements. |
+| `faq6.q` | Is the output PDF searchable or re-editable? |
+| `faq7.a` | Yes! Download the APK from the footer — the Stable build is frozen and beginner-safe, while the Beta build gets new features first. Both work fully offline and PDFs you download are saved straight to your phone. |
+| `faq7.q` | Is there an Android app? |
+| `faq8.a` | Yes — tap “Import from cloud” on the upload screen and paste the share link (set the file to “Anyone with the link”). The server fetches it once and streams it straight to your browser; nothing is stored. |
+| `faq8.q` | Can I import a PDF from Google Drive or Dropbox? |
+| `feat.booklet.d` | Fold-in-half booklet order for duplex printing. |
+| `feat.booklet.t` | Booklet Mode |
+| `feat.eyebrow` | Features |
+| `feat.gray.d` | Strip color for maximum contrast. |
+| `feat.gray.t` | Grayscale & B&W |
+| `feat.grid.d` | Up to 16 slides on a single sheet. |
+| `feat.grid.t` | N-up Grid |
+| `feat.ink.d` | Backgrounds pushed to pure white. |
+| `feat.ink.t` | Ink Saver |
+| `feat.invert.d` | Dark slides become bright, printable pages. |
+| `feat.invert.t` | Invert Colors |
+| `feat.local.d` | PDFs never leave your browser. |
+| `feat.local.t` | 100% Local |
+| `feat.num.d` | Numbered output for easy collating. |
+| `feat.num.t` | Page Numbers |
+| `feat.quality.d` | Balance file size vs. crispness. |
+| `feat.quality.t` | Quality Control |
+| `feat.sep.d` | Clean cut lines between slides. |
+| `feat.sep.t` | Separation Lines |
+| `feat.sub` | Inspired by the tools you love — rebuilt for the web, completely free. |
+| `feat.title` | Everything a student needs |
+| `feat.wm.d` | Print your name or roll number on every sheet. |
+| `feat.wm.t` | Name Stamp |
+| `feat.zip.d` | A whole batch arrives as one tidy .zip file. |
+| `feat.zip.t` | ZIP Batch Export |
+| `ft.beta` | Beta — new features first |
+| `ft.copyright` | © {y} Notes Printifier — built for students, by students. |
+| `ft.get` | Get the app |
+| `ft.links` | Explore |
+| `ft.local` | All processing happens locally in your browser |
+| `ft.made` | Made for students who print smart. |
+| `ft.replay` | Replay the guide |
+| `ft.replayHint` | The 4-step walkthrough, anytime |
+| `ft.stable` | Android app — Stable v1.0 |
+| `ft.tagline` | The free, private way to turn lecture PDFs into printer-friendly notes. |
+| `ft.webapp` | Or just use it in your browser — nothing to install. |
+| `hero.after` | 3 slides/sheet · 14 bright pages |
+| `hero.badge3` | Works on any device |
+| `hero.before` | 41 dark slides · 41 sheets |
+| `hero.chip.grid` | 3× slides/sheet |
+| `hero.chip.ink` | −80% ink |
+| `hero.chip.sheets` | ~9 sheets saved |
+| `hero.example` | See a real example |
+| `hero.howlink` | or see how it works |
+| `hero.sub` | Turn lecture notes into printable notes by reducing ink and pages — perfect for exam-time printing. |
+| `hero.title1` | Make Your Lecture Notes |
+| `hero.title2` | Print-Ready |
+| `how.cta` | Try it now — it’s free |
+| `how.ctaHint` | No signup · nothing leaves your device |
+| `how.eyebrow` | 3 simple steps |
+| `how.s1.d` | Drop one or many lecture PDFs. Pages load instantly as previews — nothing is uploaded to a server. |
+| `how.s1.t` | Upload your PDFs |
+| `how.s2.d` | Keep only the pages you need, invert dark slides to white, then stack up to 16 slides per sheet. |
+| `how.s2.t` | Pick, enhance & lay out |
+| `how.s3.d` | Get a bright, compact, numbered PDF ready for your printer — with stats on paper and ink saved. |
+| `how.s3.t` | Download & print |
+| `how.sub` | Three steps, about a minute — no account required. |
+| `how.title` | How It Works |
+| `im.streak.max` | Top tier reached — legend! |
+| `im.streak.next` | {n} sheets to {tier} |
+| `im.streak.none` | Convert once a week to keep the streak alive |
+| `im.streak.thisweek` | {n} this week |
+| `im.streak.title` | Streak & milestones |
+| `im.streak.weeks` | {n}-week streak |
+| `im.tier.bronze` | Bronze |
+| `im.tier.diamond` | Diamond |
+| `im.tier.gold` | Gold |
+| `im.tier.legend` | Legend |
+| `im.tier.platinum` | Platinum |
+| `im.tier.silver` | Silver |
+| `kb.esc` | Close dialogs |
+| `kb.flip` | Light / dark flip |
+| `kb.k` | Command menu |
+| `kb.open` | Shortcuts |
+| `kb.q` | This help |
+| `kb.title` | Keyboard shortcuts |
+| `labs.badge` | experimental |
+| `labs.body` | Fresh features that are still cooking. They only affect this device and you can switch them off anytime — the core tool stays untouched. |
+| `labs.more` | More experiments coming: smart per-page invert, saved presets, handwriting boost… |
+| `labs.remember` | Remember my settings |
+| `labs.rememberD` | Keeps your Enhance & Layout choices on this device for your next visit. |
+| `labs.repaint` | Text repaint (OCR) |
+| `labs.repaintD` | Experimental: OCRs each page and re-typesets recognized text as crisp black-on-white instead of a re-compressed scan. Sharp output, tiny files; handwriting and complex diagrams automatically fall back to the original image. |
+| `labs.title` | Labs |
+| `ly.adv.on` | {n} on |
+| `ly.adv.sub` | Budget · Slide nos. · Cover · Booklet |
+| `ly.bookletNote` | Booklet: print 2-up duplex with “flip on short edge”, then fold — the separator line is your fold guide. |
+| `ly.budget.fit` | Fits: {n} sheets at {per} slides per sheet ✓ |
+| `ly.budget.go` | Auto-fit |
+| `ly.budget.none` | Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway. |
+| `ly.budget.ph` | e.g. 25 |
+| `ly.budget.sub` | Xerox shop charges per sheet? Set a sheet limit and we pick the tightest layout that fits. |
+| `ly.budget.title` | Print budget |
+| `ly.compEmail` | Email · 25 MB |
+| `ly.compForms` | Forms · 5 MB |
+| `ly.compOff` | No cap |
+| `ly.compPreset` | Quick caps |
+| `ly.compWhatsApp` | WhatsApp · 16 MB |
+| `ly.cover` | Cover page |
+| `ly.cover.contents` | Contents |
+| `ly.cover.footnote` | Merged print-ready PDF · notesprintifier |
+| `ly.cover.pages` | {n} pages |
+| `ly.coverSub` | Title page listing every merged file |
+| `ly.dpi.aria` | Render resolution (DPI) |
+| `ly.dpi.custom` | Custom |
+| `ly.dpi.hint` | Higher = sharper text but a bigger file. The presets above set this automatically — drag to override. |
+| `ly.dpi.reset` | Use preset |
+| `ly.dpi.value` | {n} DPI |
+| `ly.duplexPad` | Duplex pad |
+| `ly.duplexPadSub` | Adds one blank page when the count is odd, so double-sided backs line up. |
+| `ly.estCost` | saves about {rs} in paper + ink |
+| `ly.estInk` | ~{n}% ink saved |
+| `ly.estSampling` | estimating from {n} sample pages… |
+| `ly.estSize` | ≈ {size} output file |
+| `ly.estimate` | Estimated output |
+| `ly.footerNote` | Printed small at the bottom-left of every sheet. |
+| `ly.footerOpt` | (optional) |
+| `ly.inPages` | Input pages |
+| `ly.liveBadge` | LIVE |
+| `ly.liveSub` | Real filters on the first sheet |
+| `ly.md.active` | Margin calibration active (T/R/B/L mm) |
+| `ly.md.applied` | Margin calibration applied — every output respects your borders now. |
+| `ly.md.apply` | Apply calibration |
+| `ly.md.bottom` | Bottom |
+| `ly.md.hint` | Measured your borders on the test sheet? Tune the output margins here. |
+| `ly.md.left` | Left |
+| `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
+| `ly.md.open` | Margin Doctor |
+| `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
+| `ly.md.preset.laser` | Laser |
+| `ly.md.preset.safe` | Extra safe |
+| `ly.md.presets` | Quick fill — typical printer borders |
 | `ly.md.reset` | Reset |
 | `ly.md.right` | Right |
 | `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |

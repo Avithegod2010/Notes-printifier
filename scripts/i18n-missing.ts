@@ -24,6 +24,8 @@ const LANG_META: Record<keyof typeof EXTRA, { name: string; note: string }> = {
   mr: { name: 'मराठी (Marathi)', note: '`mr` in `src/lib/i18n.ts` → `EXTRA.mr`' },
   ta: { name: 'தமிழ் (Tamil)', note: '`ta` in `src/lib/i18n.ts` → `EXTRA.ta`' },
   bn: { name: 'বাংলা (Bengali)', note: '`bn` in `src/lib/i18n.ts` → `EXTRA.bn`' },
+  gu: { name: 'ગુજરાતી (Gujarati)', note: '`gu` in `src/lib/i18n.ts` → `EXTRA.gu`' },
+  pa: { name: 'ਪੰਜਾਬੀ (Punjabi)', note: '`pa` in `src/lib/i18n.ts` → `EXTRA.pa`' },
 };
 
 const allKeys = Object.keys(DICT).sort();
@@ -90,24 +92,26 @@ writeFileSync(OUT, md, 'utf8');
 
 // ---- i18n-progress.json (README badges) ----------------------------------
 // Hindi is baked into DICT itself (fully translated by definition);
-// mr/ta/bn live in EXTRA and are measured against the full key set.
+// the partial languages live in EXTRA and are measured against the full
+// key set — gu/pa are picked up automatically from the EXTRA keys.
 const pct = (lang: keyof typeof EXTRA): number => {
   const missing = allKeys.filter((k) => !EXTRA[lang][k]).length;
   return Math.round(((allKeys.length - missing) / Math.max(1, allKeys.length)) * 100);
 };
-const progress = {
+const extraLangs = Object.keys(EXTRA) as Array<keyof typeof EXTRA>;
+const progress: Record<string, number> = {
   hi: 100,
-  mr: pct('mr'),
-  ta: pct('ta'),
-  bn: pct('bn'),
-  overall: Math.round((pct('mr') + pct('ta') + pct('bn')) / 3),
-  totalKeys: allKeys.length,
 };
+for (const lang of extraLangs) progress[lang] = pct(lang);
+progress.overall = Math.round(
+  extraLangs.reduce((sum, lang) => sum + pct(lang), 0) / Math.max(1, extraLangs.length),
+);
+progress.totalKeys = allKeys.length;
 writeFileSync(OUT_JSON, JSON.stringify(progress, null, 2) + '\n', 'utf8');
 
 console.log(
   `MISSING_TRANSLATIONS.md + i18n-progress.json written — ${allKeys.length} total keys, ${total} missing across ${Object.keys(EXTRA).length} languages.`,
 );
 console.log(
-  `Progress: hi ${progress.hi}% · mr ${progress.mr}% · ta ${progress.ta}% · bn ${progress.bn}%`,
+  `Progress: ${extraLangs.map((l) => `${l} ${progress[l]}%`).join(' · ')} (hi 100%)`,
 );
