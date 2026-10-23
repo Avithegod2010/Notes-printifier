@@ -33,7 +33,7 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 626 missing (133/759 done, 18%)
+## मराठी (Marathi) — 631 missing (133/764 done, 17%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
@@ -344,6 +344,11 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.paste` | Paste worksheet numbers |
+| `ly.md.pasteBad` | Couldn't read those numbers — use L/R/T/B + mm. |
+| `ly.md.pasteBtn` | Fill |
+| `ly.md.pasteOk` | Numbers filled — press Apply calibration. |
+| `ly.md.pastePh` | e.g. L3 R4 T5 B12 — or just 3 4 5 12 |
 | `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
 | `ly.md.preset.laser` | Laser |
 | `ly.md.preset.safe` | Extra safe |
@@ -666,7 +671,7 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## தமிழ் (Tamil) — 626 missing (133/759 done, 18%)
+## தமிழ் (Tamil) — 631 missing (133/764 done, 17%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
@@ -977,6 +982,11 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.paste` | Paste worksheet numbers |
+| `ly.md.pasteBad` | Couldn't read those numbers — use L/R/T/B + mm. |
+| `ly.md.pasteBtn` | Fill |
+| `ly.md.pasteOk` | Numbers filled — press Apply calibration. |
+| `ly.md.pastePh` | e.g. L3 R4 T5 B12 — or just 3 4 5 12 |
 | `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
 | `ly.md.preset.laser` | Laser |
 | `ly.md.preset.safe` | Extra safe |
@@ -1299,7 +1309,7 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## বাংলা (Bengali) — 626 missing (133/759 done, 18%)
+## বাংলা (Bengali) — 631 missing (133/764 done, 17%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
@@ -1610,6 +1620,11 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.paste` | Paste worksheet numbers |
+| `ly.md.pasteBad` | Couldn't read those numbers — use L/R/T/B + mm. |
+| `ly.md.pasteBtn` | Fill |
+| `ly.md.pasteOk` | Numbers filled — press Apply calibration. |
+| `ly.md.pastePh` | e.g. L3 R4 T5 B12 — or just 3 4 5 12 |
 | `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
 | `ly.md.preset.laser` | Laser |
 | `ly.md.preset.safe` | Extra safe |
@@ -1932,7 +1947,7 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## ગુજરાતી (Gujarati) — 626 missing (133/759 done, 18%)
+## ગુજરાતી (Gujarati) — 631 missing (133/764 done, 17%)
 
 Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA.gu`:
 
@@ -2243,6 +2258,11 @@ Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.paste` | Paste worksheet numbers |
+| `ly.md.pasteBad` | Couldn't read those numbers — use L/R/T/B + mm. |
+| `ly.md.pasteBtn` | Fill |
+| `ly.md.pasteOk` | Numbers filled — press Apply calibration. |
+| `ly.md.pastePh` | e.g. L3 R4 T5 B12 — or just 3 4 5 12 |
 | `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
 | `ly.md.preset.laser` | Laser |
 | `ly.md.preset.safe` | Extra safe |
@@ -2565,7 +2585,7 @@ Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## ਪੰਜਾਬੀ (Punjabi) — 626 missing (133/759 done, 18%)
+## ਪੰਜਾਬੀ (Punjabi) — 631 missing (133/764 done, 17%)
 
 Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA.pa`:
 
@@ -2876,6 +2896,11 @@ Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.left` | Left |
 | `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
 | `ly.md.open` | Margin Doctor |
+| `ly.md.paste` | Paste worksheet numbers |
+| `ly.md.pasteBad` | Couldn't read those numbers — use L/R/T/B + mm. |
+| `ly.md.pasteBtn` | Fill |
+| `ly.md.pasteOk` | Numbers filled — press Apply calibration. |
+| `ly.md.pastePh` | e.g. L3 R4 T5 B12 — or just 3 4 5 12 |
 | `ly.md.preset.inkjet` | Inkjet (HP/Epson) |
 | `ly.md.preset.laser` | Laser |
 | `ly.md.preset.safe` | Extra safe |
