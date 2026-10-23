@@ -1272,7 +1272,7 @@ export function LayoutStep() {
                         layout.separators && hasBottom && 'border-b border-zinc-300',
                       )}
                     >
-                      {th ? (
+                      {th && src ? (
                         <div
                           className={cn(
                             'flex h-full w-full items-center justify-center',

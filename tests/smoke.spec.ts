@@ -106,6 +106,22 @@ test('OCR-enabled run shows the confidence report card', async ({ page }) => {
   const ocrSwitch = page.getByTestId('ocr-switch');
   await expect(ocrSwitch).toBeVisible({ timeout: 30_000 });
   await ocrSwitch.click();
+
+  // OCR Bench (inside the Print Doctor card, same step) — run the PSM 3 vs
+  // PSM 6 benchmark on the fixture's first page and assert both rows render
+  // with real numbers plus the "adopt the winner" action. Guards the bench
+  // pipeline (worker spawn → dual recognition → winner pick) the same way
+  // the report-card assertion guards the OCR layer itself.
+  const benchRun = page.getByTestId('ocr-bench-run');
+  await expect(benchRun).toBeVisible({ timeout: 30_000 });
+  await benchRun.click();
+  const benchApply = page.getByTestId('ocr-bench-apply');
+  await expect(benchApply).toBeVisible({ timeout: 180_000 });
+  // both result rows render inside the table (scoped to <td> so the bench
+  // title "OCR Bench — PSM 3 vs 6" can't satisfy the assertion)
+  await expect(page.locator('td').filter({ hasText: /PSM 3/ })).toBeVisible();
+  await expect(page.locator('td').filter({ hasText: /PSM 6/ })).toBeVisible();
+
   await continueBtn.click();
 
   // Layout → process.

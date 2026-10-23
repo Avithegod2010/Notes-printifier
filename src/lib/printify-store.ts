@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { loadPdfDocument } from './pdf/pdfjs';
+import { loadPdfDocument, type PdfDocument } from './pdf/pdfjs';
 import { renderPageToCanvas, canvasToDataUrl, getPageDimensions } from './pdf/render';
 import {
   defaultFilters,
@@ -58,7 +58,8 @@ interface PageItem {
   pageNumber: number;
   rotation: number;
   selected: boolean;
-  thumb: string;
+  /** JPEG data URL — null until lazy rasterization fills it (see ensureThumbs). */
+  thumb: string | null;
   widthPt: number;
   heightPt: number;
   /** Detected as (near-)blank — shown as a badge, skipped by "Skip blank". */
@@ -92,6 +93,26 @@ interface ProcessResult {
 /** Raw PDF bytes — kept outside zustand (not serializable, potentially large). */
 const docBuffers = new Map<number, ArrayBuffer>();
 let nextDocId = 1;
+
+/**
+ * Parsed pdf.js documents, one promise per doc — shared by the lazy
+ * thumbnail renderer so scrolling the arrange grid never re-parses.
+ * (loadPdfDocument slices the buffer, so sharing is safe.)
+ */
+const pdfDocs = new Map<number, Promise<PdfDocument>>();
+/** Page ids currently being rasterized — dedupes IntersectionObserver bursts. */
+const thumbJobs = new Set<string>();
+
+function getPdfDoc(docId: number): Promise<PdfDocument> | null {
+  const buf = docBuffers.get(docId);
+  if (!buf) return null;
+  let p = pdfDocs.get(docId);
+  if (!p) {
+    p = loadPdfDocument(buf);
+    pdfDocs.set(docId, p);
+  }
+  return p;
+}
 
 /**
  * Mean luminance of a (thumb) canvas — used to guess whether the document is
@@ -563,6 +584,13 @@ interface PrintifyState {
   deletePreset: (id: string) => void;
 
   addFiles: (files: File[]) => Promise<void>;
+  /**
+   * pdf.js render-diet: rasterize the given pages' thumbnails (300 px) if
+   * they don't have one yet. Called by the arrange grid when placeholder
+   * cells scroll into view — upload stays metadata-only, so a 300-page
+   * deck opens instantly instead of blocking on 300 renders.
+   */
+  ensureThumbs: (pageIds: string[]) => Promise<void>;
   removeDoc: (docId: number) => void;
   togglePage: (pageId: string) => void;
   setAllSelected: (selected: boolean) => void;
@@ -702,8 +730,9 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
           size: buffer.byteLength,
           pageCount: doc.numPages,
         });
+        // Metadata-only: dimensions from the parsed doc, thumbnails lazily
+        // rasterized by the arrange grid (ensureThumbs) as cells appear.
         for (let p = 1; p <= doc.numPages; p++) {
-          const canvas = await renderPageToCanvas(doc, p, { targetWidth: 300 });
           const dims = await getPageDimensions(doc, p);
           pages.push({
             id: `d${docId}p${p}`,
@@ -711,7 +740,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
             pageNumber: p,
             rotation: 0,
             selected: true,
-            thumb: canvasToDataUrl(canvas, 'image/jpeg', 0.55),
+            thumb: null,
             widthPt: dims.width,
             heightPt: dims.height,
           });
@@ -745,20 +774,13 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
           pageCount: doc.numPages,
         });
 
+        // pdf.js render-diet: upload only parses metadata (page count +
+        // dimensions). The eager 300 px render of EVERY page was the single
+        // biggest upload-time cost (~100–300 ms/page → half a minute on a
+        // 200-page deck before Continue appeared). Thumbnails now rasterize
+        // lazily as their grid cells scroll into view (ensureThumbs); the
+        // processing pipeline never consumed thumbs.
         for (let p = 1; p <= doc.numPages; p++) {
-          let canvas = await renderPageToCanvas(doc, p, { targetWidth: 300 });
-          if (canvasLooksLikeFailedRender(canvas)) {
-            // A dependent (JPX) image may not have been decoded yet at small
-            // scales — retry, escalating resolution until it decodes.
-            for (const w of [620, 900]) {
-              await new Promise((r) => setTimeout(r, 200));
-              const retry = await renderPageToCanvas(doc, p, { targetWidth: w });
-              if (!canvasLooksLikeFailedRender(retry)) {
-                canvas = retry;
-                break;
-              }
-            }
-          }
           const dims = await getPageDimensions(doc, p);
           pages.push({
             id: `d${docId}p${p}`,
@@ -766,7 +788,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
             pageNumber: p,
             rotation: 0,
             selected: true,
-            thumb: canvasToDataUrl(canvas, 'image/jpeg', 0.55),
+            thumb: null,
             widthPt: dims.width,
             heightPt: dims.height,
           });
@@ -786,8 +808,71 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
     }
   },
 
+  ensureThumbs: async (pageIds) => {
+    if (pageIds.length === 0) return;
+    const targets = get().pages.filter(
+      (p) => pageIds.includes(p.id) && p.thumb === null && !thumbJobs.has(p.id),
+    );
+    if (targets.length === 0) return;
+    for (const t of targets) thumbJobs.add(t.id);
+    try {
+      // group the requested pages per document, render each missing thumb
+      const byDoc = new Map<number, typeof targets>();
+      for (const t of targets) {
+        const list = byDoc.get(t.docId) ?? [];
+        list.push(t);
+        byDoc.set(t.docId, list);
+      }
+      for (const [docId, items] of byDoc) {
+        try {
+          const doc = await getPdfDoc(docId);
+          if (!doc) continue;
+          const fixes = new Map<string, string>();
+          for (const item of items) {
+            try {
+              let canvas = await renderPageToCanvas(doc, item.pageNumber, {
+                targetWidth: 300,
+              });
+              if (canvasLooksLikeFailedRender(canvas)) {
+                // A dependent (JPX) image may not have been decoded yet at
+                // small scales — retry, escalating resolution until it does.
+                for (const w of [620, 900]) {
+                  await new Promise((r) => setTimeout(r, 200));
+                  const retry = await renderPageToCanvas(doc, item.pageNumber, {
+                    targetWidth: w,
+                  });
+                  if (!canvasLooksLikeFailedRender(retry)) {
+                    canvas = retry;
+                    break;
+                  }
+                }
+              }
+              fixes.set(item.id, canvasToDataUrl(canvas, 'image/jpeg', 0.55));
+            } catch {
+              // this page failed to rasterize — placeholder stays, a later
+              // intersection retry can pick it up again
+            }
+          }
+          if (fixes.size > 0) {
+            set((st) => ({
+              pages: st.pages.map((p) => {
+                const t = fixes.get(p.id);
+                return t ? { ...p, thumb: t } : p;
+              }),
+            }));
+          }
+        } catch {
+          // document unreadable — placeholders stay
+        }
+      }
+    } finally {
+      for (const t of targets) thumbJobs.delete(t.id);
+    }
+  },
+
   removeDoc: (docId) => {
     docBuffers.delete(docId);
+    pdfDocs.delete(docId);
     set((s) => ({
       docs: s.docs.filter((d) => d.id !== docId),
       pages: s.pages.filter((p) => p.docId !== docId),
@@ -865,10 +950,16 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   skipBlankPages: async () => {
     const pages = get().pages;
 
-    // Pass 1: cheap scan of the stored thumbnails.
+    // Pass 1: cheap scan of the stored thumbnails. Pages whose thumb hasn't
+    // been lazily rasterized yet can't be judged here — they join pass 2's
+    // fresh-render verification (which also fills their thumb).
     const suspicious: PageItem[] = [];
     for (const p of pages) {
       if (!p.selected) continue;
+      if (p.thumb === null) {
+        suspicious.push(p);
+        continue;
+      }
       try {
         const frac = await thumbInkFraction(p.thumb);
         if (frac < 0.012) suspicious.push(p);
@@ -894,9 +985,13 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         const canvas = await renderPageToCanvas(doc, p.pageNumber, {
           targetWidth: 620,
         });
+        // the fresh render doubles as the page's (previously missing) thumb
+        if (p.thumb === null) {
+          thumbFixes.set(p.id, canvasToDataUrl(canvas, 'image/jpeg', 0.55));
+        }
         if (canvasDarkFraction(canvas) < 0.012) {
           flagged.add(p.id);
-        } else {
+        } else if (p.thumb !== null) {
           // recovered — also repair the broken thumbnail in the UI
           thumbFixes.set(p.id, canvasToDataUrl(canvas, 'image/jpeg', 0.55));
         }

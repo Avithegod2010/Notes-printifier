@@ -86,6 +86,10 @@ export function PagesStep() {
   const setPageOverride = usePrintifyStore((s) => s.setPageOverride);
   const clearPageOverrides = usePrintifyStore((s) => s.clearPageOverrides);
   const pageOverrides = usePrintifyStore((s) => s.pageOverrides);
+  const ensureThumbs = usePrintifyStore((s) => s.ensureThumbs);
+
+  /** Scroll container of the thumbnail grid — IntersectionObserver root. */
+  const gridRef = useRef<HTMLDivElement | null>(null);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -196,6 +200,32 @@ export function PagesStep() {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [activeId, rotatePage, removePage, movePage]);
+
+  // Lazy thumbnails (pdf.js render-diet): cells without a rasterized thumb
+  // get one the moment they scroll into (or near) the grid viewport, so a
+  // 300-page deck opens instantly instead of blocking upload on 300 renders.
+  // The effect re-runs on every render — cheap querySelectorAll, and it
+  // picks up newly added pages plus cells whose thumb is still pending.
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const pending = Array.from(grid.querySelectorAll<HTMLElement>('[data-thumb-pending]'));
+    if (pending.length === 0) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const ids = entries
+          .filter((e) => e.isIntersecting)
+          .map((e) =>
+            e.target instanceof HTMLElement ? e.target.dataset.thumbPending : undefined,
+          )
+          .filter((x): x is string => !!x);
+        if (ids.length > 0) void ensureThumbs(ids);
+      },
+      { root: grid, rootMargin: '400px 0px' },
+    );
+    for (const el of pending) io.observe(el);
+    return () => io.disconnect();
+  });
 
   return (
     <div className="space-y-5">
@@ -382,7 +412,10 @@ export function PagesStep() {
         </p>
       )}
 
-      <div className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[44rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div
+        ref={gridRef}
+        className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[44rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      >
         {pages.map((page, index) => {
           const override: Partial<FilterSettings> | undefined = pageOverrides[page.id];
           return (
@@ -429,12 +462,21 @@ export function PagesStep() {
               aria-pressed={page.selected}
               aria-label={`Page ${index + 1} ${page.selected ? '(selected)' : '(excluded)'}`}
             >
-              <img
-                src={page.thumb}
-                alt={`Page ${index + 1} preview`}
-                className="aspect-[4/3] w-full bg-zinc-900 object-contain"
-                draggable={false}
-              />
+              {page.thumb ? (
+                <img
+                  src={page.thumb}
+                  alt={`Page ${index + 1} preview`}
+                  className="aspect-[4/3] w-full bg-zinc-900 object-contain"
+                  draggable={false}
+                />
+              ) : (
+                <div
+                  data-thumb-pending={page.id}
+                  className="aspect-[4/3] w-full animate-pulse bg-zinc-900"
+                  role="img"
+                  aria-label={`Page ${index + 1} preview loading`}
+                />
+              )}
             </button>
 
             {/* selection / order badge */}

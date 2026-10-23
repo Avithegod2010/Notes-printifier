@@ -25,7 +25,30 @@ interface TestPageStrings {
   model: string;
   dateLabel: string;
   edgeLabel: string;
+  /** Worksheet heading (defaults to English — the printed sheet is a
+   *  technical artifact, so untranslated fallbacks are fine). */
+  wsTitle?: string;
+  /** Prompt above the four blanks. */
+  wsEnter?: string;
+  /** Edge labels for the blanks. */
+  wsLeft?: string;
+  wsRight?: string;
+  wsTop?: string;
+  wsBottom?: string;
+  /** Where to take the four numbers. */
+  wsDoctor?: string;
 }
+
+/** English fallbacks for the worksheet block (optional in `strings`). */
+const WS_FALLBACK = {
+  wsTitle: 'YOUR PRINTER\u2019S UNPRINTABLE BORDER',
+  wsEnter: 'Write the largest number whose frame still printed on each edge:',
+  wsLeft: 'Left',
+  wsRight: 'Right',
+  wsTop: 'Top',
+  wsBottom: 'Bottom',
+  wsDoctor: 'Enter these 4 numbers in Printifier\u2019s Margin Doctor.',
+} as const;
 
 /**
  * Build the calibration sheet.
@@ -124,25 +147,100 @@ export async function buildMarginTestPage(
   page.drawCircle({ x: cx, y: cy, size: 3 * MM, borderWidth: 0.7, borderColor: gray });
   page.drawCircle({ x: cx, y: cy, size: 0.9 * MM, color: black });
 
-  // --- mm ruler along the left edge ----------------------------------------
-  for (let mm = 10; mm * MM < hPt - 12 * MM; mm += 5) {
-    const major = mm % 10 === 0;
-    const y = mm * MM;
+  // --- mm rulers along ALL FOUR edges ---------------------------------------
+  // Tick every 5 mm, longer + darker every 10 mm, numbers every 20 mm.
+  // Reading the last tick that fully printed on ANY edge gives the hardware
+  // border for that edge (top/bottom ticks run from the left edge inward).
+  const tick = (x: number, y: number, dx: number, dy: number, major: boolean) => {
     page.drawLine({
-      start: { x: 0, y },
-      end: { x: (major ? 3.2 : 1.8) * MM, y },
+      start: { x, y },
+      end: { x: x + dx, y: y + dy },
       thickness: major ? 0.8 : 0.5,
       color: major ? black : gray,
     });
+  };
+  const RULER_LEN = 4.2 * MM;
+  for (let mm = 5; mm * MM < Math.min(wPt, hPt) - 12 * MM; mm += 5) {
+    const major = mm % 10 === 0;
+    const d = mm * MM;
+    const long = major ? RULER_LEN : RULER_LEN * 0.55;
+    // left edge (ticks point right) — numbers every 20 mm
+    tick(0, d, long, 0, major);
+    // right edge (ticks point left)
+    tick(wPt, d, -long, 0, major);
+    // top edge (ticks point down)
+    tick(d, hPt, 0, -long, major);
+    // bottom edge (ticks point up)
+    tick(d, 0, 0, long, major);
     if (major && mm % 20 === 0) {
-      page.drawText(String(mm), {
-        x: 3.8 * MM,
-        y: y - 2,
+      const label = String(mm);
+      page.drawText(label, { x: 4.6 * MM, y: d - 2, size: 5.5, font, color: gray });
+      page.drawText(label, {
+        x: wPt - 4.6 * MM - bold.widthOfTextAtSize(label, 5.5),
+        y: d - 2,
         size: 5.5,
         font,
         color: gray,
       });
+      page.drawText(label, { x: d + 1, y: hPt - 4.6 * MM, size: 5.5, font, color: gray });
+      page.drawText(label, { x: d + 1, y: 4.6 * MM + 4, size: 5.5, font, color: gray });
     }
+  }
+
+  // --- misalignment worksheet ------------------------------------------------
+  // Four blanks the student fills in while holding the sheet: the largest
+  // mm tick per edge whose tick still printed. These are exactly the 4
+  // numbers the in-app Margin Doctor asks for, so reporting misalignment
+  // afterwards is a 10-second transcription job.
+  //
+  // Placement: a white form box low on the page (below the instructions
+  // block, above the bottom ruler) — the white fill masks the calibration
+  // frames passing behind it so the blanks stay readable.
+  const ws: Record<keyof typeof WS_FALLBACK, string> = {
+    wsTitle: strings.wsTitle ?? WS_FALLBACK.wsTitle,
+    wsEnter: strings.wsEnter ?? WS_FALLBACK.wsEnter,
+    wsLeft: strings.wsLeft ?? WS_FALLBACK.wsLeft,
+    wsRight: strings.wsRight ?? WS_FALLBACK.wsRight,
+    wsTop: strings.wsTop ?? WS_FALLBACK.wsTop,
+    wsBottom: strings.wsBottom ?? WS_FALLBACK.wsBottom,
+    wsDoctor: strings.wsDoctor ?? WS_FALLBACK.wsDoctor,
+  };
+  {
+    const boxH = 30 * MM;
+    const boxY = 9 * MM;
+    const bx = cx - 46 * MM;
+    // white card + hairline border (masks the frames behind it)
+    page.drawRectangle({
+      x: bx,
+      y: boxY,
+      width: 92 * MM,
+      height: boxH,
+      color: rgb(1, 1, 1),
+      borderColor: gray,
+      borderWidth: 0.6,
+    });
+    let wy = boxY + boxH - 5 * MM; // title baseline
+    page.drawText(ws.wsTitle, { x: bx + 4 * MM, y: wy, size: 9, font: bold, color: black });
+    wy -= 5.2 * MM;
+    page.drawText(ws.wsEnter, { x: bx + 4 * MM, y: wy, size: 7.5, font, color: gray });
+    wy -= 7.2 * MM;
+    // the four blanks: Left ___mm  Right ___mm  Top ___mm  Bottom ___mm
+    const labels = [ws.wsLeft, ws.wsRight, ws.wsTop, ws.wsBottom];
+    let bx2 = bx + 4 * MM;
+    for (const label of labels) {
+      page.drawText(label, { x: bx2, y: wy, size: 8.5, font, color: black });
+      bx2 += bold.widthOfTextAtSize(label, 8.5) + 2;
+      page.drawLine({
+        start: { x: bx2, y: wy - 1 },
+        end: { x: bx2 + 9 * MM, y: wy - 1 },
+        thickness: 0.8,
+        color: black,
+      });
+      page.drawText('mm', { x: bx2 + 9.8 * MM, y: wy, size: 7, font, color: gray });
+      bx2 += 15.5 * MM;
+    }
+    wy -= 6.5 * MM;
+    page.drawText(ws.wsDoctor, { x: bx + 4 * MM, y: wy, size: 8, font: bold, color: black });
   }
 
   // --- instructions block ----------------------------------------------------

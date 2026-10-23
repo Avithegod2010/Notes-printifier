@@ -1,13 +1,11 @@
 {
-  "version": "1.4.0",
+  "version": "1.6.0",
   "updated": "2026-10-23",
   "notes": [
-    "6 new print-heritage themes (Blueprint, Kraft, Chai, Festive, Xerox, OHP) + Theme Workshop",
-    "Theme Workshop: density, sharp corners, calm motion, confetti, tunable wheel damping",
-    "Margin Doctor: enter measured printer borders, every output respects them",
-    "OCR Bench inside the Print Doctor: same page through PSM 3 vs PSM 6, one tap to adopt the winner",
-    "Bundle diet: −320 KB gzip of dead iconv-lite encoding tables removed",
-    "Smoke CI now runs on every push to main + asserts the OCR report card end-to-end",
-    "Translation progress badges in the README (hi/mr/ta/bn) — help translate!"
+    "Margin test page upgrade: mm rulers on all four edges + a fill-in worksheet that maps 1:1 onto Margin Doctor",
+    "pdf.js render-diet: thumbnails rasterize lazily as you scroll — huge decks open instantly instead of blocking upload",
+    "Translation sprint: mr/ta/bn core-flow coverage 8% → 18% + new community issue template",
+    "Smoke CI now also runs the OCR Bench (PSM 3 vs 6) end-to-end on every push",
+    "v1.6.0"
   ]
 }

@@ -33,7 +33,7 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 697 missing (58/755 done, 8%)
+## मराठी (Marathi) — 622 missing (133/755 done, 18%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
@@ -118,21 +118,12 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `dr.applied` | Doctor’s suggestion applied |
 | `dr.apply` | Apply suggestion |
 | `dr.ask` | Ask the Doctor |
-| `dr.bench.again` | Run again |
 | `dr.bench.applied` | Recognition mode set to PSM {psm} |
-| `dr.bench.conf` | Confidence |
 | `dr.bench.fail` | Benchmark failed — try another page. |
 | `dr.bench.mode` | Mode |
 | `dr.bench.page` | Page {n} of “{name}” |
-| `dr.bench.run` | Run benchmark |
-| `dr.bench.running` | Recognizing twice… |
 | `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
-| `dr.bench.time` | Time |
-| `dr.bench.title` | OCR Bench — PSM 3 vs 6 |
-| `dr.bench.use3` | Use auto (3) |
-| `dr.bench.use6` | Use single block (6) |
 | `dr.bench.winner` | PSM {psm} reads this page better |
-| `dr.bench.words` | Words |
 | `dr.fail` | The Doctor is unavailable right now |
 | `dr.goal` | Goal |
 | `dr.goal.balanced` | Balanced |
@@ -151,10 +142,7 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `en.cmp.aria` | Drag to compare before and after |
 | `en.cmp.side` | Side by side |
 | `en.cmp.wipe` | Compare |
-| `en.deskew` | Straighten pages (auto deskew) |
 | `en.deskew.badge` | Auto-rotation applied |
-| `en.deskew.d` | Detects tilted scans and phone photos and rotates each page straight before the other filters run — great for photos of handwritten notes. Pairs well with Trim margins. |
-| `en.ink.d` | Pushes light backgrounds to pure white so your printer skips them. 40–60 works great for dark slides. |
 | `en.logo` | Remove logo / watermark |
 | `en.logo.aria` | Header strip removal height |
 | `en.logo.band` | Or shave the top band |
@@ -176,12 +164,8 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `en.mode.invert.h` | Dark slides → white pages |
 | `en.mode.original` | Original |
 | `en.mode.original.h` | Keep colors, clean background stains |
-| `en.ocr` | Searchable PDF (OCR) |
-| `en.ocr.d` | Adds an invisible text layer so you can search and select text in the output. Slower — runs OCR on every page. |
 | `en.ocr.page` | page {n} of {t} |
 | `en.ocr.running` | Adding searchable text (OCR)… |
-| `en.ocrLang` | Text language |
-| `en.ocrLang.all` | English + हिन्दी + தமிழ் |
 | `en.ocrPsm` | Recognition mode |
 | `en.ocrPsm.auto` | Auto — slides & mixed layouts |
 | `en.ocrPsm.block` | Single block — handwriting & notes |
@@ -189,9 +173,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `en.overlay` | Erased |
 | `en.overlay.aria` | Highlight the pixels the filters erase (red) |
 | `en.overlay.hint` | Red = removed by your filters |
-| `en.pen` | Handwriting boost |
-| `en.pen.d` | Darkens pen/pencil strokes while keeping paper white — light handwriting prints clearly instead of washing out. |
-| `en.presets` | Presets |
 | `en.presets.apply` | Apply |
 | `en.presets.builtinNote` | Start with a built-in recipe, then fine-tune below. |
 | `en.presets.import` | Import |
@@ -203,8 +184,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `en.presets.saved` | Saved! |
 | `en.presets.share` | Share |
 | `en.presets.shareNote` | Share your presets with classmates |
-| `en.preview.after` | After |
-| `en.preview.before` | Before |
 | `en.preview.full` | Full preview |
 | `en.preview.ink` | ~{n}% ink |
 | `en.preview.note` | Preview shows the first selected page — filters apply to every page. |
@@ -212,12 +191,8 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `en.preview.pick` | Preview page {n} of {t} |
 | `en.preview.saves` | This filter combo reduces ink coverage by about {n}% on this page |
 | `en.recommended` | Recommended |
-| `en.stains` | Stain cleanup |
 | `en.stains.inv` | Recommended — clears the blue/cyan cast that dark brown & navy slide backgrounds pick up when inverted, plus inverted red key fills. Handwriting and diagrams stay. |
 | `en.stains.light` | Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes. |
-| `en.title` | Color mode |
-| `en.trim` | Trim margins |
-| `en.trim.d` | Auto-crops empty borders so content fills each grid cell — bigger, more readable text on the same paper. Worth it when stacking 3+ slides per sheet. |
 | `en.zoom.fit` | Reset zoom |
 | `en.zoom.in` | Zoom in |
 | `en.zoom.out` | Zoom out |
@@ -325,19 +300,15 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `labs.repaint` | Text repaint (OCR) |
 | `labs.repaintD` | Experimental: OCRs each page and re-typesets recognized text as crisp black-on-white instead of a re-compressed scan. Sharp output, tiny files; handwriting and complex diagrams automatically fall back to the original image. |
 | `labs.title` | Labs |
-| `ly.adv` | Advanced |
 | `ly.adv.on` | {n} on |
 | `ly.adv.sub` | Budget · Slide nos. · Cover · Booklet |
-| `ly.booklet` | Booklet mode |
 | `ly.bookletNote` | Booklet: print 2-up duplex with “flip on short edge”, then fold — the separator line is your fold guide. |
-| `ly.bookletSub` | 2-up, re-ordered for fold-in-half booklets |
 | `ly.budget.fit` | Fits: {n} sheets at {per} slides per sheet ✓ |
 | `ly.budget.go` | Auto-fit |
 | `ly.budget.none` | Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway. |
 | `ly.budget.ph` | e.g. 25 |
 | `ly.budget.sub` | Xerox shop charges per sheet? Set a sheet limit and we pick the tightest layout that fits. |
 | `ly.budget.title` | Print budget |
-| `ly.cols` | Columns |
 | `ly.compEmail` | Email · 25 MB |
 | `ly.compForms` | Forms · 5 MB |
 | `ly.compOff` | No cap |
@@ -360,10 +331,8 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.estSampling` | estimating from {n} sample pages… |
 | `ly.estSize` | ≈ {size} output file |
 | `ly.estimate` | Estimated output |
-| `ly.footer` | Footer label |
 | `ly.footerNote` | Printed small at the bottom-left of every sheet. |
 | `ly.footerOpt` | (optional) |
-| `ly.footerPh` | e.g. PHY · L3 · Centre of Mass |
 | `ly.inPages` | Input pages |
 | `ly.liveBadge` | LIVE |
 | `ly.liveSub` | Real filters on the first sheet |
@@ -381,16 +350,9 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.title` | Margin Doctor |
 | `ly.md.top` | Top |
 | `ly.metaHint` | Title and author written into the output file’s metadata. |
-| `ly.noteLines` | Note lines (3-up) |
 | `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
-| `ly.noteLinesSub` | Ruled lines beside each slide for handwritten notes |
-| `ly.orientation` | Orientation |
 | `ly.outPages` | Output pages |
-| `ly.pageNums` | Page numbers |
-| `ly.pageNumsSub` | At the bottom |
 | `ly.paperSaved` | Paper saved |
-| `ly.perPage` | Slides per page |
-| `ly.perPageN` | {n} per page |
 | `ly.perSheet` | Slides per sheet |
 | `ly.processing` | Processing page {d} of {t}… keep this tab open. |
 | `ly.processingBg` | Processing runs in the background — the app stays responsive. |
@@ -400,21 +362,15 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.q.lowD` | Smallest file · 96 DPI |
 | `ly.q.med` | Medium |
 | `ly.q.medD` | Balanced · 150 DPI |
-| `ly.quality` | Output quality |
 | `ly.qualityNote` | Final PDF is generated in high quality — previews above are low-res. |
 | `ly.recipeQr` | Recipe QR on print |
 | `ly.recipeQrHint` | Print a small QR in the footer band — scanning it re-opens the site with these exact settings (no server needed). |
-| `ly.rows` | Rows |
-| `ly.separators` | Separation lines |
-| `ly.separatorsSub` | Between slides |
 | `ly.sizeTarget` | Target file size |
 | `ly.sizeTargetHint` | Quality is lowered automatically until the PDF fits — for email limits and print-shop uploads. |
 | `ly.sizeTargetOff` | Off |
 | `ly.sizeTargetOn` | Under {n} MB |
 | `ly.sizeTargetOver` | Estimated above target — quality will be reduced while processing. |
 | `ly.sizeTargetPh` | e.g. 5 |
-| `ly.slideNums` | Slide source numbers |
-| `ly.slideNumsSub` | Stamp the original page number on each slide |
 | `ly.stampNote` | Printed small at the bottom-right of every sheet. |
 | `ly.stampOpt` | optional |
 | `ly.stampPh` | e.g. Aarav · 12-A · Roll 42 |
@@ -439,27 +395,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `pat.topo` | Topographic |
 | `pat.waves` | Waves |
 | `pat.weave` | Weave |
-| `pg.autoRotate` | Auto-rotate |
-| `pg.autoRotateDone` | {n} landscape page(s) rotated upright |
-| `pg.autoRotateHint` | Turn every sideways (landscape) page upright inside this portrait batch |
-| `pg.autoRotateNone` | No sideways pages found — batch is already portrait |
-| `pg.clear` | Clear |
-| `pg.dragHint` |  · drag to reorder |
-| `pg.moveEarlier` | Move page earlier |
-| `pg.moveLater` | Move page later |
-| `pg.needOne` | Select at least one page to continue. |
-| `pg.noBlank` | No blank pages found |
-| `pg.scMove` | move — acts on the page you tapped/clicked last |
-| `pg.scRemove` | remove |
-| `pg.scRotate` | rotate |
-| `pg.scanFail` | Could not scan pages |
-| `pg.selectAll` | Select all |
-| `pg.shortcuts` | Shortcuts: |
-| `pg.skipBlank` | Skip blank pages |
-| `pg.skipped` | Skipped {n} blank page(s) |
-| `pg.tweak.count` | {n} page(s) with a custom color override |
-| `pg.tweak.hint` | Color override for this page only |
-| `pg.tweak.reset` | Reset tweaks |
 | `pr.builtin.balanced` | Balanced |
 | `pr.builtin.balancedD` | The everyday default — smart color mode, 4 slides per sheet, medium quality. |
 | `pr.builtin.economy` | Economy |
@@ -516,16 +451,12 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `rs.impactSheets` | sheets saved |
 | `rs.impactTitle` | Your impact so far |
 | `rs.impactTrees` | trees |
-| `rs.inkSaved` | Est. ink saved |
 | `rs.iosBody` | iOS can’t display PDFs inside the page — but your file is ready. Tap Open to view it full-screen, or Download to save it for printing. |
 | `rs.larger` | {n}% larger (quality boost) |
-| `rs.layout` | Layout |
-| `rs.lessPaper` | {n}% less paper |
 | `rs.listen` | Listen |
 | `rs.listenFail` | Could not generate audio |
 | `rs.loading` | Generating audio… |
 | `rs.mode` | mode: {m} |
-| `rs.noResult` | No result yet — process a file first. |
 | `rs.ocrNote` | Searchable text layer added — try Ctrl+F / search in your PDF viewer. |
 | `rs.ocrRep.avg` | {n}% avg confidence |
 | `rs.ocrRep.good` | Recognition looks clean — the searchable layer should be accurate. |
@@ -535,8 +466,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `rs.ocrRep.title` | OCR quality report |
 | `rs.ocrRep.tryBlock` | Tip: switch Recognition mode to “Single block” in Enhance for handwriting-style pages. |
 | `rs.odd` | Odd sheets ({n}) |
-| `rs.pages` | Pages |
-| `rs.previewLabel` | Output preview |
 | `rs.print` | Print now |
 | `rs.qr.copied` | Recipe link copied |
 | `rs.qr.copy` | Copy link |
@@ -544,7 +473,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `rs.qr.save` | Save QR |
 | `rs.qr.sub` | Scan to print with these exact settings again — classmates can reuse your whole recipe. |
 | `rs.qr.title` | Recipe QR |
-| `rs.ready` | Your print-ready PDF is ready! 🎉 |
 | `rs.receipt.btn` | Save receipt card |
 | `rs.receipt.fail` | Could not build the receipt card |
 | `rs.receipt.footnote` | Made with Notes Printifier — free, private, in-browser |
@@ -554,14 +482,11 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `rs.receipt.shared` | Receipt shared |
 | `rs.receipt.sub` | Ink-saving print receipt |
 | `rs.repainted` | {n} pages re-typeset |
-| `rs.samePaper` | same paper |
 | `rs.saved` | You saved about {rs} |
 | `rs.savedDetail` | {n} sheet(s) of paper + ink |
-| `rs.searchable` | Searchable (OCR) |
 | `rs.share.fail` | Could not share the PDF |
 | `rs.share.fallback` | PDF downloaded — attach it in the chat that just opened |
 | `rs.share.text` | Here is the print-ready PDF — made with Notes Printifier |
-| `rs.size` | Output size |
 | `rs.sizeTargetAlready` | Already under the {n} MB target — no extra compression needed |
 | `rs.sizeTargetFit` | Compressed in {p} extra pass(es) to fit under {n} MB |
 | `rs.smaller` | {n}% smaller than source |
@@ -737,7 +662,7 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## தமிழ் (Tamil) — 697 missing (58/755 done, 8%)
+## தமிழ் (Tamil) — 622 missing (133/755 done, 18%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
@@ -822,21 +747,12 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `dr.applied` | Doctor’s suggestion applied |
 | `dr.apply` | Apply suggestion |
 | `dr.ask` | Ask the Doctor |
-| `dr.bench.again` | Run again |
 | `dr.bench.applied` | Recognition mode set to PSM {psm} |
-| `dr.bench.conf` | Confidence |
 | `dr.bench.fail` | Benchmark failed — try another page. |
 | `dr.bench.mode` | Mode |
 | `dr.bench.page` | Page {n} of “{name}” |
-| `dr.bench.run` | Run benchmark |
-| `dr.bench.running` | Recognizing twice… |
 | `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
-| `dr.bench.time` | Time |
-| `dr.bench.title` | OCR Bench — PSM 3 vs 6 |
-| `dr.bench.use3` | Use auto (3) |
-| `dr.bench.use6` | Use single block (6) |
 | `dr.bench.winner` | PSM {psm} reads this page better |
-| `dr.bench.words` | Words |
 | `dr.fail` | The Doctor is unavailable right now |
 | `dr.goal` | Goal |
 | `dr.goal.balanced` | Balanced |
@@ -855,10 +771,7 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `en.cmp.aria` | Drag to compare before and after |
 | `en.cmp.side` | Side by side |
 | `en.cmp.wipe` | Compare |
-| `en.deskew` | Straighten pages (auto deskew) |
 | `en.deskew.badge` | Auto-rotation applied |
-| `en.deskew.d` | Detects tilted scans and phone photos and rotates each page straight before the other filters run — great for photos of handwritten notes. Pairs well with Trim margins. |
-| `en.ink.d` | Pushes light backgrounds to pure white so your printer skips them. 40–60 works great for dark slides. |
 | `en.logo` | Remove logo / watermark |
 | `en.logo.aria` | Header strip removal height |
 | `en.logo.band` | Or shave the top band |
@@ -880,12 +793,8 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `en.mode.invert.h` | Dark slides → white pages |
 | `en.mode.original` | Original |
 | `en.mode.original.h` | Keep colors, clean background stains |
-| `en.ocr` | Searchable PDF (OCR) |
-| `en.ocr.d` | Adds an invisible text layer so you can search and select text in the output. Slower — runs OCR on every page. |
 | `en.ocr.page` | page {n} of {t} |
 | `en.ocr.running` | Adding searchable text (OCR)… |
-| `en.ocrLang` | Text language |
-| `en.ocrLang.all` | English + हिन्दी + தமிழ் |
 | `en.ocrPsm` | Recognition mode |
 | `en.ocrPsm.auto` | Auto — slides & mixed layouts |
 | `en.ocrPsm.block` | Single block — handwriting & notes |
@@ -893,9 +802,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `en.overlay` | Erased |
 | `en.overlay.aria` | Highlight the pixels the filters erase (red) |
 | `en.overlay.hint` | Red = removed by your filters |
-| `en.pen` | Handwriting boost |
-| `en.pen.d` | Darkens pen/pencil strokes while keeping paper white — light handwriting prints clearly instead of washing out. |
-| `en.presets` | Presets |
 | `en.presets.apply` | Apply |
 | `en.presets.builtinNote` | Start with a built-in recipe, then fine-tune below. |
 | `en.presets.import` | Import |
@@ -907,8 +813,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `en.presets.saved` | Saved! |
 | `en.presets.share` | Share |
 | `en.presets.shareNote` | Share your presets with classmates |
-| `en.preview.after` | After |
-| `en.preview.before` | Before |
 | `en.preview.full` | Full preview |
 | `en.preview.ink` | ~{n}% ink |
 | `en.preview.note` | Preview shows the first selected page — filters apply to every page. |
@@ -916,12 +820,8 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `en.preview.pick` | Preview page {n} of {t} |
 | `en.preview.saves` | This filter combo reduces ink coverage by about {n}% on this page |
 | `en.recommended` | Recommended |
-| `en.stains` | Stain cleanup |
 | `en.stains.inv` | Recommended — clears the blue/cyan cast that dark brown & navy slide backgrounds pick up when inverted, plus inverted red key fills. Handwriting and diagrams stay. |
 | `en.stains.light` | Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes. |
-| `en.title` | Color mode |
-| `en.trim` | Trim margins |
-| `en.trim.d` | Auto-crops empty borders so content fills each grid cell — bigger, more readable text on the same paper. Worth it when stacking 3+ slides per sheet. |
 | `en.zoom.fit` | Reset zoom |
 | `en.zoom.in` | Zoom in |
 | `en.zoom.out` | Zoom out |
@@ -1029,19 +929,15 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `labs.repaint` | Text repaint (OCR) |
 | `labs.repaintD` | Experimental: OCRs each page and re-typesets recognized text as crisp black-on-white instead of a re-compressed scan. Sharp output, tiny files; handwriting and complex diagrams automatically fall back to the original image. |
 | `labs.title` | Labs |
-| `ly.adv` | Advanced |
 | `ly.adv.on` | {n} on |
 | `ly.adv.sub` | Budget · Slide nos. · Cover · Booklet |
-| `ly.booklet` | Booklet mode |
 | `ly.bookletNote` | Booklet: print 2-up duplex with “flip on short edge”, then fold — the separator line is your fold guide. |
-| `ly.bookletSub` | 2-up, re-ordered for fold-in-half booklets |
 | `ly.budget.fit` | Fits: {n} sheets at {per} slides per sheet ✓ |
 | `ly.budget.go` | Auto-fit |
 | `ly.budget.none` | Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway. |
 | `ly.budget.ph` | e.g. 25 |
 | `ly.budget.sub` | Xerox shop charges per sheet? Set a sheet limit and we pick the tightest layout that fits. |
 | `ly.budget.title` | Print budget |
-| `ly.cols` | Columns |
 | `ly.compEmail` | Email · 25 MB |
 | `ly.compForms` | Forms · 5 MB |
 | `ly.compOff` | No cap |
@@ -1064,10 +960,8 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.estSampling` | estimating from {n} sample pages… |
 | `ly.estSize` | ≈ {size} output file |
 | `ly.estimate` | Estimated output |
-| `ly.footer` | Footer label |
 | `ly.footerNote` | Printed small at the bottom-left of every sheet. |
 | `ly.footerOpt` | (optional) |
-| `ly.footerPh` | e.g. PHY · L3 · Centre of Mass |
 | `ly.inPages` | Input pages |
 | `ly.liveBadge` | LIVE |
 | `ly.liveSub` | Real filters on the first sheet |
@@ -1085,16 +979,9 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.title` | Margin Doctor |
 | `ly.md.top` | Top |
 | `ly.metaHint` | Title and author written into the output file’s metadata. |
-| `ly.noteLines` | Note lines (3-up) |
 | `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
-| `ly.noteLinesSub` | Ruled lines beside each slide for handwritten notes |
-| `ly.orientation` | Orientation |
 | `ly.outPages` | Output pages |
-| `ly.pageNums` | Page numbers |
-| `ly.pageNumsSub` | At the bottom |
 | `ly.paperSaved` | Paper saved |
-| `ly.perPage` | Slides per page |
-| `ly.perPageN` | {n} per page |
 | `ly.perSheet` | Slides per sheet |
 | `ly.processing` | Processing page {d} of {t}… keep this tab open. |
 | `ly.processingBg` | Processing runs in the background — the app stays responsive. |
@@ -1104,21 +991,15 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.q.lowD` | Smallest file · 96 DPI |
 | `ly.q.med` | Medium |
 | `ly.q.medD` | Balanced · 150 DPI |
-| `ly.quality` | Output quality |
 | `ly.qualityNote` | Final PDF is generated in high quality — previews above are low-res. |
 | `ly.recipeQr` | Recipe QR on print |
 | `ly.recipeQrHint` | Print a small QR in the footer band — scanning it re-opens the site with these exact settings (no server needed). |
-| `ly.rows` | Rows |
-| `ly.separators` | Separation lines |
-| `ly.separatorsSub` | Between slides |
 | `ly.sizeTarget` | Target file size |
 | `ly.sizeTargetHint` | Quality is lowered automatically until the PDF fits — for email limits and print-shop uploads. |
 | `ly.sizeTargetOff` | Off |
 | `ly.sizeTargetOn` | Under {n} MB |
 | `ly.sizeTargetOver` | Estimated above target — quality will be reduced while processing. |
 | `ly.sizeTargetPh` | e.g. 5 |
-| `ly.slideNums` | Slide source numbers |
-| `ly.slideNumsSub` | Stamp the original page number on each slide |
 | `ly.stampNote` | Printed small at the bottom-right of every sheet. |
 | `ly.stampOpt` | optional |
 | `ly.stampPh` | e.g. Aarav · 12-A · Roll 42 |
@@ -1143,27 +1024,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `pat.topo` | Topographic |
 | `pat.waves` | Waves |
 | `pat.weave` | Weave |
-| `pg.autoRotate` | Auto-rotate |
-| `pg.autoRotateDone` | {n} landscape page(s) rotated upright |
-| `pg.autoRotateHint` | Turn every sideways (landscape) page upright inside this portrait batch |
-| `pg.autoRotateNone` | No sideways pages found — batch is already portrait |
-| `pg.clear` | Clear |
-| `pg.dragHint` |  · drag to reorder |
-| `pg.moveEarlier` | Move page earlier |
-| `pg.moveLater` | Move page later |
-| `pg.needOne` | Select at least one page to continue. |
-| `pg.noBlank` | No blank pages found |
-| `pg.scMove` | move — acts on the page you tapped/clicked last |
-| `pg.scRemove` | remove |
-| `pg.scRotate` | rotate |
-| `pg.scanFail` | Could not scan pages |
-| `pg.selectAll` | Select all |
-| `pg.shortcuts` | Shortcuts: |
-| `pg.skipBlank` | Skip blank pages |
-| `pg.skipped` | Skipped {n} blank page(s) |
-| `pg.tweak.count` | {n} page(s) with a custom color override |
-| `pg.tweak.hint` | Color override for this page only |
-| `pg.tweak.reset` | Reset tweaks |
 | `pr.builtin.balanced` | Balanced |
 | `pr.builtin.balancedD` | The everyday default — smart color mode, 4 slides per sheet, medium quality. |
 | `pr.builtin.economy` | Economy |
@@ -1220,16 +1080,12 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `rs.impactSheets` | sheets saved |
 | `rs.impactTitle` | Your impact so far |
 | `rs.impactTrees` | trees |
-| `rs.inkSaved` | Est. ink saved |
 | `rs.iosBody` | iOS can’t display PDFs inside the page — but your file is ready. Tap Open to view it full-screen, or Download to save it for printing. |
 | `rs.larger` | {n}% larger (quality boost) |
-| `rs.layout` | Layout |
-| `rs.lessPaper` | {n}% less paper |
 | `rs.listen` | Listen |
 | `rs.listenFail` | Could not generate audio |
 | `rs.loading` | Generating audio… |
 | `rs.mode` | mode: {m} |
-| `rs.noResult` | No result yet — process a file first. |
 | `rs.ocrNote` | Searchable text layer added — try Ctrl+F / search in your PDF viewer. |
 | `rs.ocrRep.avg` | {n}% avg confidence |
 | `rs.ocrRep.good` | Recognition looks clean — the searchable layer should be accurate. |
@@ -1239,8 +1095,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `rs.ocrRep.title` | OCR quality report |
 | `rs.ocrRep.tryBlock` | Tip: switch Recognition mode to “Single block” in Enhance for handwriting-style pages. |
 | `rs.odd` | Odd sheets ({n}) |
-| `rs.pages` | Pages |
-| `rs.previewLabel` | Output preview |
 | `rs.print` | Print now |
 | `rs.qr.copied` | Recipe link copied |
 | `rs.qr.copy` | Copy link |
@@ -1248,7 +1102,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `rs.qr.save` | Save QR |
 | `rs.qr.sub` | Scan to print with these exact settings again — classmates can reuse your whole recipe. |
 | `rs.qr.title` | Recipe QR |
-| `rs.ready` | Your print-ready PDF is ready! 🎉 |
 | `rs.receipt.btn` | Save receipt card |
 | `rs.receipt.fail` | Could not build the receipt card |
 | `rs.receipt.footnote` | Made with Notes Printifier — free, private, in-browser |
@@ -1258,14 +1111,11 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `rs.receipt.shared` | Receipt shared |
 | `rs.receipt.sub` | Ink-saving print receipt |
 | `rs.repainted` | {n} pages re-typeset |
-| `rs.samePaper` | same paper |
 | `rs.saved` | You saved about {rs} |
 | `rs.savedDetail` | {n} sheet(s) of paper + ink |
-| `rs.searchable` | Searchable (OCR) |
 | `rs.share.fail` | Could not share the PDF |
 | `rs.share.fallback` | PDF downloaded — attach it in the chat that just opened |
 | `rs.share.text` | Here is the print-ready PDF — made with Notes Printifier |
-| `rs.size` | Output size |
 | `rs.sizeTargetAlready` | Already under the {n} MB target — no extra compression needed |
 | `rs.sizeTargetFit` | Compressed in {p} extra pass(es) to fit under {n} MB |
 | `rs.smaller` | {n}% smaller than source |
@@ -1441,7 +1291,7 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## বাংলা (Bengali) — 697 missing (58/755 done, 8%)
+## বাংলা (Bengali) — 622 missing (133/755 done, 18%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
@@ -1526,21 +1376,12 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `dr.applied` | Doctor’s suggestion applied |
 | `dr.apply` | Apply suggestion |
 | `dr.ask` | Ask the Doctor |
-| `dr.bench.again` | Run again |
 | `dr.bench.applied` | Recognition mode set to PSM {psm} |
-| `dr.bench.conf` | Confidence |
 | `dr.bench.fail` | Benchmark failed — try another page. |
 | `dr.bench.mode` | Mode |
 | `dr.bench.page` | Page {n} of “{name}” |
-| `dr.bench.run` | Run benchmark |
-| `dr.bench.running` | Recognizing twice… |
 | `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
-| `dr.bench.time` | Time |
-| `dr.bench.title` | OCR Bench — PSM 3 vs 6 |
-| `dr.bench.use3` | Use auto (3) |
-| `dr.bench.use6` | Use single block (6) |
 | `dr.bench.winner` | PSM {psm} reads this page better |
-| `dr.bench.words` | Words |
 | `dr.fail` | The Doctor is unavailable right now |
 | `dr.goal` | Goal |
 | `dr.goal.balanced` | Balanced |
@@ -1559,10 +1400,7 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `en.cmp.aria` | Drag to compare before and after |
 | `en.cmp.side` | Side by side |
 | `en.cmp.wipe` | Compare |
-| `en.deskew` | Straighten pages (auto deskew) |
 | `en.deskew.badge` | Auto-rotation applied |
-| `en.deskew.d` | Detects tilted scans and phone photos and rotates each page straight before the other filters run — great for photos of handwritten notes. Pairs well with Trim margins. |
-| `en.ink.d` | Pushes light backgrounds to pure white so your printer skips them. 40–60 works great for dark slides. |
 | `en.logo` | Remove logo / watermark |
 | `en.logo.aria` | Header strip removal height |
 | `en.logo.band` | Or shave the top band |
@@ -1584,12 +1422,8 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `en.mode.invert.h` | Dark slides → white pages |
 | `en.mode.original` | Original |
 | `en.mode.original.h` | Keep colors, clean background stains |
-| `en.ocr` | Searchable PDF (OCR) |
-| `en.ocr.d` | Adds an invisible text layer so you can search and select text in the output. Slower — runs OCR on every page. |
 | `en.ocr.page` | page {n} of {t} |
 | `en.ocr.running` | Adding searchable text (OCR)… |
-| `en.ocrLang` | Text language |
-| `en.ocrLang.all` | English + हिन्दी + தமிழ் |
 | `en.ocrPsm` | Recognition mode |
 | `en.ocrPsm.auto` | Auto — slides & mixed layouts |
 | `en.ocrPsm.block` | Single block — handwriting & notes |
@@ -1597,9 +1431,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `en.overlay` | Erased |
 | `en.overlay.aria` | Highlight the pixels the filters erase (red) |
 | `en.overlay.hint` | Red = removed by your filters |
-| `en.pen` | Handwriting boost |
-| `en.pen.d` | Darkens pen/pencil strokes while keeping paper white — light handwriting prints clearly instead of washing out. |
-| `en.presets` | Presets |
 | `en.presets.apply` | Apply |
 | `en.presets.builtinNote` | Start with a built-in recipe, then fine-tune below. |
 | `en.presets.import` | Import |
@@ -1611,8 +1442,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `en.presets.saved` | Saved! |
 | `en.presets.share` | Share |
 | `en.presets.shareNote` | Share your presets with classmates |
-| `en.preview.after` | After |
-| `en.preview.before` | Before |
 | `en.preview.full` | Full preview |
 | `en.preview.ink` | ~{n}% ink |
 | `en.preview.note` | Preview shows the first selected page — filters apply to every page. |
@@ -1620,12 +1449,8 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `en.preview.pick` | Preview page {n} of {t} |
 | `en.preview.saves` | This filter combo reduces ink coverage by about {n}% on this page |
 | `en.recommended` | Recommended |
-| `en.stains` | Stain cleanup |
 | `en.stains.inv` | Recommended — clears the blue/cyan cast that dark brown & navy slide backgrounds pick up when inverted, plus inverted red key fills. Handwriting and diagrams stay. |
 | `en.stains.light` | Wipes out light-blue watercolor marks between slides and the cyan fills behind question numbers & answer keys, while keeping handwriting, diagrams and text. Recommended for white-background notes. |
-| `en.title` | Color mode |
-| `en.trim` | Trim margins |
-| `en.trim.d` | Auto-crops empty borders so content fills each grid cell — bigger, more readable text on the same paper. Worth it when stacking 3+ slides per sheet. |
 | `en.zoom.fit` | Reset zoom |
 | `en.zoom.in` | Zoom in |
 | `en.zoom.out` | Zoom out |
@@ -1733,19 +1558,15 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `labs.repaint` | Text repaint (OCR) |
 | `labs.repaintD` | Experimental: OCRs each page and re-typesets recognized text as crisp black-on-white instead of a re-compressed scan. Sharp output, tiny files; handwriting and complex diagrams automatically fall back to the original image. |
 | `labs.title` | Labs |
-| `ly.adv` | Advanced |
 | `ly.adv.on` | {n} on |
 | `ly.adv.sub` | Budget · Slide nos. · Cover · Booklet |
-| `ly.booklet` | Booklet mode |
 | `ly.bookletNote` | Booklet: print 2-up duplex with “flip on short edge”, then fold — the separator line is your fold guide. |
-| `ly.bookletSub` | 2-up, re-ordered for fold-in-half booklets |
 | `ly.budget.fit` | Fits: {n} sheets at {per} slides per sheet ✓ |
 | `ly.budget.go` | Auto-fit |
 | `ly.budget.none` | Even the tightest layout needs {n} sheets (over {limit}) — applied 8-up anyway. |
 | `ly.budget.ph` | e.g. 25 |
 | `ly.budget.sub` | Xerox shop charges per sheet? Set a sheet limit and we pick the tightest layout that fits. |
 | `ly.budget.title` | Print budget |
-| `ly.cols` | Columns |
 | `ly.compEmail` | Email · 25 MB |
 | `ly.compForms` | Forms · 5 MB |
 | `ly.compOff` | No cap |
@@ -1768,10 +1589,8 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.estSampling` | estimating from {n} sample pages… |
 | `ly.estSize` | ≈ {size} output file |
 | `ly.estimate` | Estimated output |
-| `ly.footer` | Footer label |
 | `ly.footerNote` | Printed small at the bottom-left of every sheet. |
 | `ly.footerOpt` | (optional) |
-| `ly.footerPh` | e.g. PHY · L3 · Centre of Mass |
 | `ly.inPages` | Input pages |
 | `ly.liveBadge` | LIVE |
 | `ly.liveSub` | Real filters on the first sheet |
@@ -1789,16 +1608,9 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.md.title` | Margin Doctor |
 | `ly.md.top` | Top |
 | `ly.metaHint` | Title and author written into the output file’s metadata. |
-| `ly.noteLines` | Note lines (3-up) |
 | `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
-| `ly.noteLinesSub` | Ruled lines beside each slide for handwritten notes |
-| `ly.orientation` | Orientation |
 | `ly.outPages` | Output pages |
-| `ly.pageNums` | Page numbers |
-| `ly.pageNumsSub` | At the bottom |
 | `ly.paperSaved` | Paper saved |
-| `ly.perPage` | Slides per page |
-| `ly.perPageN` | {n} per page |
 | `ly.perSheet` | Slides per sheet |
 | `ly.processing` | Processing page {d} of {t}… keep this tab open. |
 | `ly.processingBg` | Processing runs in the background — the app stays responsive. |
@@ -1808,21 +1620,15 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.q.lowD` | Smallest file · 96 DPI |
 | `ly.q.med` | Medium |
 | `ly.q.medD` | Balanced · 150 DPI |
-| `ly.quality` | Output quality |
 | `ly.qualityNote` | Final PDF is generated in high quality — previews above are low-res. |
 | `ly.recipeQr` | Recipe QR on print |
 | `ly.recipeQrHint` | Print a small QR in the footer band — scanning it re-opens the site with these exact settings (no server needed). |
-| `ly.rows` | Rows |
-| `ly.separators` | Separation lines |
-| `ly.separatorsSub` | Between slides |
 | `ly.sizeTarget` | Target file size |
 | `ly.sizeTargetHint` | Quality is lowered automatically until the PDF fits — for email limits and print-shop uploads. |
 | `ly.sizeTargetOff` | Off |
 | `ly.sizeTargetOn` | Under {n} MB |
 | `ly.sizeTargetOver` | Estimated above target — quality will be reduced while processing. |
 | `ly.sizeTargetPh` | e.g. 5 |
-| `ly.slideNums` | Slide source numbers |
-| `ly.slideNumsSub` | Stamp the original page number on each slide |
 | `ly.stampNote` | Printed small at the bottom-right of every sheet. |
 | `ly.stampOpt` | optional |
 | `ly.stampPh` | e.g. Aarav · 12-A · Roll 42 |
@@ -1847,27 +1653,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `pat.topo` | Topographic |
 | `pat.waves` | Waves |
 | `pat.weave` | Weave |
-| `pg.autoRotate` | Auto-rotate |
-| `pg.autoRotateDone` | {n} landscape page(s) rotated upright |
-| `pg.autoRotateHint` | Turn every sideways (landscape) page upright inside this portrait batch |
-| `pg.autoRotateNone` | No sideways pages found — batch is already portrait |
-| `pg.clear` | Clear |
-| `pg.dragHint` |  · drag to reorder |
-| `pg.moveEarlier` | Move page earlier |
-| `pg.moveLater` | Move page later |
-| `pg.needOne` | Select at least one page to continue. |
-| `pg.noBlank` | No blank pages found |
-| `pg.scMove` | move — acts on the page you tapped/clicked last |
-| `pg.scRemove` | remove |
-| `pg.scRotate` | rotate |
-| `pg.scanFail` | Could not scan pages |
-| `pg.selectAll` | Select all |
-| `pg.shortcuts` | Shortcuts: |
-| `pg.skipBlank` | Skip blank pages |
-| `pg.skipped` | Skipped {n} blank page(s) |
-| `pg.tweak.count` | {n} page(s) with a custom color override |
-| `pg.tweak.hint` | Color override for this page only |
-| `pg.tweak.reset` | Reset tweaks |
 | `pr.builtin.balanced` | Balanced |
 | `pr.builtin.balancedD` | The everyday default — smart color mode, 4 slides per sheet, medium quality. |
 | `pr.builtin.economy` | Economy |
@@ -1924,16 +1709,12 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `rs.impactSheets` | sheets saved |
 | `rs.impactTitle` | Your impact so far |
 | `rs.impactTrees` | trees |
-| `rs.inkSaved` | Est. ink saved |
 | `rs.iosBody` | iOS can’t display PDFs inside the page — but your file is ready. Tap Open to view it full-screen, or Download to save it for printing. |
 | `rs.larger` | {n}% larger (quality boost) |
-| `rs.layout` | Layout |
-| `rs.lessPaper` | {n}% less paper |
 | `rs.listen` | Listen |
 | `rs.listenFail` | Could not generate audio |
 | `rs.loading` | Generating audio… |
 | `rs.mode` | mode: {m} |
-| `rs.noResult` | No result yet — process a file first. |
 | `rs.ocrNote` | Searchable text layer added — try Ctrl+F / search in your PDF viewer. |
 | `rs.ocrRep.avg` | {n}% avg confidence |
 | `rs.ocrRep.good` | Recognition looks clean — the searchable layer should be accurate. |
@@ -1943,8 +1724,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `rs.ocrRep.title` | OCR quality report |
 | `rs.ocrRep.tryBlock` | Tip: switch Recognition mode to “Single block” in Enhance for handwriting-style pages. |
 | `rs.odd` | Odd sheets ({n}) |
-| `rs.pages` | Pages |
-| `rs.previewLabel` | Output preview |
 | `rs.print` | Print now |
 | `rs.qr.copied` | Recipe link copied |
 | `rs.qr.copy` | Copy link |
@@ -1952,7 +1731,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `rs.qr.save` | Save QR |
 | `rs.qr.sub` | Scan to print with these exact settings again — classmates can reuse your whole recipe. |
 | `rs.qr.title` | Recipe QR |
-| `rs.ready` | Your print-ready PDF is ready! 🎉 |
 | `rs.receipt.btn` | Save receipt card |
 | `rs.receipt.fail` | Could not build the receipt card |
 | `rs.receipt.footnote` | Made with Notes Printifier — free, private, in-browser |
@@ -1962,14 +1740,11 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `rs.receipt.shared` | Receipt shared |
 | `rs.receipt.sub` | Ink-saving print receipt |
 | `rs.repainted` | {n} pages re-typeset |
-| `rs.samePaper` | same paper |
 | `rs.saved` | You saved about {rs} |
 | `rs.savedDetail` | {n} sheet(s) of paper + ink |
-| `rs.searchable` | Searchable (OCR) |
 | `rs.share.fail` | Could not share the PDF |
 | `rs.share.fallback` | PDF downloaded — attach it in the chat that just opened |
 | `rs.share.text` | Here is the print-ready PDF — made with Notes Printifier |
-| `rs.size` | Output size |
 | `rs.sizeTargetAlready` | Already under the {n} MB target — no extra compression needed |
 | `rs.sizeTargetFit` | Compressed in {p} extra pass(es) to fit under {n} MB |
 | `rs.smaller` | {n}% smaller than source |
