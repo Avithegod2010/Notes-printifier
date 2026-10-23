@@ -35,6 +35,11 @@ export interface LayoutSettings {
   customDpi?: number | null;
   /** Optional small label printed bottom-left of every sheet. */
   footerLabel?: string;
+  /** Print a small recipe QR in the footer band of every output sheet —
+   *  a physical handout then carries its own "print this recipe again" code
+   *  (scanning it reopens the site with these exact Enhance/Layout
+   *  settings). The recipe rides in the ?r= link, no server needed. */
+  recipeQr?: boolean;
   /** Name stamp — ownership mark printed bottom-right of every sheet
    *  (the advertised "Name Stamp" feature). Empty/undefined = off. */
   nameStamp?: string;

@@ -45,17 +45,12 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
-  buildErasedOverlay,
-  estimateDeskewForPage,
-  inkCoverage,
-  preparePageCanvas,
-  resolveColorMode,
-  trimCanvasMargins,
-  type AnyCanvas,
   type ColorMode,
   type FilterSettings,
   type LogoRegion,
 } from '@/lib/pdf/filters';
+import { runFilterPreview } from '@/lib/pdf/filter-client';
+import { makeImageData } from '@/lib/pdf/filter-preview-core';
 import { loadPdfDocument } from '@/lib/pdf/pdfjs';
 import { renderPageToCanvas } from '@/lib/pdf/render';
 import { getDocBuffer, usePrintifyStore } from '@/lib/printify-store';
@@ -145,9 +140,8 @@ export function EnhanceStep() {
   const [zoomIdx, setZoomIdx] = useState(0);
   const zoom = ZOOM_STEPS[zoomIdx];
 
-  /** Estimated tilt (deg) of the preview page — measured once, then cached. */
+  /** Estimated tilt (deg) of the preview page — measured in the filter worker. */
   const [skewAngle, setSkewAngle] = useState<number | null>(null);
-  const angleCache = useRef<Map<string, number>>(new Map());
 
   // F8 toggle — render the erased-pixels view instead of the clean result
   const [showErased, setShowErased] = useState(false);
@@ -188,56 +182,31 @@ export function EnhanceStep() {
         });
         if (cancelled) return;
         setBefore(canvas.toDataURL('image/jpeg', 0.72));
-        setInkBefore(inkCoverage((canvas.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, canvas.width, canvas.height).data));
-        // resolve 'auto' once so the preview shows the page's actual treatment
-        const effMode = resolveColorMode(canvas as AnyCanvas, effPreviewFilters.colorMode);
-        // Skew angle: measured on the RAW render once per page and cached, so
-        // slider tweaks never re-run the search — the badge just reads it.
-        if (effPreviewFilters.deskew) {
-          const angleKey = `${previewPage.docId}:${previewPage.pageNumber}:${previewPage.rotation}`;
-          const cached = angleCache.current.get(angleKey);
-          if (cached !== undefined) {
-            setSkewAngle(cached);
-          } else {
-            const a = estimateDeskewForPage(canvas as AnyCanvas);
-            angleCache.current.set(angleKey, a);
-            if (cancelled) return;
-            setSkewAngle(a);
-          }
-        }
-        // deskew → filters — the same chain the final pipeline runs (trim is
-        // applied separately below so ink can be measured pre-trim)
-        const work = preparePageCanvas(
-          canvas as AnyCanvas,
-          { ...effPreviewFilters, trimMargins: false },
-          effMode,
-        );
-        if (cancelled) return;
-        // Ink is measured BEFORE trimming: cropping white margins raises the
-        // dark-pixel fraction without saving ink — trim saves paper instead.
-        setInkAfter(inkCoverage((work.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D).getImageData(0, 0, work.width, work.height).data));
-        let final = work;
-        if (effPreviewFilters.trimMargins) {
-          const trimmed = trimCanvasMargins(work);
-          if (trimmed !== work) final = trimmed;
-        }
-        if (cancelled) return;
-        setAfter((final as HTMLCanvasElement).toDataURL('image/jpeg', 0.72));
 
-        // F8 overlay: normalize the raw render onto the displayed result's
-        // box (trim may have changed the aspect), then diff pixel-by-pixel.
-        try {
-          const norm = document.createElement('canvas');
-          norm.width = final.width;
-          norm.height = final.height;
-          const nctx = norm.getContext('2d');
-          if (nctx) {
-            nctx.drawImage(canvas as CanvasImageSource, 0, 0, final.width, final.height);
-            setOverlay(buildErasedOverlay(norm as AnyCanvas, final as AnyCanvas));
-          }
-        } catch {
-          setOverlay(null);
-        }
+        // The whole pixel chain (filters → trim → F8 overlay → ink stats)
+        // runs INSIDE the filter Web Worker — sliders stay at 60fps even
+        // while a big deck is previewed. Main-thread fallback is built in.
+        const rawCtx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+        const raw = rawCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const out = await runFilterPreview(raw, effPreviewFilters);
+        if (cancelled) return;
+
+        setInkBefore(out.inkBefore);
+        setInkAfter(out.inkAfter);
+        if (effPreviewFilters.deskew) setSkewAngle(out.skewAngle);
+
+        // paint the worker's result onto a canvas → data URL for the <img>
+        const paint = (w: number, h: number, px: Uint8ClampedArray) => {
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          c.getContext('2d')?.putImageData(makeImageData(px, w, h), 0, 0);
+          return c.toDataURL('image/jpeg', 0.72);
+        };
+        setAfter(paint(out.width, out.height, out.pixels));
+        setOverlay(
+          out.overlay ? paint(out.overlay.width, out.overlay.height, out.overlay.pixels) : null,
+        );
       } catch (err) {
         console.error('Preview failed', err);
       } finally {
@@ -943,7 +912,7 @@ export function EnhanceStep() {
                   {/* Recognition language — more traineddata = better Hindi /
                       Tamil decks. Self-hosted, so it stays fully offline. */}
                   {filters.searchable && (
-                    <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                       <Label htmlFor="ocr-langs" className="text-xs font-medium text-muted-foreground">
                         {t('en.ocrLang')}
                       </Label>
@@ -963,6 +932,33 @@ export function EnhanceStep() {
                           <SelectItem value="eng+hin+tam">{t('en.ocrLang.all')}</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  )}
+                  {/* OCR quality preset — tessedit_pageseg_mode. Single-block
+                      (PSM 6) rescues handwriting + one-column notes that auto
+                      mode (PSM 3) fragments. */}
+                  {filters.searchable && (
+                    <div className="mt-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <Label htmlFor="ocr-psm" className="text-xs font-medium text-muted-foreground">
+                          {t('en.ocrPsm')}
+                        </Label>
+                        <Select
+                          value={filters.ocrPsm ?? '3'}
+                          onValueChange={(v) => setFilters({ ocrPsm: v })}
+                        >
+                          <SelectTrigger id="ocr-psm" className="h-8 w-auto min-w-44 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="3">{t('en.ocrPsm.auto')}</SelectItem>
+                            <SelectItem value="6">{t('en.ocrPsm.block')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                        {t('en.ocrPsm.hint')}
+                      </p>
                     </div>
                   )}
                 </div>

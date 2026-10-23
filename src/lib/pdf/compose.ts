@@ -179,6 +179,7 @@ export async function composePdf(o: ComposeOptions): Promise<ComposeResult> {
           repaintCanvases: o.repaintCanvases ?? null,
           coverSheetData: o.coverSheetData ?? null,
           jpegQualityOverride: o.jpegQualityOverride,
+          recipeQrPng: o.recipeQrPng ?? null,
         },
         transfer,
         o.onProgress,

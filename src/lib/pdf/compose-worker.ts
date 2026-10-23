@@ -80,6 +80,8 @@ interface WorkerRequest {
   coverSheetData?: CoverSheetData | null;
   /** Size-target recompression ceiling for JPEG quality. */
   jpegQualityOverride?: number;
+  /** Pre-rendered recipe QR PNG (main thread generated, see compose-core). */
+  recipeQrPng?: Uint8Array | null;
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -97,6 +99,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         repaintCanvases: e.data.repaintCanvases ?? null,
         coverSheetData: e.data.coverSheetData ?? null,
         jpegQualityOverride: e.data.jpegQualityOverride,
+        recipeQrPng: e.data.recipeQrPng ?? null,
         onProgress: (done, total) => post({ type: 'progress', id, done, total }),
       });
       post({ type: 'done', id, result }, [result.pdfBytes.buffer as ArrayBuffer]);

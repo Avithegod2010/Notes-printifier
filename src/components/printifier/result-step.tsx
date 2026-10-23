@@ -273,6 +273,21 @@ export function ResultStep() {
   const [splitBusy, setSplitBusy] = useState(false);
   const [splitParts, setSplitParts] = useState<Array<{ url: string; label: string }> | null>(null);
 
+  // Per-part size estimate — bytes per output page × pages per part (+ small
+  // per-file overhead), so the user can pick an N that stays under a
+  // WhatsApp / email cap BEFORE cutting. Same extrapolation the layout
+  // estimate uses — approximate by design, labeled as an estimate.
+  const splitEstimate = useMemo(() => {
+    if (!result || result.outputPages < 1) return null;
+    const n = parseInt(splitN, 10);
+    if (!Number.isFinite(n) || n < 1) return null;
+    const parts = Math.ceil(result.outputPages / n);
+    const perPartPages = Math.min(n, result.outputPages);
+    const perPartBytes =
+      Math.round((result.outputBytes / result.outputPages) * perPartPages) + 2400;
+    return { parts, perPartBytes };
+  }, [result, splitN]);
+
   const splitEveryN = async () => {
     if (!result || splitBusy) return;
     const n = parseInt(splitN, 10);
@@ -759,6 +774,61 @@ export function ResultStep() {
         </div>
       )}
 
+      {/* OCR quality report — per-slide confidence from the Tesseract pass.
+          Surfaces "page 7 looked like handwriting, 61%" instead of making the
+          user discover bad text layers by searching. */}
+      {result.ocrReport && result.ocrReport.pages.length > 0 &&
+        (() => {
+          const pages = [...result.ocrReport.pages].sort(
+            (a, b) => a.confidence - b.confidence,
+          );
+          const avg = Math.round(
+            pages.reduce((s, p) => s + p.confidence, 0) / pages.length,
+          );
+          const weakest = pages.slice(0, 3).filter((p) => p.confidence < 80);
+          const hintKey =
+            avg >= 80 ? 'rs.ocrRep.good' : avg >= 60 ? 'rs.ocrRep.mid' : 'rs.ocrRep.low';
+          return (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+              <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                <ScanText className="h-4 w-4 text-violet-300" /> {t('rs.ocrRep.title')}
+                <Badge
+                  variant="secondary"
+                  className={
+                    avg >= 80
+                      ? 'bg-emerald-500/15 text-emerald-200'
+                      : avg >= 60
+                        ? 'bg-amber-500/15 text-amber-200'
+                        : 'bg-red-500/15 text-red-200'
+                  }
+                >
+                  {t('rs.ocrRep.avg', { n: avg })}
+                </Badge>
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {t(hintKey)}
+              </p>
+              {weakest.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {weakest.map((p) => (
+                    <li
+                      key={`${p.docId}:${p.pageNumber}:${p.rotation}`}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {t('rs.ocrRep.page', { n: p.pageNumber, c: p.confidence })}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {result.ocrReport.psm !== '6' && avg < 80 && (
+                <p className="mt-2 text-xs font-medium text-violet-300">
+                  {t('rs.ocrRep.tryBlock')}
+                </p>
+              )}
+            </div>
+          );
+        })()}
+
       {/* Lifetime impact meter — pure local data, one tap to clear */}
       {impact && (
         <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.07] p-4 sm:p-5">
@@ -1103,6 +1173,11 @@ export function ResultStep() {
             </Button>
           </div>
         </div>
+        {splitEstimate && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t('rs.split.est', { size: formatMB(splitEstimate.perPartBytes), n: splitEstimate.parts })}
+          </p>
+        )}
         {splitParts && (
           <div className="pretty-scroll mt-3 flex max-h-40 flex-col gap-2 overflow-y-auto pr-1">
             {splitParts.map((p) => (

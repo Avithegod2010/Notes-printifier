@@ -11,6 +11,8 @@
     "build:static": "bash scripts/static-export.sh",
     "budget": "node scripts/bundle-budget.mjs",
     "budget:update": "node scripts/bundle-budget.mjs --update",
+    "i18n:check": "bun scripts/i18n-missing.ts",
+    "test:smoke": "playwright test",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push --accept-data-loss",
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.11",
+    "@playwright/test": "^1.58.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",

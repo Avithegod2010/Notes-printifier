@@ -63,6 +63,13 @@ export interface ComposeOptions {
   /** Upper bound for JPEG quality when the size target needs recompression.
    *  Never RAISES quality above what the layout preset chose. */
   jpegQualityOverride?: number;
+  /**
+   * Pre-rendered recipe QR PNG (small, ~1–3 KB) — drawn into the footer band
+   * of every output sheet when layout.recipeQr is on. Generated on the MAIN
+   * thread with the `qrcode` package (needs a DOM canvas), so the worker
+   * only ever embeds ready-made bytes.
+   */
+  recipeQrPng?: Uint8Array | null;
   onProgress?: (done: number, total: number) => void;
 }
 
@@ -188,6 +195,20 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   const lineColor = rgb(0.75, 0.75, 0.75);
   const textColor = rgb(0.45, 0.45, 0.45);
 
+  // ---- recipe QR (physical handout carries its own recipe) ----------------
+  // Embedded once; drawn bottom-left into every sheet's footer band. The
+  // footer label text shifts right to make room.
+  let qrImage: Awaited<ReturnType<typeof out.embedPng>> | null = null;
+  if (o.layout.recipeQr && o.recipeQrPng && o.recipeQrPng.byteLength > 0) {
+    try {
+      qrImage = await out.embedPng(o.recipeQrPng);
+    } catch (err) {
+      console.warn('[compose] recipe QR embed failed — printing without it', err);
+    }
+  }
+  const QR_SIZE = 26; // pt — scannable at arm's length, fits the footer band
+  const qrLabelOffset = qrImage ? QR_SIZE + 10 : 0;
+
   // ---- batch cover page ----------------------------------------------------
   // One unnumbered page before the content: app title, date and the list of
   // merged documents. Booklet mode is excluded — a portrait cover page would
@@ -303,10 +324,18 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
         color: textColor,
       });
     }
+    if (qrImage) {
+      page.drawImage(qrImage, {
+        x: marginX,
+        y: 8,
+        width: QR_SIZE,
+        height: QR_SIZE,
+      });
+    }
     if (o.layout.footerLabel && o.layout.footerLabel.trim()) {
       const label = o.layout.footerLabel.trim().slice(0, 60);
       page.drawText(label, {
-        x: marginX,
+        x: marginX + qrLabelOffset,
         y: 12,
         size: 8,
         font,

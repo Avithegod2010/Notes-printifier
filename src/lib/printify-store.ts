@@ -20,6 +20,7 @@ import {
   buildRepaintCanvases,
   countOcrSlides,
   ocrComposeItems,
+  type OcrPageReport,
   type OcrWord,
 } from './pdf/ocr';
 import { saveRecentJob, saveRecentSource, type RecentSourceFile } from './recent-jobs';
@@ -84,6 +85,8 @@ interface ProcessResult {
   sizeTargetMB: number | null;
   /** How many extra recompress passes were needed to (try to) fit the cap. */
   sizeAttempts: number;
+  /** OCR quality report — per-slide confidence + the PSM mode used. */
+  ocrReport: { pages: OcrPageReport[]; psm: string } | null;
 }
 
 /** Raw PDF bytes — kept outside zustand (not serializable, potentially large). */
@@ -175,6 +178,37 @@ function canvasLooksLikeFailedRender(canvas: HTMLCanvasElement): boolean {
 // optional searchable OCR layer.
 // ---------------------------------------------------------------------------
 
+/**
+ * Render the recipe QR as PNG bytes on the MAIN thread (the `qrcode`
+ * package needs a DOM canvas; the compose worker only embeds ready-made
+ * bytes). Returns null when off / the code would be too long / any failure.
+ */
+async function buildRecipeQrPng(
+  filters: FilterSettings,
+  layout: LayoutSettings,
+): Promise<Uint8Array | null> {
+  if (!layout.recipeQr) return null;
+  try {
+    const { encodeRecipe, recipeUrl } = await import('./recipe-link');
+    const code = encodeRecipe(filters, layout);
+    if (!code) return null;
+    const QR = await import('qrcode');
+    const dataUrl = await QR.toDataURL(recipeUrl(code), {
+      margin: 1,
+      width: 128,
+      errorCorrectionLevel: 'M',
+    });
+    const b64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  } catch (err) {
+    console.warn('Recipe QR generation failed — printing without it:', err);
+    return null;
+  }
+}
+
 /** Thrown when the job was cancelled (user reset / batch stop). */
 export class JobCancelled extends Error {
   constructor() {
@@ -246,6 +280,10 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
   // can be re-typeset into canvases that replace the pdf page renders.
   // When "searchable" is also on, this ONE OCR pass feeds both consumers
   // (Tesseract never runs twice); repaint-only mode runs it just once too.
+  // Per-slide OCR confidence report — collected from whichever pass ran.
+  const ocrReports: OcrPageReport[] = [];
+  const onPageReport = (r: OcrPageReport) => ocrReports.push(r);
+
   let sharedOcrWords: Map<string, OcrWord[]> | null = null;
   let sharedOcrError: Error | null = null;
   let sharedOcrRan = false;
@@ -260,6 +298,8 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
         (done, t) => onProgress({ done, total: t, ocr: true }),
         isActive,
         filters.ocrLangs ?? ['eng'],
+        filters.ocrPsm ?? '3',
+        onPageReport,
       );
     } catch (err) {
       if (!isActive()) throw new JobCancelled();
@@ -307,6 +347,9 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
   // compose pipeline (and pdf-lib) load on demand — keeps the initial
   // bundle light; the pipeline ships in its own async chunk.
   const { composePdf } = await import('./pdf/compose');
+  // Recipe QR bytes are generated once (main thread) and reused across any
+  // size-target recompress passes.
+  const recipeQrPng = await buildRecipeQrPng(filters, layout);
   let composed = await composePdf({
     buffers,
     items,
@@ -314,6 +357,7 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
     layout: effLayout,
     repaintCanvases,
     coverSheetData,
+    recipeQrPng,
     onProgress: (done, total) => onProgress({ done, total }),
   });
   // Repaint canvases were consumed by compose (and possibly transferred
@@ -338,6 +382,7 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
         filters,
         layout: effLayout,
         coverSheetData,
+        recipeQrPng,
         jpegQualityOverride: q,
         onProgress: (done, total) => onProgress({ done, total }),
       });
@@ -365,6 +410,8 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
           (done, t) => onProgress({ done, total: t, ocr: true }),
           isActive,
           filters.ocrLangs ?? ['eng'],
+          filters.ocrPsm ?? '3',
+          onPageReport,
         );
       }
       const withText = await addOcrTextLayer(composed.pdfBytes, items, composed.placements, words);
@@ -392,6 +439,10 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
     ocrWarning,
     sizeTargetMB: targetMB,
     sizeAttempts,
+    ocrReport:
+      sharedOcrRan || searchable
+        ? { pages: ocrReports, psm: filters.ocrPsm ?? '3' }
+        : null,
   };
   const fileName =
     docs.map((d) => d.name).join(', ').slice(0, 300) || 'untitled.pdf';

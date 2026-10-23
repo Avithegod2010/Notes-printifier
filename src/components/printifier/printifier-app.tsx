@@ -92,6 +92,7 @@ import { cn } from '@/lib/utils';
 import { decodeRecipe } from '@/lib/recipe-link';
 import { useGlobalKeys } from '@/hooks/use-global-keys';
 import { useShareTarget } from '@/hooks/use-share-target';
+import { useWheelTamer } from '@/hooks/use-wheel-tamer';
 import {
   Dialog,
   DialogContent,
@@ -645,6 +646,10 @@ export function PrintifierApp() {
 
   // Keyboard-first pass 2 — O / Enter / P / arrows (see use-global-keys.ts)
   useGlobalKeys();
+
+  // Calmer mouse-wheel scrolling — every tick is damped so the page needs
+  // noticeably more wheel turns (see use-wheel-tamer.ts).
+  useWheelTamer();
 
   // Web Share Target (GET) — a PDF link shared from the OS share sheet lands
   // here and flows straight into the pipeline.

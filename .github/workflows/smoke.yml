@@ -1,0 +1,61 @@
+name: Smoke (Playwright)
+
+on:
+  pull_request:
+    branches: [main, stable]
+  workflow_dispatch:
+
+# Least privilege: the workflow only needs to read the repo.
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Static export build
+        run: bun run build:static
+
+      # Production (GitHub Pages) serves the site under /<repo>/ — stage the
+      # same layout locally so the smoke test exercises the exact production
+      # asset paths (service worker, pdf.js worker, traineddata…).
+      - name: Stage site under base path
+        run: |
+          mkdir -p .webtest/Notes-printifier
+          cp -r .next-static/. .webtest/Notes-printifier/
+
+      - name: Install Playwright chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Serve static site
+        run: |
+          npx --yes serve -l 4173 .webtest &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4173/Notes-printifier/ > /dev/null; then break; fi
+            sleep 1
+          done
+
+      - name: Run smoke test (upload → process)
+        run: bunx playwright test
+        env:
+          SMOKE_BASE_URL: http://127.0.0.1:4173/Notes-printifier
+
+      - name: Upload trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

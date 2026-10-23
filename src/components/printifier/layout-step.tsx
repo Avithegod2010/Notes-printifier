@@ -10,6 +10,7 @@ import {
   IndianRupee,
   Loader2,
   Printer,
+  QrCode,
   SlidersHorizontal,
   Sparkles,
   Stamp,
@@ -891,6 +892,30 @@ export function LayoutStep() {
                   aria-label="Name stamp printed on every sheet"
                 />
                 <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.stampNote')}</p>
+              </div>
+
+              {/* Recipe QR — a physical handout carries its own "print this
+                  recipe again" code; scanning reopens the site with these
+                  exact Enhance + Layout settings (?r= link, no server). */}
+              <div
+                className={cn(
+                  'flex items-center justify-between rounded-xl border p-4 transition-colors',
+                  layout.recipeQr
+                    ? 'border-violet-500/50 bg-violet-500/10'
+                    : 'border-white/10 bg-white/[0.02]',
+                )}
+              >
+                <div className="pr-3">
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    <QrCode className="h-4 w-4 text-violet-300" /> {t('ly.recipeQr')}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{t('ly.recipeQrHint')}</p>
+                </div>
+                <Switch
+                  checked={!!layout.recipeQr}
+                  onCheckedChange={(v) => setLayout({ recipeQr: v })}
+                  aria-label={t('ly.recipeQr')}
+                />
               </div>
             </div>
           </CollapsibleContent>

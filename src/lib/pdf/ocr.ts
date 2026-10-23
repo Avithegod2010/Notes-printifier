@@ -46,6 +46,20 @@ const MAX_OCR_SLIDES = 120; // hard cap — beyond this the wait isn't worth it
  */
 export type OcrLang = 'eng' | 'hin' | 'tam';
 
+/**
+ * Per-slide OCR quality report — feeds the result-page confidence card
+ * ("page 7 looked like a handwriting scan, 61% confidence").
+ */
+export interface OcrPageReport {
+  docId: number;
+  pageNumber: number;
+  rotation: number;
+  /** Page-level Tesseract confidence 0..100 (whole-slide average). */
+  confidence: number;
+  /** Words that survived the per-word confidence gate. */
+  words: number;
+}
+
 /** Strip control characters only — Devanagari/Tamil/etc. text is KEPT. */
 function sanitize(text: string): string {
   return text.replace(/[\u0000-\u001F\u007F]/g, '').trim();
@@ -118,6 +132,9 @@ export function countOcrSlides(items: ComposeItem[]): number {
  * Returns word boxes keyed by docId:pageNumber:rotation.
  * `langs` — Tesseract language codes (default ['eng']); combos like
  * ['eng','hin'] recognize mixed-script decks.
+ * `psm` — Tesseract page-segmentation mode: '3' = auto (default),
+ * '6' = single uniform text block (often better for handwritten notes).
+ * `onPageReport` — optional per-slide quality callback (confidence card).
  */
 export async function ocrComposeItems(
   buffers: Array<{ id: number; data: ArrayBuffer }>,
@@ -125,6 +142,8 @@ export async function ocrComposeItems(
   onProgress?: (done: number, total: number) => void,
   isCancelled?: () => boolean,
   langs: string[] = ['eng'],
+  psm: string = '3',
+  onPageReport?: (r: OcrPageReport) => void,
 ): Promise<Map<string, OcrWord[]>> {
   const unique = new Map<string, OcrKey>();
   for (const item of items) {
@@ -143,7 +162,7 @@ export async function ocrComposeItems(
     );
   }
 
-  const { createWorker, OEM } = await import('tesseract.js');
+  const { createWorker, OEM, PSM } = await import('tesseract.js');
   // GitHub Pages hosts the site under /<repo>/ — prefix self-hosted assets.
   const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const cleanLangs = langs.filter((l) => /^[a-z]{3}$/.test(l));
@@ -160,6 +179,14 @@ export async function ocrComposeItems(
   );
 
   try {
+    // OCR quality preset — expose tessedit_pageseg_mode. PSM 3 (auto) is
+    // right for slides / multi-column layouts; PSM 6 treats the page as ONE
+    // uniform text block, which frequently rescues handwriting + single
+    // column scans that auto mode fragments.
+    await worker.setParameters({
+      tessedit_pageseg_mode: psm === '6' ? PSM.SINGLE_BLOCK : PSM.AUTO,
+    });
+
     const docs = new Map<number, Awaited<ReturnType<typeof loadPdfDocument>>>();
     const buffersById = new Map(buffers.map((b) => [b.id, b.data]));
 
@@ -212,6 +239,16 @@ export async function ocrComposeItems(
         }
       }
       results.set(key, words);
+
+      onPageReport?.({
+        docId: k.docId,
+        pageNumber: k.pageNumber,
+        rotation: k.rotation,
+        // page-level confidence (whole-slide average over everything
+        // Tesseract saw, kept or not) — the honest quality signal
+        confidence: Math.round(data.confidence ?? 0),
+        words: words.length,
+      });
 
       done++;
       onProgress?.(done, total);

@@ -26,8 +26,8 @@ const LANG_IDS = LANGUAGES.map((l) => l.id);
 
 const LS_KEY = 'printifier.lang';
 
-/** [English, हिन्दी] */
-const DICT: Record<string, [string, string]> = {
+/** [English, हिन्दी] — exported for scripts/i18n-missing.ts. */
+export const DICT: Record<string, [string, string]> = {
   // header / nav
   'nav.how': ['How it works', 'कैसे काम करता है'],
   'nav.features': ['Features', 'खूबियाँ'],
@@ -928,6 +928,49 @@ const DICT: Record<string, [string, string]> = {
 
   // welcome tour: pattern picker
   'tour.s2.patterns': ['Backdrop pattern', 'बैकड्रॉप पैटर्न'],
+
+  // layout: recipe QR printed on the output pages
+  'ly.recipeQr': ['Recipe QR on print', 'प्रिंट पर रेसिपी QR'],
+  'ly.recipeQrHint': [
+    'Print a small QR in the footer band — scanning it re-opens the site with these exact settings (no server needed).',
+    'फुटर में छोटा QR प्रिंट करें — स्कैन करने पर साइट यही सेटिंग्स लेकर खुलेगी (सर्वर ज़रूरी नहीं)।',
+  ],
+
+  // enhance: OCR quality preset (tessedit_pageseg_mode)
+  'en.ocrPsm': ['Recognition mode', 'पहचान मोड'],
+  'en.ocrPsm.auto': ['Auto — slides & mixed layouts', 'ऑटो — स्लाइड व मिश्रित'],
+  'en.ocrPsm.block': ['Single block — handwriting & notes', 'एक ब्लॉक — हस्तलेखन व नोट्स'],
+  'en.ocrPsm.hint': [
+    'Single block treats the page as one text column — often rescues handwriting and single-column scans that Auto fragments.',
+    'सिंगल ब्लॉक पूरे पन्ने को एक कॉलम मानता है — हस्तलेखन और सिंगल-कॉलम स्कैन के लिए बेहतर।',
+  ],
+
+  // result: OCR confidence report card
+  'rs.ocrRep.title': ['OCR quality report', 'OCR गुणवत्ता रिपोर्ट'],
+  'rs.ocrRep.avg': ['{n}% avg confidence', '{n}% औसत विश्वास'],
+  'rs.ocrRep.good': [
+    'Recognition looks clean — the searchable layer should be accurate.',
+    'पहचान साफ़ है — सर्च लेयर सटीक होनी चाहिए।',
+  ],
+  'rs.ocrRep.mid': [
+    'Some pages look like handwriting or rough scans — search still works, but expect a few misread words.',
+    'कुछ पन्ने हस्तलेखन या फीके स्कैन जैसे लगते हैं — सर्च चलेगा, पर कुछ शब्द ग़लत पढ़े जा सकते हैं।',
+  ],
+  'rs.ocrRep.low': [
+    'Low confidence — these pages were probably handwriting, photos or a language the OCR does not cover.',
+    'कम विश्वास — ये पन्ने संभवतः हस्तलेखन, फ़ोटो या ग़ैर-समर्थित भाषा के हैं।',
+  ],
+  'rs.ocrRep.page': ['Page {n} — {c}% confidence', 'पृष्ठ {n} — {c}% विश्वास'],
+  'rs.ocrRep.tryBlock': [
+    'Tip: switch Recognition mode to “Single block” in Enhance for handwriting-style pages.',
+    'सुझाव: हस्तलेखन पन्नों के लिए Enhance में “एक ब्लॉक” मोड आज़माएँ।',
+  ],
+
+  // result: split every N — per-part size estimate
+  'rs.split.est': [
+    '≈ {size} per part · {n} parts (estimate)',
+    '≈ {size} प्रति भाग · {n} भाग (अनुमान)',
+  ],
 };
 
 interface LangState {
@@ -963,8 +1006,10 @@ export const useLangStore = create<LangState>((set) => ({
  * Partial dictionaries for मराठी / தமிழ் / বাংলা — the most visible strings
  * are translated; anything missing falls back to English (never to a raw
  * key). Adding a string: put it in DICT (en/hi) and optionally in EXTRA.
+ * Exported for scripts/i18n-missing.ts — the MISSING_TRANSLATIONS.md
+ * generator that shows contributors exactly what is still missing.
  */
-const EXTRA: Record<'mr' | 'ta' | 'bn', Record<string, string>> = {
+export const EXTRA: Record<'mr' | 'ta' | 'bn', Record<string, string>> = {
   mr: {
     'nav.how': 'कसे चालते',
     'nav.features': 'वैशिष्ट्ये',
