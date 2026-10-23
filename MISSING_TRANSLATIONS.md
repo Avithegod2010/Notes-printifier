@@ -33,7 +33,7 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 631 missing (133/764 done, 17%)
+## मराठी (Marathi) — 597 missing (167/764 done, 22%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
@@ -98,7 +98,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `cp.shortcuts` | Keyboard shortcuts |
 | `cp.themes` | Themes |
 | `cp.top` | Back to top |
-| `cp.tour` | Replay the intro tour |
 | `cp.upload` | Upload new PDFs |
 | `db.co2` | CO₂ avoided |
 | `db.empty` | Process your first PDF and your savings will appear here. |
@@ -551,39 +550,6 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
 | `th.xerox` | Xerox Mono |
-| `tour.aria` | Welcome tour |
-| `tour.back` | Back |
-| `tour.next` | Next |
-| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
-| `tour.s1.c1` | N-up layouts |
-| `tour.s1.c2` | Ink saver |
-| `tour.s1.c3` | Booklet mode |
-| `tour.s1.c4` | 100% private |
-| `tour.s1.t` | Welcome to Printifier |
-| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
-| `tour.s2.dark` | Dark |
-| `tour.s2.hint` | Hover to see it live — tap to keep it |
-| `tour.s2.light` | Light |
-| `tour.s2.live` | Live preview |
-| `tour.s2.patterns` | Backdrop pattern |
-| `tour.s2.t` | Make it yours |
-| `tour.s3.after` | After · {n} pages |
-| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
-| `tour.s3.before` | Before · {n} sheets |
-| `tour.s3.full` | Browse the full before & after |
-| `tour.s3.ink` | −~87% ink |
-| `tour.s3.load` | Load this PDF & try it |
-| `tour.s3.pages` | −{n}% pages |
-| `tour.s3.t` | A real example |
-| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
-| `tour.s4.cta` | Try it yourself |
-| `tour.s4.s1` | Upload your PDF |
-| `tour.s4.s2` | Enhance & lay out |
-| `tour.s4.s3` | Print or share it |
-| `tour.s4.sample` | Load the sample PDF |
-| `tour.s4.t` | Your turn |
-| `tour.skip` | Skip |
-| `tour.stepN` | Step {n} of {m} |
 | `trust.free` | Free forever |
 | `trust.offline` | Works offline |
 | `trust.private` | 100% private |
@@ -671,7 +637,7 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## தமிழ் (Tamil) — 631 missing (133/764 done, 17%)
+## தமிழ் (Tamil) — 597 missing (167/764 done, 22%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
@@ -736,7 +702,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `cp.shortcuts` | Keyboard shortcuts |
 | `cp.themes` | Themes |
 | `cp.top` | Back to top |
-| `cp.tour` | Replay the intro tour |
 | `cp.upload` | Upload new PDFs |
 | `db.co2` | CO₂ avoided |
 | `db.empty` | Process your first PDF and your savings will appear here. |
@@ -1189,39 +1154,6 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
 | `th.xerox` | Xerox Mono |
-| `tour.aria` | Welcome tour |
-| `tour.back` | Back |
-| `tour.next` | Next |
-| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
-| `tour.s1.c1` | N-up layouts |
-| `tour.s1.c2` | Ink saver |
-| `tour.s1.c3` | Booklet mode |
-| `tour.s1.c4` | 100% private |
-| `tour.s1.t` | Welcome to Printifier |
-| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
-| `tour.s2.dark` | Dark |
-| `tour.s2.hint` | Hover to see it live — tap to keep it |
-| `tour.s2.light` | Light |
-| `tour.s2.live` | Live preview |
-| `tour.s2.patterns` | Backdrop pattern |
-| `tour.s2.t` | Make it yours |
-| `tour.s3.after` | After · {n} pages |
-| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
-| `tour.s3.before` | Before · {n} sheets |
-| `tour.s3.full` | Browse the full before & after |
-| `tour.s3.ink` | −~87% ink |
-| `tour.s3.load` | Load this PDF & try it |
-| `tour.s3.pages` | −{n}% pages |
-| `tour.s3.t` | A real example |
-| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
-| `tour.s4.cta` | Try it yourself |
-| `tour.s4.s1` | Upload your PDF |
-| `tour.s4.s2` | Enhance & lay out |
-| `tour.s4.s3` | Print or share it |
-| `tour.s4.sample` | Load the sample PDF |
-| `tour.s4.t` | Your turn |
-| `tour.skip` | Skip |
-| `tour.stepN` | Step {n} of {m} |
 | `trust.free` | Free forever |
 | `trust.offline` | Works offline |
 | `trust.private` | 100% private |
@@ -1309,7 +1241,7 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## বাংলা (Bengali) — 631 missing (133/764 done, 17%)
+## বাংলা (Bengali) — 597 missing (167/764 done, 22%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
@@ -1374,7 +1306,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `cp.shortcuts` | Keyboard shortcuts |
 | `cp.themes` | Themes |
 | `cp.top` | Back to top |
-| `cp.tour` | Replay the intro tour |
 | `cp.upload` | Upload new PDFs |
 | `db.co2` | CO₂ avoided |
 | `db.empty` | Process your first PDF and your savings will appear here. |
@@ -1827,39 +1758,6 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
 | `th.xerox` | Xerox Mono |
-| `tour.aria` | Welcome tour |
-| `tour.back` | Back |
-| `tour.next` | Next |
-| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
-| `tour.s1.c1` | N-up layouts |
-| `tour.s1.c2` | Ink saver |
-| `tour.s1.c3` | Booklet mode |
-| `tour.s1.c4` | 100% private |
-| `tour.s1.t` | Welcome to Printifier |
-| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
-| `tour.s2.dark` | Dark |
-| `tour.s2.hint` | Hover to see it live — tap to keep it |
-| `tour.s2.light` | Light |
-| `tour.s2.live` | Live preview |
-| `tour.s2.patterns` | Backdrop pattern |
-| `tour.s2.t` | Make it yours |
-| `tour.s3.after` | After · {n} pages |
-| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
-| `tour.s3.before` | Before · {n} sheets |
-| `tour.s3.full` | Browse the full before & after |
-| `tour.s3.ink` | −~87% ink |
-| `tour.s3.load` | Load this PDF & try it |
-| `tour.s3.pages` | −{n}% pages |
-| `tour.s3.t` | A real example |
-| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
-| `tour.s4.cta` | Try it yourself |
-| `tour.s4.s1` | Upload your PDF |
-| `tour.s4.s2` | Enhance & lay out |
-| `tour.s4.s3` | Print or share it |
-| `tour.s4.sample` | Load the sample PDF |
-| `tour.s4.t` | Your turn |
-| `tour.skip` | Skip |
-| `tour.stepN` | Step {n} of {m} |
 | `trust.free` | Free forever |
 | `trust.offline` | Works offline |
 | `trust.private` | 100% private |
@@ -1947,7 +1845,7 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## ગુજરાતી (Gujarati) — 631 missing (133/764 done, 17%)
+## ગુજરાતી (Gujarati) — 597 missing (167/764 done, 22%)
 
 Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA.gu`:
 
@@ -2012,7 +1910,6 @@ Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA
 | `cp.shortcuts` | Keyboard shortcuts |
 | `cp.themes` | Themes |
 | `cp.top` | Back to top |
-| `cp.tour` | Replay the intro tour |
 | `cp.upload` | Upload new PDFs |
 | `db.co2` | CO₂ avoided |
 | `db.empty` | Process your first PDF and your savings will appear here. |
@@ -2465,39 +2362,6 @@ Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
 | `th.xerox` | Xerox Mono |
-| `tour.aria` | Welcome tour |
-| `tour.back` | Back |
-| `tour.next` | Next |
-| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
-| `tour.s1.c1` | N-up layouts |
-| `tour.s1.c2` | Ink saver |
-| `tour.s1.c3` | Booklet mode |
-| `tour.s1.c4` | 100% private |
-| `tour.s1.t` | Welcome to Printifier |
-| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
-| `tour.s2.dark` | Dark |
-| `tour.s2.hint` | Hover to see it live — tap to keep it |
-| `tour.s2.light` | Light |
-| `tour.s2.live` | Live preview |
-| `tour.s2.patterns` | Backdrop pattern |
-| `tour.s2.t` | Make it yours |
-| `tour.s3.after` | After · {n} pages |
-| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
-| `tour.s3.before` | Before · {n} sheets |
-| `tour.s3.full` | Browse the full before & after |
-| `tour.s3.ink` | −~87% ink |
-| `tour.s3.load` | Load this PDF & try it |
-| `tour.s3.pages` | −{n}% pages |
-| `tour.s3.t` | A real example |
-| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
-| `tour.s4.cta` | Try it yourself |
-| `tour.s4.s1` | Upload your PDF |
-| `tour.s4.s2` | Enhance & lay out |
-| `tour.s4.s3` | Print or share it |
-| `tour.s4.sample` | Load the sample PDF |
-| `tour.s4.t` | Your turn |
-| `tour.skip` | Skip |
-| `tour.stepN` | Step {n} of {m} |
 | `trust.free` | Free forever |
 | `trust.offline` | Works offline |
 | `trust.private` | 100% private |
@@ -2585,7 +2449,7 @@ Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA
 | `ws.wheel` | Wheel damping |
 | `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## ਪੰਜਾਬੀ (Punjabi) — 631 missing (133/764 done, 17%)
+## ਪੰਜਾਬੀ (Punjabi) — 597 missing (167/764 done, 22%)
 
 Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA.pa`:
 
@@ -2650,7 +2514,6 @@ Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA
 | `cp.shortcuts` | Keyboard shortcuts |
 | `cp.themes` | Themes |
 | `cp.top` | Back to top |
-| `cp.tour` | Replay the intro tour |
 | `cp.upload` | Upload new PDFs |
 | `db.co2` | CO₂ avoided |
 | `db.empty` | Process your first PDF and your savings will appear here. |
@@ -3103,39 +2966,6 @@ Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
 | `th.xerox` | Xerox Mono |
-| `tour.aria` | Welcome tour |
-| `tour.back` | Back |
-| `tour.next` | Next |
-| `tour.s1.b` | Turn heavy lecture PDFs into printer-friendly sheets — more slides per page, less ink, brighter prints. Everything runs right here in your browser; your files never leave your device. |
-| `tour.s1.c1` | N-up layouts |
-| `tour.s1.c2` | Ink saver |
-| `tour.s1.c3` | Booklet mode |
-| `tour.s1.c4` | 100% private |
-| `tour.s1.t` | Welcome to Printifier |
-| `tour.s2.b` | Pick a look — the whole app follows instantly. 12 themes and 10 backdrop patterns live in the palette button up top, or press ⌘K / Ctrl+K anytime. |
-| `tour.s2.dark` | Dark |
-| `tour.s2.hint` | Hover to see it live — tap to keep it |
-| `tour.s2.light` | Light |
-| `tour.s2.live` | Live preview |
-| `tour.s2.patterns` | Backdrop pattern |
-| `tour.s2.t` | Make it yours |
-| `tour.s3.after` | After · {n} pages |
-| `tour.s3.b` | This is a real 41-page dark lecture PDF, processed with the default recipe (inverted, ink-saver, 3 slides per sheet). Nothing staged. |
-| `tour.s3.before` | Before · {n} sheets |
-| `tour.s3.full` | Browse the full before & after |
-| `tour.s3.ink` | −~87% ink |
-| `tour.s3.load` | Load this PDF & try it |
-| `tour.s3.pages` | −{n}% pages |
-| `tour.s3.t` | A real example |
-| `tour.s4.b` | Drop any lecture PDF, tune the sliders, and download a print-ready file. Three steps: upload → enhance → print. |
-| `tour.s4.cta` | Try it yourself |
-| `tour.s4.s1` | Upload your PDF |
-| `tour.s4.s2` | Enhance & lay out |
-| `tour.s4.s3` | Print or share it |
-| `tour.s4.sample` | Load the sample PDF |
-| `tour.s4.t` | Your turn |
-| `tour.skip` | Skip |
-| `tour.stepN` | Step {n} of {m} |
 | `trust.free` | Free forever |
 | `trust.offline` | Works offline |
 | `trust.private` | 100% private |
