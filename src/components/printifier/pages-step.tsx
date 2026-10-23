@@ -8,17 +8,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Palette,
   RotateCw,
   ScanLine,
   SlidersHorizontal,
   Trash2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { useT } from '@/lib/i18n';
+import type { FilterSettings } from '@/lib/pdf/filters';
 
 /**
  * Parse a page-range spec like "1-5, 8, 12-14" into 1-based positions.
@@ -40,6 +44,29 @@ export function parsePageSpec(spec: string, maxPage: number): number[] | null {
   return out.size > 0 ? [...out].sort((x, y) => x - y) : null;
 }
 
+/**
+ * Per-page color-mode override cycle — one tap walks the page through the
+ * useful exceptions to the deck-wide setting ("keep slide 3 colorful, invert
+ * the rest"). patch null = inherit the global Enhance settings.
+ */
+const OVERRIDE_CYCLE: Array<{
+  patch: Partial<FilterSettings> | null;
+  label: string;
+}> = [
+  { patch: { colorMode: 'original' }, label: 'COL' },
+  { patch: { colorMode: 'invert' }, label: 'INV' },
+  { patch: { colorMode: 'grayscale' }, label: 'GRAY' },
+  { patch: { colorMode: 'bw' }, label: 'B&W' },
+  { patch: null, label: '' },
+];
+
+function nextOverride(current: Partial<FilterSettings> | undefined) {
+  const idx = current?.colorMode
+    ? OVERRIDE_CYCLE.findIndex((o) => o.patch?.colorMode === current.colorMode)
+    : OVERRIDE_CYCLE.length - 1; // currently off → start the cycle
+  return OVERRIDE_CYCLE[(idx + 1) % OVERRIDE_CYCLE.length];
+}
+
 export function PagesStep() {
   const t = useT();
   const pages = usePrintifyStore((s) => s.pages);
@@ -53,23 +80,29 @@ export function PagesStep() {
   const movePage = usePrintifyStore((s) => s.movePage);
   const skipBlankPages = usePrintifyStore((s) => s.skipBlankPages);
   const setStep = usePrintifyStore((s) => s.setStep);
+  const autoRotateMixed = usePrintifyStore((s) => s.autoRotateMixed);
+  const activeId = usePrintifyStore((s) => s.activePageId);
+  const setActiveId = usePrintifyStore((s) => s.setActivePageId);
+  const setPageOverride = usePrintifyStore((s) => s.setPageOverride);
+  const clearPageOverrides = usePrintifyStore((s) => s.clearPageOverrides);
+  const pageOverrides = usePrintifyStore((s) => s.pageOverrides);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [scanningBlank, setScanningBlank] = useState(false);
   const [blankMsg, setBlankMsg] = useState<string | null>(null);
-  /** Last page the user acted on — target for keyboard shortcuts. */
-  const [activeId, setActiveId] = useState<string | null>(null);
   /** Two-thumb range slider window (1-based, inclusive). */
   const [range, setRange] = useState<[number, number]>([1, 1]);
   /** Custom range spec input ("1-5, 8, 12-14"). */
   const [spec, setSpec] = useState('');
   const [specMsg, setSpecMsg] = useState<string | null>(null);
+  const [rotateMsg, setRotateMsg] = useState<string | null>(null);
   const pagesRef = useRef(pages);
   pagesRef.current = pages;
 
   const selectedCount = pages.filter((p) => p.selected).length;
   const pageCount = pages.length;
+  const overrideCount = Object.keys(pageOverrides).length;
 
   // New document loaded (page count changed) → reset the slider to full span.
   // Adjusting state during render (React's recommended pattern) — no effect.
@@ -116,6 +149,12 @@ export function PagesStep() {
       setScanningBlank(false);
     }
   }, [skipBlankPages, t]);
+
+  const onAutoRotate = useCallback(() => {
+    setRotateMsg(null);
+    const n = autoRotateMixed();
+    setRotateMsg(n > 0 ? t('pg.autoRotateDone', { n }) : t('pg.autoRotateNone'));
+  }, [autoRotateMixed, t]);
 
   // Desktop keyboard shortcuts, acting on the last page the user touched.
   useEffect(() => {
@@ -200,6 +239,18 @@ export function PagesStep() {
             variant="outline"
             size="sm"
             className="flex-1 sm:flex-none"
+            disabled={pageCount === 0}
+            onClick={onAutoRotate}
+            title={t('pg.autoRotateHint')}
+          >
+            <RotateCw className="mr-1.5 h-4 w-4 text-violet-300" />
+            {t('pg.autoRotate')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none"
             onClick={() => setAllSelected(true)}
           >
             {t('pg.selectAll')}
@@ -237,6 +288,28 @@ export function PagesStep() {
           ))}
         </div>
       </div>
+
+      {overrideCount > 0 && (
+        <div className="flex items-center gap-2">
+          <Badge
+            variant="secondary"
+            className="bg-fuchsia-500/15 text-fuchsia-200"
+          >
+            <Palette className="mr-1.5 h-3.5 w-3.5" />
+            {t('pg.tweak.count', { n: overrideCount })}
+          </Badge>
+          <button
+            type="button"
+            onClick={() => {
+              clearPageOverrides();
+              setRotateMsg(null);
+            }}
+            className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-red-400/40 hover:text-red-300"
+          >
+            <X className="h-3 w-3" /> {t('pg.tweak.reset')}
+          </button>
+        </div>
+      )}
 
       {/* Range slider — drag the two handles to keep only that window */}
       {pageCount > 1 && (
@@ -303,8 +376,16 @@ export function PagesStep() {
         </p>
       )}
 
-      <div className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[36rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {pages.map((page, index) => (
+      {rotateMsg && (
+        <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-sm text-sky-200">
+          {rotateMsg}
+        </p>
+      )}
+
+      <div className="pretty-scroll grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-1 sm:max-h-[44rem] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {pages.map((page, index) => {
+          const override: Partial<FilterSettings> | undefined = pageOverrides[page.id];
+          return (
           <div
             key={page.id}
             draggable
@@ -365,7 +446,21 @@ export function PagesStep() {
               )}
             </div>
 
-            {page.rotation > 0 && (
+            {pageOverrides[page.id]?.colorMode && (
+              <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
+                {page.rotation > 0 && (
+                  <span className="rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {page.rotation}°
+                  </span>
+                )}
+                <span className="rounded-md bg-fuchsia-600/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {OVERRIDE_CYCLE.find(
+                    (o) => o.patch?.colorMode === pageOverrides[page.id]?.colorMode,
+                  )?.label ?? ''}
+                </span>
+              </div>
+            )}
+            {!pageOverrides[page.id]?.colorMode && page.rotation > 0 && (
               <div className="absolute right-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 {page.rotation}°
               </div>
@@ -380,6 +475,27 @@ export function PagesStep() {
             {/* always-visible action bar — touch devices have no hover, so
                 these controls must never hide (also a keyboard win) */}
             <div className="flex items-center justify-between gap-0.5 border-t border-white/10 bg-black/60 px-1 py-1 backdrop-blur-sm">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={`Per-page color override for page ${index + 1}`}
+                title={t('pg.tweak.hint')}
+                onClick={() => {
+                  setActiveId(page.id);
+                  const next = nextOverride(override);
+                  setPageOverride(page.id, next.patch);
+                }}
+                className="h-8 w-8 text-white/85 hover:bg-fuchsia-600/60 hover:text-white"
+              >
+                {override ? (
+                  <span className="text-[9px] font-extrabold leading-none">
+                    {OVERRIDE_CYCLE.find((o) => o.patch?.colorMode === override.colorMode)?.label}
+                  </span>
+                ) : (
+                  <Palette className="h-3.5 w-3.5" />
+                )}
+              </Button>
               <Button
                 type="button"
                 variant="ghost"
@@ -437,7 +553,8 @@ export function PagesStep() {
               </Button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <p className="hidden items-center justify-center gap-2 text-xs text-muted-foreground [@media(hover:hover)]:flex">

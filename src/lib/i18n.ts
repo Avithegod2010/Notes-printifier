@@ -148,6 +148,15 @@ const DICT: Record<string, [string, string]> = {
   'pg.scRotate': ['rotate', 'घुमाएँ'],
   'pg.scRemove': ['remove', 'हटाएँ'],
   'pg.scMove': ['move — acts on the page you tapped/clicked last', 'खिसकाएँ — जो पेज आख़िर दबाया उसी पर चलेगा'],
+
+  // arrange — auto-rotate mixed decks + per-page color overrides
+  'pg.autoRotate': ['Auto-rotate', 'अपने आप घुमाएँ'],
+  'pg.autoRotateHint': ['Turn every sideways (landscape) page upright inside this portrait batch', 'इस बैच में तिरछे (लैंडस्केप) पन्नों को सीधा घुमाएँ'],
+  'pg.autoRotateDone': ['{n} landscape page(s) rotated upright', '{n} तिरछे पन्ने सीधे घुमाए गए'],
+  'pg.autoRotateNone': ['No sideways pages found — batch is already portrait', 'कोई तिरछा पन्ना नहीं मिला — बैच पहले से पोर्ट्रेट है'],
+  'pg.tweak.hint': ['Color override for this page only', 'सिर्फ इस पेज के लिए रंग बदलें'],
+  'pg.tweak.reset': ['Reset tweaks', 'ट्वीक हटाएँ'],
+  'pg.tweak.count': ['{n} page(s) with a custom color override', '{n} पेजों का रंग अलग सेट है'],
   'pg.moveEarlier': ['Move page earlier', 'पेज पहले ले जाएँ'],
   'pg.moveLater': ['Move page later', 'पेज बाद में ले जाएँ'],
 
@@ -187,6 +196,8 @@ const DICT: Record<string, [string, string]> = {
   'en.pen.d': ['Darkens pen/pencil strokes while keeping paper white — light handwriting prints clearly instead of washing out.', 'कागज़ सफ़ेद रखते हुए पेन/पेंसिल की लकीरें गहरी करता है — हल्की लिखावट भी साफ़ छपेगी।'],
   'en.ocr': ['Searchable PDF (OCR)', 'सर्च-योग्य PDF (OCR)'],
   'en.ocr.d': ['Adds an invisible text layer so you can search and select text in the output. Slower — runs OCR on every page.', 'अदृश्य टेक्स्ट लेयर जोड़ता है जिससे आउटपुट में टेक्स्ट खोजा/चुना जा सके। धीमा — हर पेज पर OCR चलता है।'],
+  'en.ocrLang': ['Text language', 'टेक्स्ट की भाषा'],
+  'en.ocrLang.all': ['English + हिन्दी + தமிழ்', 'English + हिन्दी + தமிழ்'],
   'en.ocr.running': ['Adding searchable text (OCR)…', 'सर्च-योग्य टेक्स्ट (OCR) जोड़ा जा रहा है…'],
   'en.ocr.page': ['page {n} of {t}', '{t} में से पेज {n}'],
   'en.presets': ['Presets', 'प्रीसेट'],
@@ -261,6 +272,10 @@ const DICT: Record<string, [string, string]> = {
   'pr.incomingTitle': ['Shared preset', 'शेयर किया प्रीसेट'],
   'pr.incomingBody': ['“{n}” was shared with you. Apply it now? You can save it to your presets afterwards.', '“{n}” आपके साथ शेयर किया गया। अभी लगाएँ? बाद में प्रीसेट में सेव भी कर सकते हैं।'],
   'pr.incoming.apply': ['Apply preset', 'प्रीसेट लगाएँ'],
+  'pr.recipeApplied': ['Recipe applied from link ✓', 'लिंक से रेसिपी लागू हुई ✓'],
+  'pr.recipeBad': ['That recipe link is invalid', 'यह रेसिपी लिंक अमान्य है'],
+  'st.shared.importing': ['Downloading shared PDF…', 'शेयर किया PDF डाउनलोड हो रहा है…'],
+  'st.shared.ok': ['Shared PDF added ✓', 'शेयर किया PDF जुड़ गया ✓'],
   'pr.incoming.later': ['Not now', 'अभी नहीं'],
   'pr.incoming.applied': ['Preset “{n}” applied', 'प्रीसेट “{n}” लग गया'],
   'pr.incoming.bad': ['That preset link is broken or expired', 'प्रीसेट लिंक ग़लत या समाप्त है'],
@@ -510,6 +525,8 @@ const DICT: Record<string, [string, string]> = {
   'ft.links': ['Explore', 'जानें'],
   'ft.get': ['Get the app', 'ऐप पाएँ'],
   'ft.webapp': ['Or just use it in your browser — nothing to install.', 'या ब्राउज़र में ही चलाएँ — कुछ इंस्टॉल नहीं करना।'],
+  'ft.replay': ['Replay the guide', 'गाइड फिर देखें'],
+  'ft.replayHint': ['The 4-step walkthrough, anytime', 'चार-चरण वाली सैर, कभी भी'],
   'ft.made': ['Made for students who print smart.', 'उन छात्रों के लिए, जो समझदारी से छापते हैं।'],
 
   // duplex pad
@@ -634,8 +651,29 @@ const DICT: Record<string, [string, string]> = {
   ],
   'ly.sizeTargetOver': ['Estimated above target — quality will be reduced while processing.', 'अनुमान लक्ष्य से ज़्यादा है — प्रोसेसिंग के समय क्वालिटी घटेगी।'],
 
+  // layout — compression quick caps + margin calibration sheet
+  'ly.compPreset': ['Quick caps', 'झटपट कैप'],
+  'ly.compWhatsApp': ['WhatsApp · 16 MB', 'WhatsApp · 16 MB'],
+  'ly.compEmail': ['Email · 25 MB', 'Email · 25 MB'],
+  'ly.compForms': ['Forms · 5 MB', 'फॉर्म · 5 MB'],
+  'ly.compOff': ['No cap', 'कोई कैप नहीं'],
+  'ly.testPage': ['Margin test page', 'मार्जिन टेस्ट पेज'],
+  'ly.testHint': ['Not sure how thick your printer\'s unprintable border is? Print a true-size calibration sheet.', 'प्रिंटर का अछूता किनारा कितना चौड़ा है? असली साइज़ की कैलिब्रेशन शीट प्रिंट करें।'],
+  'ly.testNeedFixed': ['Pick a fixed paper size (A4/Letter/…) first — original/custom sizes can\'t be calibrated.', 'पहले कोई फिक्स्ड साइज़ चुनें (A4/Letter/…) — original/custom कैलिब्रेट नहीं हो सकते।'],
+  'ly.testOpened': ['Test sheet opened in a new tab — print it at 100% scale.', 'टेस्ट शीट नए टैब में खुली — 100% स्केल पर प्रिंट करें।'],
+  'ly.testFail': ['Could not build the test sheet — try again.', 'टेस्ट शीट नहीं बनी — फिर कोशिश करें।'],
+
   // receipt card
   'rs.receipt.btn': ['Save receipt card', 'रसीद कार्ड सेव करें'],
+
+  // result — print now + recipe QR
+  'rs.print': ['Print now', 'अभी प्रिंट करें'],
+  'rs.qr.title': ['Recipe QR', 'रेसिपी QR'],
+  'rs.qr.sub': ['Scan to print with these exact settings again — classmates can reuse your whole recipe.', 'इन्हीं सेटिंग्स से दोबारा प्रिंट करने के लिए स्कैन करें — दोस्त भी आपकी पूरी रेसिपी इस्तेमाल कर सकते हैं।'],
+  'rs.qr.copy': ['Copy link', 'लिंक कॉपी करें'],
+  'rs.qr.copied': ['Recipe link copied', 'रेसिपी लिंक कॉपी हुआ'],
+  'rs.qr.copyFail': ['Could not copy — long-press the QR instead', 'कॉपी नहीं हुआ — QR को दबाकर देखें'],
+  'rs.qr.save': ['Save QR', 'QR सेव करें'],
   'rs.receipt.sub': ['Ink-saving print receipt', 'स्याही-बचत प्रिंट रसीद'],
   'rs.receipt.pagesIn': ['Slides in → sheets out', 'स्लाइड इन → शीट आउट'],
   'rs.receipt.money': ['Money saved', 'पैसे बचे'],

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   BookOpen,
   CheckCircle2,
+  Copy,
   Download,
   ExternalLink,
   FileImage,
@@ -16,6 +17,7 @@ import {
   MessageCircle,
   Pencil,
   Printer,
+  QrCode,
   RotateCcw,
   ScanText,
   Scissors,
@@ -67,6 +69,7 @@ import { buildReceiptCanvas, receiptCanvasToBlob } from '@/lib/receipt';
 import { ListenButton } from './listen-button';
 import { toast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
+import { encodeRecipe, recipeUrl } from '@/lib/recipe-link';
 
 /**
  * Telegram brand mark — lucide has no brand icons, so inline the classic
@@ -82,6 +85,37 @@ function TelegramIcon({ className }: { className?: string }) {
 
 function formatMB(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/**
+ * Print the finished PDF without a detour through the Downloads folder:
+ * load it into a hidden iframe and invoke that frame's print dialog, so the
+ * browser prints ONLY the PDF. Safari refuses iframe PDFs — fall back to
+ * opening the blob URL in a tab where the user prints manually.
+ */
+function printResultPdf(url: string): void {
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '1px';
+  iframe.style.height = '1px';
+  iframe.style.border = '0';
+  iframe.style.opacity = '0';
+  iframe.src = url;
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      window.open(url, '_blank', 'noopener');
+    }
+  };
+  iframe.onerror = () => window.open(url, '_blank', 'noopener');
+  document.body.appendChild(iframe);
+  // clean up long after the dialog has done its job
+  window.setTimeout(() => iframe.remove(), 120_000);
 }
 
 /** colorMode → i18n key, so the result stat shows the mode in the active language. */
@@ -298,6 +332,76 @@ export function ResultStep() {
     },
     [],
   );
+
+  // ---- keyboard pass 2: P (and the palette) print the finished PDF --------
+  useEffect(() => {
+    const onPrint = () => {
+      if (result) printResultPdf(result.url);
+    };
+    window.addEventListener('printifier:print', onPrint);
+    return () => window.removeEventListener('printifier:print', onPrint);
+  }, [result]);
+
+  // ---- Recipe QR — scan to reprint with these exact settings --------------
+  const recipeCode = useMemo(() => {
+    if (!result) return null;
+    try {
+      return encodeRecipe(filters, layout);
+    } catch {
+      return null;
+    }
+  }, [result, filters, layout]);
+  /** {code, url} pair — rendered only when the code still matches, so the
+   *  QR can never go stale after follow-up setting tweaks. */
+  const [qr, setQr] = useState<{ code: string; url: string } | null>(null);
+  const [qrBusy, setQrBusy] = useState(false);
+  const qrDataUrl = qr && qr.code === recipeCode ? qr.url : null;
+
+  useEffect(() => {
+    let dead = false;
+    if (!recipeCode) return;
+    void (async () => {
+      try {
+        const QR = await import('qrcode');
+        const url = await QR.toDataURL(recipeUrl(recipeCode), {
+          margin: 1,
+          width: 360,
+          errorCorrectionLevel: 'M',
+          color: { dark: '#0b0a10', light: '#ffffff' },
+        });
+        if (!dead) setQr({ code: recipeCode, url });
+      } catch (err) {
+        console.warn('QR generation failed', err);
+      }
+    })();
+    return () => {
+      dead = true;
+    };
+  }, [recipeCode]);
+
+  const copyRecipeLink = async () => {
+    if (!recipeCode) return;
+    try {
+      await navigator.clipboard.writeText(recipeUrl(recipeCode));
+      toast({ description: t('rs.qr.copied') });
+    } catch {
+      toast({ description: t('rs.qr.copyFail') });
+    }
+  };
+
+  const downloadQr = async () => {
+    if (!qrDataUrl) return;
+    setQrBusy(true);
+    try {
+      const res = await fetch(qrDataUrl);
+      const blob = await res.blob();
+      downloadBlob(blob, 'printifier-recipe-qr.png');
+    } catch {
+      toast({ description: t('rs.qr.copyFail') });
+    } finally {
+      setQrBusy(false);
+    }
+  };
 
   // ---- shareable ink-savings receipt (PNG card) ----------------------------
   const [receiptBusy, setReceiptBusy] = useState(false);
@@ -606,6 +710,55 @@ export function ResultStep() {
         <ListenButton />
       </div>
 
+      {/* Recipe QR — classmates scan it and land here with the SAME settings
+          already applied ("print this recipe again"). Fully static: the whole
+          recipe rides in the ?r= link, no server, no account. */}
+      {qrDataUrl && (
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:p-5">
+          <img
+            src={qrDataUrl}
+            alt={t('rs.qr.sub')}
+            width={128}
+            height={128}
+            className="h-32 w-32 shrink-0 rounded-xl bg-white p-1.5 shadow-lg"
+          />
+          <div className="min-w-0 flex-1 text-center sm:text-left">
+            <p className="flex items-center justify-center gap-2 text-sm font-semibold sm:justify-start">
+              <QrCode className="h-4 w-4 text-violet-300" /> {t('rs.qr.title')}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {t('rs.qr.sub')}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 border-white/15 bg-white/5"
+                onClick={() => void copyRecipeLink()}
+              >
+                <Copy className="mr-1.5 h-3.5 w-3.5" /> {t('rs.qr.copy')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 border-white/15 bg-white/5"
+                disabled={qrBusy}
+                onClick={() => void downloadQr()}
+              >
+                {qrBusy ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {t('rs.qr.save')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Lifetime impact meter — pure local data, one tap to clear */}
       {impact && (
         <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.07] p-4 sm:p-5">
@@ -750,6 +903,18 @@ export function ResultStep() {
         >
           <Download className="h-4 w-4" /> {t('rs.download')}
         </a>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => printResultPdf(result.url)}
+          aria-label={t('rs.print')}
+          className="w-full border border-white/15 bg-white/5 shadow-none hover:bg-white/10 sm:w-auto"
+        >
+          <Printer className="h-4 w-4" /> {t('rs.print')}
+          <kbd className="ml-1.5 hidden rounded border border-white/20 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
+            P
+          </kbd>
+        </Button>
         <a
           href={result.url}
           target="_blank"

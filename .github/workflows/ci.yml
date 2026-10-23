@@ -32,6 +32,11 @@ jobs:
       - name: Static export build
         run: bun run build:static
 
+      # Bundle budget — fail when shipped JS grows >10% vs the committed
+      # baseline, so size creep is a conscious decision, never an accident.
+      - name: JS bundle budget
+        run: bun run budget
+
       - name: Upload static site artifact
         uses: actions/upload-artifact@v7
         with:

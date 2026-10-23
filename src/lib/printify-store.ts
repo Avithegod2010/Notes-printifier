@@ -192,6 +192,8 @@ interface ComposeJobInput {
   docs: DocInfo[];
   /** Page pool for this job — only the selected ones are composed. */
   pages: PageItem[];
+  /** Per-page filter overrides keyed by PageItem.id ("keep slide 3 colorful"). */
+  overrides?: Record<string, Partial<FilterSettings>>;
   filters: FilterSettings;
   layout: LayoutSettings;
   /** LABS text-repaint flag. */
@@ -227,10 +229,14 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
   const effLayout: LayoutSettings = useBooklet
     ? { ...layout, rows: 1, cols: 2, orientation: 'landscape' }
     : layout;
+  const overrides = o.overrides ?? {};
   const baseItems: ComposeItem[] = selected.map((p) => ({
     docId: p.docId,
     pageNumber: p.pageNumber,
     rotation: p.rotation,
+    // attach the per-page override directly — rotation changes can never
+    // orphan it (no key lookups)
+    override: overrides[p.id],
   }));
   const items: ComposeItem[] = useBooklet
     ? buildBookletItems(baseItems)
@@ -253,6 +259,7 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
         items,
         (done, t) => onProgress({ done, total: t, ocr: true }),
         isActive,
+        filters.ocrLangs ?? ['eng'],
       );
     } catch (err) {
       if (!isActive()) throw new JobCancelled();
@@ -357,6 +364,7 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
           items,
           (done, t) => onProgress({ done, total: t, ocr: true }),
           isActive,
+          filters.ocrLangs ?? ['eng'],
         );
       }
       const withText = await addOcrTextLayer(composed.pdfBytes, items, composed.placements, words);
@@ -470,6 +478,13 @@ interface PrintifyState {
   step: number; // 0 upload · 1 arrange · 2 enhance · 3 layout · 4 done
   docs: DocInfo[];
   pages: PageItem[];
+  /**
+   * Per-page filter overrides keyed by PageItem.id — e.g. keep one colorful
+   * slide original while the rest of the deck inverts. Empty = no tweaks.
+   */
+  pageOverrides: Record<string, Partial<FilterSettings>>;
+  /** The page the user last acted on — target for keyboard shortcuts. */
+  activePageId: string | null;
   filters: FilterSettings;
   /** True once the user manually picked a color mode — disables auto mode. */
   filtersTouched: boolean;
@@ -511,6 +526,18 @@ interface PrintifyState {
   removePage: (pageId: string) => void;
   rotatePage: (pageId: string) => void;
   movePage: (from: number, to: number) => void;
+  /** Remember the last-acted page (keyboard shortcut target). */
+  setActivePageId: (pageId: string | null) => void;
+  /** Set/clear one page's filter override (null patch = clear that page). */
+  setPageOverride: (pageId: string, patch: Partial<FilterSettings> | null) => void;
+  /** Drop every per-page override ("reset tweaks"). */
+  clearPageOverrides: () => void;
+  /**
+   * Mixed-deck fix: rotate every page whose CONTENT is landscape into
+   * portrait (and landscape-rotated portrait pages back), so a portrait
+   * output grid uses full cells instead of letterboxing. Returns the count.
+   */
+  autoRotateMixed: () => number;
   setFilters: (patch: Partial<FilterSettings>) => void;
   setLayout: (patch: Partial<LayoutSettings>) => void;
   setStep: (step: number) => void;
@@ -526,6 +553,8 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   step: 0,
   docs: [],
   pages: [],
+  pageOverrides: {},
+  activePageId: null,
   filters: defaultFilters,
   filtersTouched: false,
   layout: defaultLayout,
@@ -843,7 +872,13 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   },
 
   removePage: (pageId) =>
-    set((s) => ({ pages: s.pages.filter((p) => p.id !== pageId) })),
+    set((s) => ({
+      pages: s.pages.filter((p) => p.id !== pageId),
+      pageOverrides: Object.fromEntries(
+        Object.entries(s.pageOverrides).filter(([k]) => k !== pageId),
+      ),
+      activePageId: s.activePageId === pageId ? null : s.activePageId,
+    })),
 
   rotatePage: (pageId) =>
     set((s) => ({
@@ -851,6 +886,37 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
         p.id === pageId ? { ...p, rotation: (p.rotation + 90) % 360 } : p,
       ),
     })),
+
+  setActivePageId: (pageId) => set({ activePageId: pageId }),
+
+  setPageOverride: (pageId, patch) =>
+    set((s) => {
+      const next = { ...s.pageOverrides };
+      if (patch === null || Object.keys(patch).length === 0) delete next[pageId];
+      else next[pageId] = { ...next[pageId], ...patch };
+      return { pageOverrides: next };
+    }),
+
+  clearPageOverrides: () => set({ pageOverrides: {} }),
+
+  autoRotateMixed: () => {
+    let rotated = 0;
+    set((s) => ({
+      pages: s.pages.map((p) => {
+        // content aspect as it renders RIGHT NOW (user rotation applied)
+        const rotatedQuarter = p.rotation % 180 === 90;
+        const effW = rotatedQuarter ? p.heightPt : p.widthPt;
+        const effH = rotatedQuarter ? p.widthPt : p.heightPt;
+        if (effW > effH * 1.02) {
+          // landscape content in a portrait batch → turn it upright
+          rotated++;
+          return { ...p, rotation: (p.rotation + 90) % 360 };
+        }
+        return p;
+      }),
+    }));
+    return rotated;
+  },
 
   movePage: (from, to) =>
     set((s) => {
@@ -910,7 +976,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   },
 
   process: async () => {
-    const { docs, pages, filters, layout, labsTextRepaint } = get();
+    const { docs, pages, filters, layout, labsTextRepaint, pageOverrides } = get();
     const selected = pages.filter((p) => p.selected);
     if (selected.length === 0 || docs.length === 0) return;
 
@@ -922,6 +988,7 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
       const out = await runComposeJob({
         docs,
         pages,
+        overrides: pageOverrides,
         filters,
         layout,
         repaint: labsTextRepaint,
@@ -970,6 +1037,8 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
       step: 0,
       docs: [],
       pages: [],
+      pageOverrides: {},
+      activePageId: null,
       filters: defaultFilters,
       filtersTouched: false,
       loadingDocs: false,

@@ -39,9 +39,64 @@ const OCR_RENDER_WIDTH = 1100; // px — good accuracy/speed trade-off for OCR
 const MIN_WORD_CONFIDENCE = 35;
 const MAX_OCR_SLIDES = 120; // hard cap — beyond this the wait isn't worth it
 
-/** WinAnsi-safe text (Helvetica standard font) — drop anything else. */
+/**
+ * Language codes accepted by Tesseract (ISO 639-2). The UI passes user-facing
+ * combos (e.g. ['eng','hin']) straight through; the matching .traineddata.gz
+ * files ship self-hosted in /public/tesseract so OCR stays fully offline.
+ */
+export type OcrLang = 'eng' | 'hin' | 'tam';
+
+/** Strip control characters only — Devanagari/Tamil/etc. text is KEPT. */
 function sanitize(text: string): string {
-  return text.replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').trim();
+  return text.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+}
+
+// ---------------------------------------------------------------------------
+// Unicode text layer — script-aware invisible fonts.
+//
+// The old layer drew every word with Helvetica, which is WinAnsi-only, so any
+// Devanagari/Tamil word had to be dropped (invisible, but also unsearchable).
+// Now: Latin words still use Helvetica, while Devanagari/Tamil words draw
+// with self-hosted Noto Sans fonts (registered via @pdf-lib/fontkit). The
+// invisible layer stores real Unicode code points, so Ctrl+F finds Hindi and
+// Tamil text even though not a single visible pixel changes.
+// ---------------------------------------------------------------------------
+
+/** Script detection — first match wins; unknown scripts fall back to Helvetica. */
+function isDevanagari(text: string): boolean {
+  return /[\u0900-\u097F]/.test(text);
+}
+function isTamil(text: string): boolean {
+  return /[\u0B80-\u0BFF]/.test(text);
+}
+
+const FONT_PATHS = {
+  deva: '/fonts/NotoSansDevanagari-Regular.ttf',
+  tamil: '/fonts/NotoSansTamil-Regular.ttf',
+} as const;
+
+const fontBytesCache = new Map<string, ArrayBuffer>();
+
+/** Fetch (and cache) a self-hosted Noto font. GitHub Pages subpath aware. */
+async function getFontBytes(kind: keyof typeof FONT_PATHS): Promise<ArrayBuffer> {
+  const cached = fontBytesCache.get(kind);
+  if (cached) return cached;
+  const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+  const res = await fetch(`${BASE}${FONT_PATHS[kind]}`);
+  if (!res.ok) throw new Error(`Font ${kind} unavailable (${res.status})`);
+  const buf = await res.arrayBuffer();
+  fontBytesCache.set(kind, buf);
+  return buf;
+}
+
+/** Does ANY word anywhere need the Devanagari (or Tamil) font? */
+function needsScriptFont(wordsByKey: Map<string, OcrWord[]>, test: (s: string) => boolean): boolean {
+  for (const words of wordsByKey.values()) {
+    for (const w of words) {
+      if (test(w.text)) return true;
+    }
+  }
+  return false;
 }
 
 function ocrKeyString(k: OcrKey): string {
@@ -61,12 +116,15 @@ export function countOcrSlides(items: ComposeItem[]): number {
 /**
  * OCR every unique source slide used by the composition.
  * Returns word boxes keyed by docId:pageNumber:rotation.
+ * `langs` — Tesseract language codes (default ['eng']); combos like
+ * ['eng','hin'] recognize mixed-script decks.
  */
 export async function ocrComposeItems(
   buffers: Array<{ id: number; data: ArrayBuffer }>,
   items: ComposeItem[],
   onProgress?: (done: number, total: number) => void,
   isCancelled?: () => boolean,
+  langs: string[] = ['eng'],
 ): Promise<Map<string, OcrWord[]>> {
   const unique = new Map<string, OcrKey>();
   for (const item of items) {
@@ -88,13 +146,18 @@ export async function ocrComposeItems(
   const { createWorker, OEM } = await import('tesseract.js');
   // GitHub Pages hosts the site under /<repo>/ — prefix self-hosted assets.
   const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-  const worker = await createWorker('eng', OEM.LSTM_ONLY, {
-    workerPath: `${BASE}/tesseract/worker.min.js`,
-    corePath: `${BASE}/tesseract`,
-    langPath: `${BASE}/tesseract`,
-    gzip: true,
-    errorHandler: (e) => console.warn('[ocr]', e),
-  });
+  const cleanLangs = langs.filter((l) => /^[a-z]{3}$/.test(l));
+  const worker = await createWorker(
+    cleanLangs.length > 0 ? cleanLangs : ['eng'],
+    OEM.LSTM_ONLY,
+    {
+      workerPath: `${BASE}/tesseract/worker.min.js`,
+      corePath: `${BASE}/tesseract`,
+      langPath: `${BASE}/tesseract`,
+      gzip: true,
+      errorHandler: (e) => console.warn('[ocr]', e),
+    },
+  );
 
   try {
     const docs = new Map<number, Awaited<ReturnType<typeof loadPdfDocument>>>();
@@ -102,7 +165,10 @@ export async function ocrComposeItems(
 
     let done = 0;
     for (const [key, k] of unique) {
-      if (isCancelled?.()) throw new Error('OCR cancelled');
+      // `isCancelled` follows the store's isActive convention: TRUE = the job
+      // is still running, FALSE = the user cancelled. (This check used to be
+      // inverted, so every searchable job bailed out on its first slide.)
+      if (isCancelled && !isCancelled()) throw new Error('OCR cancelled');
       let doc = docs.get(k.docId);
       if (!doc) {
         const buf = buffersById.get(k.docId);
@@ -308,6 +374,12 @@ export async function buildRepaintCanvases(
 /**
  * Draw the invisible text layer onto the composed PDF bytes.
  * Maps OCR word fractions through each slide's final placement rect.
+ *
+ * Script-aware: Latin words draw with Helvetica (built into every PDF
+ * viewer); Devanagari/Tamil words draw with self-hosted Noto fonts embedded
+ * via fontkit so the Unicode text survives into the PDF (searchable/copyable)
+ * even though it renders at opacity 0. Font files are fetched lazily — a
+ * pure-English job never downloads a byte of them.
  */
 export async function addOcrTextLayer(
   pdfBytes: Uint8Array,
@@ -320,6 +392,38 @@ export async function addOcrTextLayer(
   const doc = await PDFDocument.load(pdfBytes);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const transparent = rgb(0, 0, 0);
+
+  // Unicode fonts, embedded only when the OCR words actually need them.
+  const wantDeva = needsScriptFont(wordsByKey, isDevanagari);
+  const wantTamil = needsScriptFont(wordsByKey, isTamil);
+  let devaFont: Awaited<ReturnType<typeof doc.embedFont>> | null = null;
+  let tamilFont: Awaited<ReturnType<typeof doc.embedFont>> | null = null;
+  if (wantDeva || wantTamil) {
+    try {
+      const fontkit = (await import('@pdf-lib/fontkit')).default;
+      doc.registerFontkit(fontkit);
+      if (wantDeva) {
+        const bytes = await getFontBytes('deva');
+        try {
+          devaFont = await doc.embedFont(bytes, { subset: true });
+        } catch {
+          devaFont = await doc.embedFont(bytes); // unsubset fallback
+        }
+      }
+      if (wantTamil) {
+        const bytes = await getFontBytes('tamil');
+        try {
+          tamilFont = await doc.embedFont(bytes, { subset: true });
+        } catch {
+          tamilFont = await doc.embedFont(bytes);
+        }
+      }
+    } catch (err) {
+      // Font embedding is best-effort: Devanagari/Tamil words will fall back
+      // to Helvetica (and be skipped per-word) — Latin text still lands.
+      console.warn('[ocr] Unicode font embedding failed:', err);
+    }
+  }
 
   for (const p of placements) {
     const item = items[p.itemIndex];
@@ -336,12 +440,18 @@ export async function addOcrTextLayer(
       const x = p.x + w.fx0 * p.w;
       // fy is measured from the TOP of the slide; PDF origin is bottom-left
       const y = p.y + (1 - w.fy1) * p.h;
+      const wordFont = isDevanagari(text)
+        ? devaFont
+        : isTamil(text)
+          ? tamilFont
+          : font;
+      if (!wordFont) continue; // script needs a font we couldn't embed
       try {
         page.drawText(text, {
           x,
           y,
           size: Math.min(fontSize, 42),
-          font,
+          font: wordFont,
           color: transparent,
           opacity: 0,
         });

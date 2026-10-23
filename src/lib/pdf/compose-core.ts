@@ -416,8 +416,13 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       }
 
       // smart per-page invert decision (before any filtering)
-      const effMode = resolveColorMode(canvas, o.filters.colorMode);
-      if (o.filters.colorMode === 'auto' && effMode === 'invert') autoInverted++;
+      // Per-page override (F: "keep slide 3 colorful") — merged over the
+      // global filters for THIS item only.
+      const effFilters = item.override
+        ? { ...o.filters, ...item.override }
+        : o.filters;
+      const effMode = resolveColorMode(canvas, effFilters.colorMode);
+      if (effFilters.colorMode === 'auto' && effMode === 'invert') autoInverted++;
 
       // ink estimate on the first few pages only (cheap)
       let before = 0;
@@ -427,7 +432,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
 
       // deskew (optional) → filters → trim — the exact per-page chain,
       // worker-safe, in one call
-      const finalCanvas = preparePageCanvas(canvas, o.filters, effMode);
+      const finalCanvas = preparePageCanvas(canvas, effFilters, effMode);
 
       if (inkSamples < 6 && before > 0.03) {
         const afterCtx = finalCanvas.getContext('2d', {
@@ -637,8 +642,9 @@ export async function estimateCore(
     await pdfPage.render({ canvasContext: ctx, viewport }).promise;
 
     const before = inkCoverage(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
-    const effMode = resolveColorMode(canvas, filters.colorMode);
-    const finalCanvas = preparePageCanvas(canvas, filters, effMode);
+    const effFilters = item.override ? { ...filters, ...item.override } : filters;
+    const effMode = resolveColorMode(canvas, effFilters.colorMode);
+    const finalCanvas = preparePageCanvas(canvas, effFilters, effMode);
 
     if (before > 0.03) {
       const afterCtx = finalCanvas.getContext('2d', {

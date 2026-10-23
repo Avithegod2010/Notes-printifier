@@ -1,0 +1,6 @@
+{
+  "totalJsBytes": 17301327,
+  "files": 36,
+  "generatedAt": "2026-10-23T08:22:20.408Z",
+  "note": "Regenerate with: bun run build:static && bun run budget:update"
+}

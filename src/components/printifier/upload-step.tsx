@@ -79,6 +79,14 @@ export function UploadStep() {
     folderRef.current?.setAttribute('directory', '');
   }, []);
 
+  // Keyboard-first pass 2 — the global "O" key dispatches this event; only
+  // this component owns the real file input, so it answers the call.
+  useEffect(() => {
+    const open = () => inputRef.current?.click();
+    window.addEventListener('printifier:open', open);
+    return () => window.removeEventListener('printifier:open', open);
+  }, []);
+
   // ---- cloud import (#8) ---------------------------------------------------
   // On static builds (GitHub Pages / APK) the section stays visible but the
   // toggle opens the "needs the server" explainer instead of expanding.

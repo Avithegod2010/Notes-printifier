@@ -13,7 +13,7 @@
  * never break the page.
  */
 
-const CACHE_NAME = 'printifier-v3';
+const CACHE_NAME = 'printifier-v4';
 
 // GitHub Pages hosts project sites under /<repo>/ — derive the base from the
 // registration scope so the same file works at the root (dev, APK) and under
@@ -35,6 +35,10 @@ const SWR_PATH_PATTERNS = [
   /^\/manifest\.webmanifest$/,
   /^\/pdf\.worker\.min\.mjs$/,
   /^\/sample-.+\.pdf$/,
+  // OCR traineddata + Unicode text-layer fonts — cached after first use so
+  // Hindi/Tamil OCR keeps working fully offline.
+  /^\/tesseract\/.+\.traineddata\.gz$/,
+  /^\/fonts\/NotoSans(Devanagari|Tamil)-Regular\.ttf$/,
 ];
 
 self.addEventListener('install', (event) => {

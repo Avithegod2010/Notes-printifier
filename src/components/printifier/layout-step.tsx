@@ -55,6 +55,7 @@ import { renderPageToCanvas } from '@/lib/pdf/render';
 import { getDocBuffer, usePrintifyStore } from '@/lib/printify-store';
 import { estimateSavings, formatRupees } from '@/lib/savings';
 import { useT } from '@/lib/i18n';
+import { toast } from '@/hooks/use-toast';
 
 const ROWS = ['1', '2', '3', '4'];
 /** Quick "slides per sheet" chips — tap one, get the right grid instantly. */
@@ -157,6 +158,41 @@ export function LayoutStep() {
   // Advanced layout section — budget, slide numbers, cover, duplex pad,
   // booklet and footer tucked away from the core grid controls.
   const [advOpen, setAdvOpen] = useState(false);
+
+  // Margin calibration sheet (print at 100% to measure the hardware border).
+  const [testPageBusy, setTestPageBusy] = useState(false);
+  const makeTestPage = async () => {
+    if (testPageBusy) return;
+    const size = layout.pageSize;
+    if (size === 'original' || size === 'custom') {
+      toast({ description: t('ly.testNeedFixed') });
+      return;
+    }
+    setTestPageBusy(true);
+    try {
+      const { buildMarginTestPage } = await import('@/lib/pdf/test-page');
+      const bytes = await buildMarginTestPage(size, {
+        title: 'Printer Margin Test',
+        subtitle: '{size} · true physical size — check the unprintable border',
+        howTo: 'Print at 100% / "Actual size" (never "Fit to page").',
+        check: 'The innermost unbroken frame = your printer\'s minimum margin.',
+        model: 'Printer model',
+        dateLabel: 'Date',
+        edgeLabel: 'paper edge',
+      });
+      const url = URL.createObjectURL(
+        new Blob([bytes as BlobPart], { type: 'application/pdf' }),
+      );
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast({ description: t('ly.testOpened') });
+    } catch (err) {
+      console.error('Test page failed', err);
+      toast({ description: t('ly.testFail') });
+    } finally {
+      setTestPageBusy(false);
+    }
+  };
 
   const selectedKey = useMemo(
     () => selected.map((p) => `${p.docId}:${p.pageNumber}:${p.rotation}`).join('|'),
@@ -687,6 +723,27 @@ export function LayoutStep() {
                   onValueChange={(v) => setLayout({ sheetMargin: v[0] ?? 0 })}
                   aria-label={t('ly.margin')}
                 />
+                {/* Real-printer calibration: a true-physical-size sheet with
+                    3–25 mm rules. Print at 100% and the first unbroken rule
+                    tells you the printer's hardware margin (HP/Epson/…). */}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">{t('ly.testHint')}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0"
+                    disabled={testPageBusy}
+                    onClick={() => void makeTestPage()}
+                  >
+                    {testPageBusy ? (
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Printer className="mr-1.5 h-4 w-4 text-violet-300" />
+                    )}
+                    {t('ly.testPage')}
+                  </Button>
+                </div>
               </div>
 
               {/* PDF metadata — title / author written into the output file */}
@@ -967,6 +1024,42 @@ export function LayoutStep() {
               aria-label={t('ly.sizeTarget')}
               className="sm:max-w-[140px]"
             />
+            {/* One-tap caps for the two places students actually send PDFs:
+                WhatsApp's 16 MB document limit and typical 25 MB email caps. */}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                {t('ly.compPreset')}:
+              </span>
+              {(
+                [
+                  { mb: 16, key: 'ly.compWhatsApp' },
+                  { mb: 25, key: 'ly.compEmail' },
+                  { mb: 5, key: 'ly.compForms' },
+                  { mb: 0, key: 'ly.compOff' },
+                ] as const
+              ).map((p) => {
+                const active =
+                  p.mb === 0
+                    ? !layout.sizeTargetMB
+                    : layout.sizeTargetMB === p.mb;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setLayout({ sizeTargetMB: p.mb === 0 ? null : p.mb })}
+                    aria-pressed={active}
+                    className={cn(
+                      'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                      active
+                        ? 'border-primary/60 bg-primary/15 text-primary'
+                        : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-violet-500/40 hover:text-foreground',
+                    )}
+                  >
+                    {t(p.key)}
+                  </button>
+                );
+              })}
+            </div>
             <p className="mt-1.5 text-xs text-muted-foreground">{t('ly.sizeTargetHint')}</p>
             {estimate && layout.sizeTargetMB && estimate.estBytes > layout.sizeTargetMB * 1024 * 1024 && (
               <p className="mt-1.5 text-xs font-medium text-amber-300">{t('ly.sizeTargetOver')}</p>

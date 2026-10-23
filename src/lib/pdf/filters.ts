@@ -99,6 +99,13 @@ export interface FilterSettings {
    * type for the same preset-recipe reason as `headerTrim`.
    */
   logoRegions?: LogoRegion[];
+  /**
+   * Tesseract recognition languages for the searchable text layer — e.g.
+   * ['eng'], ['eng','hin'], ['eng','tam']. Optional for the same
+   * preset-literal reason as deskew/headerTrim; runtime defaults to ['eng'].
+   * The .traineddata.gz files are self-hosted in /public/tesseract.
+   */
+  ocrLangs?: string[];
 }
 
 export const defaultFilters: FilterSettings = {

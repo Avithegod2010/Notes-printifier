@@ -14,6 +14,7 @@ import {
   Eye,
   Loader2,
   Minus,
+  Palette,
   PenLine,
   Plus,
   RotateCw,
@@ -31,6 +32,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -45,6 +53,7 @@ import {
   trimCanvasMargins,
   type AnyCanvas,
   type ColorMode,
+  type FilterSettings,
   type LogoRegion,
 } from '@/lib/pdf/filters';
 import { loadPdfDocument } from '@/lib/pdf/pdfjs';
@@ -112,6 +121,8 @@ export function EnhanceStep() {
   const filters = usePrintifyStore((s) => s.filters);
   const setFilters = usePrintifyStore((s) => s.setFilters);
   const setStep = usePrintifyStore((s) => s.setStep);
+  const pageOverrides = usePrintifyStore((s) => s.pageOverrides);
+  const setPageOverride = usePrintifyStore((s) => s.setPageOverride);
 
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
@@ -154,6 +165,12 @@ export function EnhanceStep() {
   const selectedPages = pages.filter((p) => p.selected);
   const selIdx = Math.min(previewIdx, Math.max(0, selectedPages.length - 1));
   const previewPage = selectedPages[selIdx] ?? pages[0];
+  /** Per-page override for the page being previewed ("keep slide 3 colorful"). */
+  const previewOverride: Partial<FilterSettings> | undefined = previewPage
+    ? pageOverrides[previewPage.id]
+    : undefined;
+  /** Global filters merged with this page's override — what the pipeline runs. */
+  const effPreviewFilters = { ...filters, ...previewOverride };
 
   useEffect(() => {
     let cancelled = false;
@@ -173,10 +190,10 @@ export function EnhanceStep() {
         setBefore(canvas.toDataURL('image/jpeg', 0.72));
         setInkBefore(inkCoverage((canvas.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, canvas.width, canvas.height).data));
         // resolve 'auto' once so the preview shows the page's actual treatment
-        const effMode = resolveColorMode(canvas as AnyCanvas, filters.colorMode);
+        const effMode = resolveColorMode(canvas as AnyCanvas, effPreviewFilters.colorMode);
         // Skew angle: measured on the RAW render once per page and cached, so
         // slider tweaks never re-run the search — the badge just reads it.
-        if (filters.deskew) {
+        if (effPreviewFilters.deskew) {
           const angleKey = `${previewPage.docId}:${previewPage.pageNumber}:${previewPage.rotation}`;
           const cached = angleCache.current.get(angleKey);
           if (cached !== undefined) {
@@ -192,7 +209,7 @@ export function EnhanceStep() {
         // applied separately below so ink can be measured pre-trim)
         const work = preparePageCanvas(
           canvas as AnyCanvas,
-          { ...filters, trimMargins: false },
+          { ...effPreviewFilters, trimMargins: false },
           effMode,
         );
         if (cancelled) return;
@@ -200,7 +217,7 @@ export function EnhanceStep() {
         // dark-pixel fraction without saving ink — trim saves paper instead.
         setInkAfter(inkCoverage((work.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D).getImageData(0, 0, work.width, work.height).data));
         let final = work;
-        if (filters.trimMargins) {
+        if (effPreviewFilters.trimMargins) {
           const trimmed = trimCanvasMargins(work);
           if (trimmed !== work) final = trimmed;
         }
@@ -231,7 +248,7 @@ export function EnhanceStep() {
     return () => {
       cancelled = true;
     };
-  }, [previewPage?.id, previewPage?.rotation, filters]);
+  }, [previewPage?.id, previewPage?.rotation, filters, pageOverrides]);
 
   // F1 — window-level pointer tracking while the wipe handle is dragged
   useEffect(() => {
@@ -345,6 +362,21 @@ export function EnhanceStep() {
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
+              {/* Per-page override indicator — this page deviates from the deck */}
+              {previewOverride?.colorMode && (
+                <Badge className="gap-1 border-0 bg-fuchsia-500/20 text-[10px] font-bold text-fuchsia-200">
+                  <Palette className="h-3 w-3" />
+                  {t('en.mode.' + previewOverride.colorMode)}
+                  <button
+                    type="button"
+                    onClick={() => previewPage && setPageOverride(previewPage.id, null)}
+                    aria-label={t('pg.tweak.reset')}
+                    className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-white/20"
+                  >
+                    <X className="h-2.5 w-2.5" strokeWidth={3} />
+                  </button>
+                </Badge>
+              )}
             </div>
             <div className="flex flex-wrap items-center justify-end gap-1.5">
               <div className="flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-1 py-0.5">
@@ -908,6 +940,31 @@ export function EnhanceStep() {
                     />
                   </div>
                   <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
+                  {/* Recognition language — more traineddata = better Hindi /
+                      Tamil decks. Self-hosted, so it stays fully offline. */}
+                  {filters.searchable && (
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <Label htmlFor="ocr-langs" className="text-xs font-medium text-muted-foreground">
+                        {t('en.ocrLang')}
+                      </Label>
+                      <Select
+                        value={(filters.ocrLangs ?? ['eng']).join('+')}
+                        onValueChange={(v) =>
+                          setFilters({ ocrLangs: v.split('+') as FilterSettings['ocrLangs'] })
+                        }
+                      >
+                        <SelectTrigger id="ocr-langs" className="h-8 w-auto min-w-44 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="eng">English</SelectItem>
+                          <SelectItem value="eng+hin">English + हिन्दी</SelectItem>
+                          <SelectItem value="eng+tam">English + தமிழ்</SelectItem>
+                          <SelectItem value="eng+hin+tam">{t('en.ocrLang.all')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 <DoctorCard />

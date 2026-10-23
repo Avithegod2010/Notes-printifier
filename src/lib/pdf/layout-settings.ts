@@ -7,7 +7,10 @@
  * everything from here, so existing imports keep working.
  *
  * This module must stay dependency-free (no pdf-lib, no pdf.js, no canvas).
+ * The FilterSettings import is type-only — erased at build time.
  */
+
+import type { FilterSettings } from './filters';
 
 export type PageSizeOpt = 'a4' | 'letter' | 'a3' | 'a5' | 'legal' | 'original' | 'custom';
 export type QualityOpt = 'low' | 'medium' | 'high';
@@ -80,6 +83,14 @@ export interface ComposeItem {
   rotation: number; // user rotation 0/90/180/270
   /** Renders an intentional empty (white) cell — used for booklet padding. */
   blank?: boolean;
+  /**
+   * Per-page filter override — merged over the global FilterSettings before
+   * preparePageCanvas runs for THIS slide only ("keep slide 3 colorful,
+   * invert the rest" = override { colorMode: 'original' } on that page).
+   * Keyed lookups are NOT used (rotation changes must not orphan overrides);
+   * the store attaches the override directly to each item it builds.
+   */
+  override?: Partial<FilterSettings>;
 }
 
 /**

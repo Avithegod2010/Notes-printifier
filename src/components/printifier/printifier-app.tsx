@@ -89,6 +89,9 @@ import { useLangStore, useT, LANGUAGES } from '@/lib/i18n';
 import { useThemeStore, isLightTheme } from '@/lib/theme';
 import { APP_VERSION } from '@/lib/version';
 import { cn } from '@/lib/utils';
+import { decodeRecipe } from '@/lib/recipe-link';
+import { useGlobalKeys } from '@/hooks/use-global-keys';
+import { useShareTarget } from '@/hooks/use-share-target';
 import {
   Dialog,
   DialogContent,
@@ -599,6 +602,19 @@ function Footer() {
               <FlaskConical className="h-3.5 w-3.5" /> {t('ft.beta')}
             </a>
           </div>
+          {/* Onboarding replay — the tour auto-plays once per device; this
+              card keeps it one tap away forever (also in the ⌘K palette). */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('printifier:tour'))}
+            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-left text-xs font-semibold text-violet-200 transition-colors hover:bg-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              {t('ft.replay')}
+              <span className="block font-normal text-violet-300/70">{t('ft.replayHint')}</span>
+            </span>
+          </button>
           <p className="mt-3 text-xs text-muted-foreground">{t('ft.webapp')}</p>
           <p className="mt-2 text-xs text-muted-foreground">
             <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">
@@ -627,6 +643,26 @@ export function PrintifierApp() {
   const hydrateLang = useLangStore((s) => s.hydrate);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
 
+  // Keyboard-first pass 2 — O / Enter / P / arrows (see use-global-keys.ts)
+  useGlobalKeys();
+
+  // Web Share Target (GET) — a PDF link shared from the OS share sheet lands
+  // here and flows straight into the pipeline.
+  useShareTarget({
+    messages: {
+      progress: t('st.shared.importing'),
+      ok: t('st.shared.ok'),
+    },
+    onPdf: (file) => {
+      void addFiles([file]);
+      document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
+    },
+    onStatus: (message, kind) => {
+      if (message) toast({ description: message });
+      if (kind === 'error') console.warn('[share-target] import failed');
+    },
+  });
+
   // F2 — shared preset arrived via ?p=<id>
   const [sharedPreset, setSharedPreset] = useState<{
     name: string;
@@ -646,6 +682,29 @@ export function PrintifierApp() {
     hydrateLang(); // restores English/हिन्दी choice
     hydrateTheme(); // restores light/dark choice
     refreshPresets(); // hydrate saved presets from localStorage
+
+    // Recipe QR / share link (?r=<code>) — decode the settings snapshot,
+    // apply it, strip the param. Works on static hosting (no server needed).
+    try {
+      const url = new URL(window.location.href);
+      const r = url.searchParams.get('r');
+      if (r && /^[A-Za-z0-9_-]{8,1400}$/.test(r)) {
+        url.searchParams.delete('r');
+        window.history.replaceState({}, '', url.toString());
+        const recipe = decodeRecipe(r);
+        if (recipe) {
+          applyPresetData(
+            recipe.filters as Parameters<typeof applyPresetData>[0],
+            recipe.layout as Parameters<typeof applyPresetData>[1],
+          );
+          toast({ description: t('pr.recipeApplied') });
+        } else {
+          toast({ description: t('pr.recipeBad') });
+        }
+      }
+    } catch {
+      // URL parsing is best-effort
+    }
 
     // F2 — incoming preset share link (?p=<id>): fetch the recipe, strip the
     // param from the URL, and offer a one-tap apply dialog.
