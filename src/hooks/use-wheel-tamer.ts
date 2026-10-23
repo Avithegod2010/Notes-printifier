@@ -8,6 +8,9 @@
  * useful on long single-page sites like this one where a single flick used
  * to jump half a screen.
  *
+ * The damping strength is user-tunable (Theme Workshop → Wheel slider, 0–80%);
+ * the store is read per event so moving the slider applies instantly.
+ *
  * Preserves the things that must never feel broken:
  *  - Ctrl/Cmd + wheel (pinch-zoom) passes through untouched
  *  - inner scrollables (page grids, selects, dialogs) still scroll, just
@@ -17,8 +20,7 @@
  */
 
 import { useEffect } from 'react';
-
-const DAMPING = 0.45;
+import { useThemeStore, WHEEL_DEFAULT } from '@/lib/theme';
 
 /** Nearest ancestor that can scroll vertically right now, if any. */
 function scrollableAncestor(node: EventTarget | null): HTMLElement | null {
@@ -63,7 +65,13 @@ export function useWheelTamer(): void {
       const target = scrollableAncestor(e.target);
       if (!target) return;
 
-      const damped = deltaToPixels(e) * DAMPING;
+      // Read the user's slider live — 0% means native scroll speed.
+      const pct = useThemeStore.getState().wheel;
+      const damping =
+        typeof pct === 'number' && Number.isFinite(pct) && pct >= 0 ? pct / 100 : WHEEL_DEFAULT / 100;
+      if (damping <= 0) return; // 0% → fully native, never touch the event
+      if (damping >= 1) return; // 100%+ → native
+      const damped = deltaToPixels(e) * damping;
       const move = damped + remainder;
       const whole = Math.sign(move) * Math.max(Math.abs(move) < 0.5 ? 0 : 1, Math.floor(Math.abs(move)));
       remainder = move - whole;

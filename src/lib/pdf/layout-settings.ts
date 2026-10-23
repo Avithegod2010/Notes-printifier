@@ -51,6 +51,11 @@ export interface LayoutSettings {
   /** Extra sheet margin in pt (0–48) added on every side of the output page.
    *  0 = the built-in compact default. */
   sheetMargin?: number;
+  /** Margin Doctor calibration (mm per edge) measured from a printed
+   *  Margin Test Page — the printer's hardware-unprintable border. Content
+   *  is pushed inward by at least this much so nothing gets clipped.
+   *  Optional for the same preset-literal reason as deskew/headerTrim. */
+  calib?: MarginCalib;
   /** Custom page size in mm — used when pageSize === 'custom'. */
   customPageW?: number | null;
   customPageH?: number | null;
@@ -179,6 +184,29 @@ export const PAGE_SIZES: Record<Exclude<PageSizeOpt, 'original'>, [number, numbe
 
 export const MM_TO_PT = 72 / 25.4;
 
+/** Margin Doctor calibration — measured hardware border in mm per edge. */
+export interface MarginCalib {
+  t: number;
+  r: number;
+  b: number;
+  l: number;
+}
+
+/** Safety clamp for calibration values (a real printer never exceeds ~12mm). */
+export const CALIB_MAX_MM = 12;
+
+function clampCalib(v: number | undefined): number {
+  const n = typeof v === 'number' && Number.isFinite(v) ? v : 0;
+  return Math.min(CALIB_MAX_MM, Math.max(0, n));
+}
+
+export const EMPTY_CALIB: MarginCalib = { t: 0, r: 0, b: 0, l: 0 };
+
+/** True when any edge carries a non-zero calibration. */
+export function isCalibrated(c?: MarginCalib): boolean {
+  return !!c && (c.t > 0 || c.r > 0 || c.b > 0 || c.l > 0);
+}
+
 /** Sheet margin slider bounds (pt). */
 export const MARGIN_MIN = 0;
 export const MARGIN_MAX = 48;
@@ -200,14 +228,23 @@ export function fixedPageSize(layout: LayoutSettings): [number, number] | null {
 
 /**
  * Effective sheet margins in pt for a layout: the built-in compact frame
- * plus the user's extra-margin slider on every side.
+ * plus the user's extra-margin slider on every side, plus the Margin Doctor
+ * hardware-border calibration per edge. Horizontal correction uses the
+ * LARGER of the measured left/right borders — content can then never be
+ * clipped on either side (top/bottom get their own exact values).
  */
-export function sheetMargins(layout: Pick<LayoutSettings, 'pageNumbers' | 'sheetMargin'>) {
+export function sheetMargins(
+  layout: Pick<LayoutSettings, 'pageNumbers' | 'sheetMargin' | 'calib'>,
+) {
   const extra = Math.min(MARGIN_MAX, Math.max(MARGIN_MIN, Math.round(layout.sheetMargin ?? 0)));
+  const c = layout.calib;
+  const calT = clampCalib(c?.t) * MM_TO_PT;
+  const calB = clampCalib(c?.b) * MM_TO_PT;
+  const calX = Math.max(clampCalib(c?.l), clampCalib(c?.r)) * MM_TO_PT;
   return {
-    x: 18 + extra,
-    top: 18 + extra,
-    bottom: (layout.pageNumbers ? 34 : 18) + extra,
+    x: 18 + extra + calX,
+    top: 18 + extra + calT,
+    bottom: (layout.pageNumbers ? 34 : 18) + extra + calB,
   };
 }
 

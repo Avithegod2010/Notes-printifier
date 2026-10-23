@@ -33,7 +33,7 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 647 missing (58/705 done, 8%)
+## मराठी (Marathi) — 697 missing (58/755 done, 8%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
@@ -118,6 +118,21 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `dr.applied` | Doctor’s suggestion applied |
 | `dr.apply` | Apply suggestion |
 | `dr.ask` | Ask the Doctor |
+| `dr.bench.again` | Run again |
+| `dr.bench.applied` | Recognition mode set to PSM {psm} |
+| `dr.bench.conf` | Confidence |
+| `dr.bench.fail` | Benchmark failed — try another page. |
+| `dr.bench.mode` | Mode |
+| `dr.bench.page` | Page {n} of “{name}” |
+| `dr.bench.run` | Run benchmark |
+| `dr.bench.running` | Recognizing twice… |
+| `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
+| `dr.bench.time` | Time |
+| `dr.bench.title` | OCR Bench — PSM 3 vs 6 |
+| `dr.bench.use3` | Use auto (3) |
+| `dr.bench.use6` | Use single block (6) |
+| `dr.bench.winner` | PSM {psm} reads this page better |
+| `dr.bench.words` | Words |
 | `dr.fail` | The Doctor is unavailable right now |
 | `dr.goal` | Goal |
 | `dr.goal.balanced` | Balanced |
@@ -352,6 +367,19 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `ly.inPages` | Input pages |
 | `ly.liveBadge` | LIVE |
 | `ly.liveSub` | Real filters on the first sheet |
+| `ly.md.active` | Margin calibration active (T/R/B/L mm) |
+| `ly.md.applied` | Margin calibration applied — every output respects your borders now. |
+| `ly.md.apply` | Apply calibration |
+| `ly.md.bottom` | Bottom |
+| `ly.md.hint` | Measured your borders on the test sheet? Tune the output margins here. |
+| `ly.md.left` | Left |
+| `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
+| `ly.md.open` | Margin Doctor |
+| `ly.md.reset` | Reset |
+| `ly.md.right` | Right |
+| `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
+| `ly.md.title` | Margin Doctor |
+| `ly.md.top` | Top |
 | `ly.metaHint` | Title and author written into the output file’s metadata. |
 | `ly.noteLines` | Note lines (3-up) |
 | `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
@@ -569,20 +597,26 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `st.shared.importing` | Downloading shared PDF… |
 | `st.shared.ok` | Shared PDF added ✓ |
 | `step.aria` | Processing steps |
+| `th.blueprint` | Blueprint |
+| `th.chai` | Chai Time |
 | `th.crimson` | Crimson Dusk |
 | `th.cyber` | Cyber Neon |
 | `th.ember` | Solar Ember |
+| `th.festive` | Festive Night |
+| `th.kraft` | Kraft Paper |
 | `th.matrix` | Emerald Terminal |
 | `th.mint` | Fresh Mint |
 | `th.noir` | Noir Mono |
 | `th.nord` | Nordic Frost |
 | `th.ocean` | Deep Ocean |
+| `th.ohp` | OHP Glow |
 | `th.paper` | Paper Light |
 | `th.pick` | Theme |
 | `th.pickSub` | Pick a look — saved on this device. |
 | `th.rose` | Rose Quartz |
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
+| `th.xerox` | Xerox Mono |
 | `tour.aria` | Welcome tour |
 | `tour.back` | Back |
 | `tour.next` | Next |
@@ -686,8 +720,24 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 | `vc.start` | Speak a command |
 | `vc.stop` | Listening… tap to stop |
 | `vc.title` | Voice settings |
+| `ws.confetti` | Confetti on finish |
+| `ws.confetti.off` | Off |
+| `ws.confetti.on` | On |
+| `ws.corners` | Corners |
+| `ws.corners.round` | Rounded |
+| `ws.corners.sharp` | Sharp |
+| `ws.density` | Density |
+| `ws.density.comfy` | Comfy |
+| `ws.density.compact` | Compact |
+| `ws.motion` | Motion |
+| `ws.motion.calm` | Calm |
+| `ws.motion.full` | Full |
+| `ws.sub` | Density, corners, motion & more — saved on this device. |
+| `ws.title` | Theme Workshop |
+| `ws.wheel` | Wheel damping |
+| `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## தமிழ் (Tamil) — 647 missing (58/705 done, 8%)
+## தமிழ் (Tamil) — 697 missing (58/755 done, 8%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
@@ -772,6 +822,21 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `dr.applied` | Doctor’s suggestion applied |
 | `dr.apply` | Apply suggestion |
 | `dr.ask` | Ask the Doctor |
+| `dr.bench.again` | Run again |
+| `dr.bench.applied` | Recognition mode set to PSM {psm} |
+| `dr.bench.conf` | Confidence |
+| `dr.bench.fail` | Benchmark failed — try another page. |
+| `dr.bench.mode` | Mode |
+| `dr.bench.page` | Page {n} of “{name}” |
+| `dr.bench.run` | Run benchmark |
+| `dr.bench.running` | Recognizing twice… |
+| `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
+| `dr.bench.time` | Time |
+| `dr.bench.title` | OCR Bench — PSM 3 vs 6 |
+| `dr.bench.use3` | Use auto (3) |
+| `dr.bench.use6` | Use single block (6) |
+| `dr.bench.winner` | PSM {psm} reads this page better |
+| `dr.bench.words` | Words |
 | `dr.fail` | The Doctor is unavailable right now |
 | `dr.goal` | Goal |
 | `dr.goal.balanced` | Balanced |
@@ -1006,6 +1071,19 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `ly.inPages` | Input pages |
 | `ly.liveBadge` | LIVE |
 | `ly.liveSub` | Real filters on the first sheet |
+| `ly.md.active` | Margin calibration active (T/R/B/L mm) |
+| `ly.md.applied` | Margin calibration applied — every output respects your borders now. |
+| `ly.md.apply` | Apply calibration |
+| `ly.md.bottom` | Bottom |
+| `ly.md.hint` | Measured your borders on the test sheet? Tune the output margins here. |
+| `ly.md.left` | Left |
+| `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
+| `ly.md.open` | Margin Doctor |
+| `ly.md.reset` | Reset |
+| `ly.md.right` | Right |
+| `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
+| `ly.md.title` | Margin Doctor |
+| `ly.md.top` | Top |
 | `ly.metaHint` | Title and author written into the output file’s metadata. |
 | `ly.noteLines` | Note lines (3-up) |
 | `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
@@ -1223,20 +1301,26 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `st.shared.importing` | Downloading shared PDF… |
 | `st.shared.ok` | Shared PDF added ✓ |
 | `step.aria` | Processing steps |
+| `th.blueprint` | Blueprint |
+| `th.chai` | Chai Time |
 | `th.crimson` | Crimson Dusk |
 | `th.cyber` | Cyber Neon |
 | `th.ember` | Solar Ember |
+| `th.festive` | Festive Night |
+| `th.kraft` | Kraft Paper |
 | `th.matrix` | Emerald Terminal |
 | `th.mint` | Fresh Mint |
 | `th.noir` | Noir Mono |
 | `th.nord` | Nordic Frost |
 | `th.ocean` | Deep Ocean |
+| `th.ohp` | OHP Glow |
 | `th.paper` | Paper Light |
 | `th.pick` | Theme |
 | `th.pickSub` | Pick a look — saved on this device. |
 | `th.rose` | Rose Quartz |
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
+| `th.xerox` | Xerox Mono |
 | `tour.aria` | Welcome tour |
 | `tour.back` | Back |
 | `tour.next` | Next |
@@ -1340,8 +1424,24 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 | `vc.start` | Speak a command |
 | `vc.stop` | Listening… tap to stop |
 | `vc.title` | Voice settings |
+| `ws.confetti` | Confetti on finish |
+| `ws.confetti.off` | Off |
+| `ws.confetti.on` | On |
+| `ws.corners` | Corners |
+| `ws.corners.round` | Rounded |
+| `ws.corners.sharp` | Sharp |
+| `ws.density` | Density |
+| `ws.density.comfy` | Comfy |
+| `ws.density.compact` | Compact |
+| `ws.motion` | Motion |
+| `ws.motion.calm` | Calm |
+| `ws.motion.full` | Full |
+| `ws.sub` | Density, corners, motion & more — saved on this device. |
+| `ws.title` | Theme Workshop |
+| `ws.wheel` | Wheel damping |
+| `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |
 
-## বাংলা (Bengali) — 647 missing (58/705 done, 8%)
+## বাংলা (Bengali) — 697 missing (58/755 done, 8%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
@@ -1426,6 +1526,21 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `dr.applied` | Doctor’s suggestion applied |
 | `dr.apply` | Apply suggestion |
 | `dr.ask` | Ask the Doctor |
+| `dr.bench.again` | Run again |
+| `dr.bench.applied` | Recognition mode set to PSM {psm} |
+| `dr.bench.conf` | Confidence |
+| `dr.bench.fail` | Benchmark failed — try another page. |
+| `dr.bench.mode` | Mode |
+| `dr.bench.page` | Page {n} of “{name}” |
+| `dr.bench.run` | Run benchmark |
+| `dr.bench.running` | Recognizing twice… |
+| `dr.bench.sub` | Runs the same page through both recognition modes so you can see why the mode switch matters. |
+| `dr.bench.time` | Time |
+| `dr.bench.title` | OCR Bench — PSM 3 vs 6 |
+| `dr.bench.use3` | Use auto (3) |
+| `dr.bench.use6` | Use single block (6) |
+| `dr.bench.winner` | PSM {psm} reads this page better |
+| `dr.bench.words` | Words |
 | `dr.fail` | The Doctor is unavailable right now |
 | `dr.goal` | Goal |
 | `dr.goal.balanced` | Balanced |
@@ -1660,6 +1775,19 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `ly.inPages` | Input pages |
 | `ly.liveBadge` | LIVE |
 | `ly.liveSub` | Real filters on the first sheet |
+| `ly.md.active` | Margin calibration active (T/R/B/L mm) |
+| `ly.md.applied` | Margin calibration applied — every output respects your borders now. |
+| `ly.md.apply` | Apply calibration |
+| `ly.md.bottom` | Bottom |
+| `ly.md.hint` | Measured your borders on the test sheet? Tune the output margins here. |
+| `ly.md.left` | Left |
+| `ly.md.note` | Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge. |
+| `ly.md.open` | Margin Doctor |
+| `ly.md.reset` | Reset |
+| `ly.md.right` | Right |
+| `ly.md.sub` | Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side. |
+| `ly.md.title` | Margin Doctor |
+| `ly.md.top` | Top |
 | `ly.metaHint` | Title and author written into the output file’s metadata. |
 | `ly.noteLines` | Note lines (3-up) |
 | `ly.noteLinesHint` | Turns on with the 3 × 1 layout |
@@ -1877,20 +2005,26 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `st.shared.importing` | Downloading shared PDF… |
 | `st.shared.ok` | Shared PDF added ✓ |
 | `step.aria` | Processing steps |
+| `th.blueprint` | Blueprint |
+| `th.chai` | Chai Time |
 | `th.crimson` | Crimson Dusk |
 | `th.cyber` | Cyber Neon |
 | `th.ember` | Solar Ember |
+| `th.festive` | Festive Night |
+| `th.kraft` | Kraft Paper |
 | `th.matrix` | Emerald Terminal |
 | `th.mint` | Fresh Mint |
 | `th.noir` | Noir Mono |
 | `th.nord` | Nordic Frost |
 | `th.ocean` | Deep Ocean |
+| `th.ohp` | OHP Glow |
 | `th.paper` | Paper Light |
 | `th.pick` | Theme |
 | `th.pickSub` | Pick a look — saved on this device. |
 | `th.rose` | Rose Quartz |
 | `th.sand` | Desert Sand |
 | `th.violet` | Midnight Violet |
+| `th.xerox` | Xerox Mono |
 | `tour.aria` | Welcome tour |
 | `tour.back` | Back |
 | `tour.next` | Next |
@@ -1994,3 +2128,19 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 | `vc.start` | Speak a command |
 | `vc.stop` | Listening… tap to stop |
 | `vc.title` | Voice settings |
+| `ws.confetti` | Confetti on finish |
+| `ws.confetti.off` | Off |
+| `ws.confetti.on` | On |
+| `ws.corners` | Corners |
+| `ws.corners.round` | Rounded |
+| `ws.corners.sharp` | Sharp |
+| `ws.density` | Density |
+| `ws.density.comfy` | Comfy |
+| `ws.density.compact` | Compact |
+| `ws.motion` | Motion |
+| `ws.motion.calm` | Calm |
+| `ws.motion.full` | Full |
+| `ws.sub` | Density, corners, motion & more — saved on this device. |
+| `ws.title` | Theme Workshop |
+| `ws.wheel` | Wheel damping |
+| `ws.wheel.hint` | Higher = each mouse-wheel tick scrolls less (0 = native speed). |

@@ -51,6 +51,12 @@ const THEME_NAME_KEY: Record<ThemeId, string> = {
   noir: 'th.noir',
   sand: 'th.sand',
   mint: 'th.mint',
+  blueprint: 'th.blueprint',
+  kraft: 'th.kraft',
+  chai: 'th.chai',
+  festive: 'th.festive',
+  xerox: 'th.xerox',
+  ohp: 'th.ohp',
 };
 
 /**

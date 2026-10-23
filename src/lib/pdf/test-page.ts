@@ -20,6 +20,8 @@ interface TestPageStrings {
   subtitle: string;
   howTo: string;
   check: string;
+  /** Optional follow-up pointing at the in-app Margin Doctor inputs. */
+  calibrate?: string;
   model: string;
   dateLabel: string;
   edgeLabel: string;
@@ -151,6 +153,9 @@ export async function buildMarginTestPage(
     ['', 'plain', 4],
     [strings.howTo, 'plain', 8.5],
     [strings.check, 'plain', 8.5],
+  ];
+  if (strings.calibrate) lines.push([strings.calibrate, 'plain', 8.5]);
+  lines.push(
     ['', 'plain', 4],
     [`${strings.model}: ______________________`, 'plain', 9],
     [
@@ -158,7 +163,7 @@ export async function buildMarginTestPage(
       'plain',
       8,
     ],
-  ];
+  );
   let ty = hPt / 2 + 14 * MM;
   for (const [text, kind, size] of lines) {
     if (text) {

@@ -1,11 +1,19 @@
 /**
- * theme.ts — 12 selectable themes + 10 backdrop patterns.
+ * theme.ts — 18 selectable themes + 10 backdrop patterns + look & feel
+ * customisation (density, corners, motion, confetti, wheel sensitivity).
  *
  * A theme is an id that maps to CSS custom-property blocks in globals.css
  * (`html[data-theme='…']`). Light themes additionally keep the legacy
  * `theme-light` class on <html> so the existing paper-glass remaps fire.
  * The backdrop pattern is exposed as a `data-pattern` attribute that the
  * DYNAMIC BACKGROUND section of globals.css uses to restyle `.dyn-gridlayer`.
+ *
+ * Customisation flags ride along as more data-attributes:
+ *   data-density='compact' → smaller root font (everything scales down)
+ *   data-corners='sharp'   → zero border-radius everywhere (photocopy vibe)
+ *   data-motion='calm'     → kill animations (MotionConfig + CSS fallback)
+ *   confetti → fires the celebration canvas when a job finishes
+ *   wheel    → mouse-wheel damping strength (0 = native, 80 = very slow)
  *
  * Everything is applied client-side post-hydration: SSR always renders the
  * default "Midnight Violet" dark look, so there is never a hydration
@@ -26,7 +34,20 @@ export type ThemeId =
   | 'nord'
   | 'noir'
   | 'sand'
-  | 'mint';
+  | 'mint'
+  | 'blueprint'
+  | 'kraft'
+  | 'chai'
+  | 'festive'
+  | 'xerox'
+  | 'ohp';
+
+/** UI density — scales the whole interface via the root font size. */
+export type Density = 'comfy' | 'compact';
+/** Corner style — soft rounded, or 90° photocopy-sharp. */
+export type Corners = 'round' | 'sharp';
+/** Motion level — full animation, or a calm reduced-motion mode. */
+export type MotionPref = 'full' | 'calm';
 
 export type PatternId =
   | 'grid'
@@ -60,6 +81,13 @@ export const THEMES: readonly ThemeMeta[] = [
   { id: 'noir', light: false, swatch: ['#060607', '#101012', '#e4e4e7'] },
   { id: 'sand', light: true, swatch: ['#faf6ee', '#ffffff', '#b45309'] },
   { id: 'mint', light: true, swatch: ['#f2faf5', '#ffffff', '#059669'] },
+  // — unique additions (print-shop heritage themes) —
+  { id: 'blueprint', light: false, swatch: ['#061019', '#0a1a29', '#38bdf8'] },
+  { id: 'kraft', light: true, swatch: ['#f1e7d3', '#faf3e6', '#a1662f'] },
+  { id: 'chai', light: true, swatch: ['#f8f0e0', '#fffbf0', '#c98a2e'] },
+  { id: 'festive', light: false, swatch: ['#14061a', '#20092b', '#f59e0b'] },
+  { id: 'xerox', light: true, swatch: ['#f4f4f3', '#ffffff', '#171717'] },
+  { id: 'ohp', light: false, swatch: ['#151009', '#221a10', '#fbbf24'] },
 ];
 
 export const PATTERNS: readonly PatternId[] = [
@@ -102,14 +130,61 @@ function applyPattern(p: PatternId) {
   }
 }
 
+function applyDensity(d: Density) {
+  try {
+    document.documentElement.dataset.density = d;
+  } catch {
+    // non-DOM context — ignore
+  }
+}
+
+function applyCorners(c: Corners) {
+  try {
+    document.documentElement.dataset.corners = c;
+  } catch {
+    // non-DOM context — ignore
+  }
+}
+
+function applyMotion(m: MotionPref) {
+  try {
+    document.documentElement.dataset.motion = m;
+  } catch {
+    // non-DOM context — ignore
+  }
+}
+
+/** Clamp for the wheel-damping slider (0–80 %). */
+export const WHEEL_MIN = 0;
+export const WHEEL_MAX = 80;
+export const WHEEL_DEFAULT = 45;
+
+function clampWheel(v: unknown): number {
+  const n = typeof v === 'number' && Number.isFinite(v) ? v : WHEEL_DEFAULT;
+  return Math.min(WHEEL_MAX, Math.max(WHEEL_MIN, Math.round(n)));
+}
+
 interface ThemeState {
   themeId: ThemeId;
   pattern: PatternId;
   /** last dark / light theme — used by the quick light/dark flip */
   lastDark: ThemeId;
   lastLight: ThemeId;
+  /** Look & feel customisation (Theme Workshop). */
+  density: Density;
+  corners: Corners;
+  motion: MotionPref;
+  /** Celebrate a finished job with a confetti burst. */
+  confetti: boolean;
+  /** Mouse-wheel damping strength in % (0 = native scroll speed). */
+  wheel: number;
   setTheme: (id: ThemeId) => void;
   setPattern: (p: PatternId) => void;
+  setDensity: (d: Density) => void;
+  setCorners: (c: Corners) => void;
+  setMotion: (m: MotionPref) => void;
+  setConfetti: (on: boolean) => void;
+  setWheel: (v: number) => void;
   /** Temporarily paint a theme's look (CSS attribute only) WITHOUT changing
    *  the committed choice or persisting anything — powers the welcome-tour
    *  live hover preview. Pass null to restore the committed theme. */
@@ -125,15 +200,25 @@ interface Persist {
   pattern: PatternId;
   lastDark: ThemeId;
   lastLight: ThemeId;
+  density: Density;
+  corners: Corners;
+  motion: MotionPref;
+  confetti: boolean;
+  wheel: number;
 }
 
-function persist(s: Pick<ThemeState, 'themeId' | 'pattern' | 'lastDark' | 'lastLight'>) {
+function persist(s: ThemeState) {
   try {
     const blob: Persist = {
       id: s.themeId,
       pattern: s.pattern,
       lastDark: s.lastDark,
       lastLight: s.lastLight,
+      density: s.density,
+      corners: s.corners,
+      motion: s.motion,
+      confetti: s.confetti,
+      wheel: s.wheel,
     };
     window.localStorage.setItem(LS_NEW, JSON.stringify(blob));
   } catch {
@@ -146,6 +231,11 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   pattern: 'grid',
   lastDark: 'violet',
   lastLight: 'paper',
+  density: 'comfy',
+  corners: 'round',
+  motion: 'full',
+  confetti: true,
+  wheel: WHEEL_DEFAULT,
 
   setTheme: (id) => {
     if (!THEME_IDS.includes(id)) return;
@@ -161,6 +251,34 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     if (!PATTERN_IDS.includes(p)) return;
     applyPattern(p);
     set({ pattern: p });
+    persist(get());
+  },
+
+  setDensity: (d) => {
+    applyDensity(d);
+    set({ density: d });
+    persist(get());
+  },
+
+  setCorners: (c) => {
+    applyCorners(c);
+    set({ corners: c });
+    persist(get());
+  },
+
+  setMotion: (m) => {
+    applyMotion(m);
+    set({ motion: m });
+    persist(get());
+  },
+
+  setConfetti: (on) => {
+    set({ confetti: on });
+    persist(get());
+  },
+
+  setWheel: (v) => {
+    set({ wheel: clampWheel(v) });
     persist(get());
   },
 
@@ -181,11 +299,23 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
         const p = JSON.parse(raw) as Partial<Persist>;
         const id = p.id && THEME_IDS.includes(p.id) ? p.id : 'violet';
         const pattern = p.pattern && PATTERN_IDS.includes(p.pattern) ? p.pattern : 'grid';
+        const density: Density = p.density === 'compact' ? 'compact' : 'comfy';
+        const corners: Corners = p.corners === 'sharp' ? 'sharp' : 'round';
+        const motion: MotionPref = p.motion === 'calm' ? 'calm' : 'full';
+        const confetti = typeof p.confetti === 'boolean' ? p.confetti : true;
         applyTheme(id);
         applyPattern(pattern);
+        applyDensity(density);
+        applyCorners(corners);
+        applyMotion(motion);
         set({
           themeId: id,
           pattern,
+          density,
+          corners,
+          motion,
+          confetti,
+          wheel: clampWheel(p.wheel),
           lastDark: p.lastDark && THEME_IDS.includes(p.lastDark) ? p.lastDark : 'violet',
           lastLight: p.lastLight && THEME_IDS.includes(p.lastLight) ? p.lastLight : 'paper',
         });

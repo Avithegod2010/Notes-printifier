@@ -903,6 +903,7 @@ export function EnhanceStep() {
                       </Badge>
                     </h4>
                     <Switch
+                      data-testid="ocr-switch"
                       checked={filters.searchable}
                       onCheckedChange={(v) => setFilters({ searchable: v })}
                       aria-label={t('en.ocr')}

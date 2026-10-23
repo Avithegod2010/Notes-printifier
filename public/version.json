@@ -1,14 +1,13 @@
 {
-  "version": "1.5.0-beta",
-  "updated": "2026-10-17",
+  "version": "1.4.0",
+  "updated": "2026-10-23",
   "notes": [
-    "12 themes x 10 animated backdrop patterns + command palette (Ctrl/K)",
-    "AI Print Doctor: goal-based setting advice applied with one tap",
-    "Voice commands (speak your print settings) & spoken receipts",
-    "Logo region picker: erase any part of the page (e.g. corner watermarks)",
-    "QR preset sharing and a private impact dashboard with badges",
-    "Honest DPI readout, animated sliders, 4-step first-visit tour",
-    "WhatsApp & Telegram share the converted PDF itself",
-    "Security hardening: rate limits, CSP headers, -3.7k lines of dead code"
+    "6 new print-heritage themes (Blueprint, Kraft, Chai, Festive, Xerox, OHP) + Theme Workshop",
+    "Theme Workshop: density, sharp corners, calm motion, confetti, tunable wheel damping",
+    "Margin Doctor: enter measured printer borders, every output respects them",
+    "OCR Bench inside the Print Doctor: same page through PSM 3 vs PSM 6, one tap to adopt the winner",
+    "Bundle diet: −320 KB gzip of dead iconv-lite encoding tables removed",
+    "Smoke CI now runs on every push to main + asserts the OCR report card end-to-end",
+    "Translation progress badges in the README (hi/mr/ta/bn) — help translate!"
   ]
 }

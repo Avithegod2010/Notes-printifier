@@ -29,32 +29,17 @@ import type { AnyCanvas, FilterSettings } from './filters';
 import { PDF_WASM_URL } from './pdfjs';
 
 // pdf.js normally spawns its own worker for parsing. Inside this worker we
-// try that first (subworkers are supported everywhere modern); if the
-// environment refuses, we fall back to the fake-worker (main-thread-of-worker)
-// mode by importing the worker bundle directly.
+// rely on that (nested/subworkers are supported by all modern Chromium,
+// Firefox and Safari 16.4+ — the APK WebView included). If the environment
+// refuses subworkers we surface a clear error; the UI falls back to the
+// main-thread pipeline instead of shipping a second full pdf.worker bundle
+// (that dead fallback used to waste ~320 KB of gzip).
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE}/pdf.worker.min.mjs`;
-let fakeWorkerReady = false;
-
-async function ensureParser(): Promise<void> {
-  if (!fakeWorkerReady) return;
-  // re-arm fake worker mode after a failure
-  const g = globalThis as unknown as { pdfjsWorker?: unknown };
-  if (!g.pdfjsWorker) {
-    g.pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.min.mjs');
-  }
-}
 
 async function loadDocument(data: ArrayBuffer): Promise<PdfDocLike> {
   const copy = new Uint8Array(data.slice(0));
-  try {
-    return (await pdfjsLib.getDocument({ data: copy, wasmUrl: PDF_WASM_URL }).promise) as unknown as PdfDocLike;
-  } catch (err) {
-    console.warn('[compose-worker] subworker parse failed, using fake worker', err);
-    fakeWorkerReady = true;
-    await ensureParser();
-    return (await pdfjsLib.getDocument({ data: copy, wasmUrl: PDF_WASM_URL }).promise) as unknown as PdfDocLike;
-  }
+  return (await pdfjsLib.getDocument({ data: copy, wasmUrl: PDF_WASM_URL }).promise) as unknown as PdfDocLike;
 }
 
 const env: ComposeEnv = {

@@ -3,6 +3,8 @@ name: Smoke (Playwright)
 on:
   pull_request:
     branches: [main, stable]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 # Least privilege: the workflow only needs to read the repo.
@@ -27,6 +29,10 @@ jobs:
 
       - name: Static export build
         run: bun run build:static
+        env:
+          # The site is staged + served under /<repo>/ — build with the same
+          # base path the production deploy uses, or every asset URL 404s.
+          NEXT_PUBLIC_BASE_PATH: /Notes-printifier
 
       # Production (GitHub Pages) serves the site under /<repo>/ — stage the
       # same layout locally so the smoke test exercises the exact production

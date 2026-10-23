@@ -11,6 +11,7 @@ import {
   Loader2,
   Printer,
   QrCode,
+  Ruler,
   SlidersHorizontal,
   Sparkles,
   Stamp,
@@ -39,6 +40,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   bookletOutputPages,
   estimateOutputPages,
@@ -47,6 +49,10 @@ import {
   DPI_MAX,
   MARGIN_MIN,
   MARGIN_MAX,
+  CALIB_MAX_MM,
+  EMPTY_CALIB,
+  isCalibrated,
+  type MarginCalib,
   type PageSizeOpt,
   type QualityOpt,
 } from '@/lib/pdf/layout-settings';
@@ -162,6 +168,30 @@ export function LayoutStep() {
 
   // Margin calibration sheet (print at 100% to measure the hardware border).
   const [testPageBusy, setTestPageBusy] = useState(false);
+  // Margin Doctor — measured hardware border per edge (mm), applied as extra
+  // sheet margin so nothing lands in the printer's unprintable zone.
+  const [calibDraft, setCalibDraft] = useState<MarginCalib>(EMPTY_CALIB);
+  const [calibOpen, setCalibOpen] = useState(false);
+  const openMarginDoctor = () => {
+    setCalibDraft(layout.calib ? { ...EMPTY_CALIB, ...layout.calib } : { ...EMPTY_CALIB });
+    setCalibOpen(true);
+  };
+  const applyCalib = () => {
+    const clean = (v: string): number => {
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? Math.min(CALIB_MAX_MM, Math.max(0, n)) : 0;
+    };
+    setLayout({
+      calib: {
+        t: clean(calibDraft.t as unknown as string),
+        r: clean(calibDraft.r as unknown as string),
+        b: clean(calibDraft.b as unknown as string),
+        l: clean(calibDraft.l as unknown as string),
+      },
+    });
+    setCalibOpen(false);
+    toast({ description: t('ly.md.applied') });
+  };
   const makeTestPage = async () => {
     if (testPageBusy) return;
     const size = layout.pageSize;
@@ -177,6 +207,8 @@ export function LayoutStep() {
         subtitle: '{size} · true physical size — check the unprintable border',
         howTo: 'Print at 100% / "Actual size" (never "Fit to page").',
         check: 'The innermost unbroken frame = your printer\'s minimum margin.',
+        calibrate:
+          'Then open Margin Doctor and enter the smallest full number you can read per edge.',
         model: 'Printer model',
         dateLabel: 'Date',
         edgeLabel: 'paper edge',
@@ -729,21 +761,122 @@ export function LayoutStep() {
                     tells you the printer's hardware margin (HP/Epson/…). */}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-muted-foreground">{t('ly.testHint')}</p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 shrink-0"
-                    disabled={testPageBusy}
-                    onClick={() => void makeTestPage()}
-                  >
-                    {testPageBusy ? (
-                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Printer className="mr-1.5 h-4 w-4 text-violet-300" />
+                  <div className="flex shrink-0 items-center gap-2">
+                    {isCalibrated(layout.calib) && (
+                      <Badge
+                        variant="secondary"
+                        className="tabular-nums text-[10px]"
+                        title={t('ly.md.active')}
+                      >
+                        T{layout.calib?.t ?? 0} R{layout.calib?.r ?? 0} B{layout.calib?.b ?? 0} L
+                        {layout.calib?.l ?? 0}
+                      </Badge>
                     )}
-                    {t('ly.testPage')}
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 shrink-0"
+                      disabled={testPageBusy}
+                      onClick={() => void makeTestPage()}
+                    >
+                      {testPageBusy ? (
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Printer className="mr-1.5 h-4 w-4 text-violet-300" />
+                      )}
+                      {t('ly.testPage')}
+                    </Button>
+                  </div>
+                </div>
+                {/* Margin Doctor — turn the printed measurement into a real
+                    per-edge correction instead of just "knowing" it. */}
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">{t('ly.md.hint')}</p>
+                  <Popover
+                    open={calibOpen}
+                    onOpenChange={(v) => {
+                      if (v) openMarginDoctor();
+                      else setCalibOpen(false);
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 shrink-0"
+                        data-testid="margin-doctor"
+                      >
+                        <Ruler className="mr-1.5 h-4 w-4 text-emerald-300" />
+                        {t('ly.md.open')}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      className="w-72 rounded-2xl border-white/10 bg-popover p-4"
+                    >
+                      <p className="text-sm font-bold">{t('ly.md.title')}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {t('ly.md.sub')}
+                      </p>
+                      <div className="mt-3 grid grid-cols-4 gap-2">
+                        {(
+                          [
+                            ['t', 'ly.md.top'],
+                            ['r', 'ly.md.right'],
+                            ['b', 'ly.md.bottom'],
+                            ['l', 'ly.md.left'],
+                          ] as const
+                        ).map(([k, key]) => (
+                          <label key={k} className="text-center">
+                            <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t(key)}
+                            </span>
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              min={0}
+                              max={CALIB_MAX_MM}
+                              step={0.5}
+                              value={String(calibDraft[k])}
+                              onChange={(e) =>
+                                setCalibDraft((d) => ({ ...d, [k]: e.target.value } as MarginCalib))
+                              }
+                              className="mt-1 h-9 px-1 text-center text-sm tabular-nums"
+                              aria-label={`${t(key)} mm`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                        {t('ly.md.note')}
+                      </p>
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
+                          onClick={applyCalib}
+                        >
+                          {t('ly.md.apply')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setLayout({ calib: { ...EMPTY_CALIB } });
+                            setCalibDraft({ ...EMPTY_CALIB });
+                            toast({ description: t('ly.md.reset') });
+                          }}
+                        >
+                          {t('ly.md.reset')}
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 

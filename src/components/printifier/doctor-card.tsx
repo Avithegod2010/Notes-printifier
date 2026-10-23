@@ -10,6 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { HAS_SERVER_API } from '@/lib/server-api';
 import { showServerFeature } from '@/components/printifier/server-feature';
+import { OcrBench } from '@/components/printifier/ocr-bench-card';
 
 /**
  * DoctorCard — "AI Print Doctor".
@@ -218,6 +219,11 @@ export function DoctorCard() {
           </Button>
         </div>
       )}
+
+      {/* OCR accuracy benchmark — the same page through PSM 3 AND PSM 6,
+          printed right here so users see why the recognition-mode switch
+          exists (and one tap adopts the winner). */}
+      <OcrBench />
     </div>
   );
 }

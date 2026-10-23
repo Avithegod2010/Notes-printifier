@@ -87,6 +87,7 @@ import { UseCases } from './use-cases';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { useLangStore, useT, LANGUAGES } from '@/lib/i18n';
 import { useThemeStore, isLightTheme } from '@/lib/theme';
+import { MotionConfig } from 'framer-motion';
 import { APP_VERSION } from '@/lib/version';
 import { cn } from '@/lib/utils';
 import { decodeRecipe } from '@/lib/recipe-link';
@@ -637,6 +638,7 @@ function Footer() {
 export function PrintifierApp() {
   const t = useT();
   const step = usePrintifyStore((s) => s.step);
+  const motion = useThemeStore((s) => s.motion);
   const hydrateLabs = usePrintifyStore((s) => s.hydrateLabs);
   const refreshPresets = usePrintifyStore((s) => s.refreshPresets);
   const applyPresetData = usePrintifyStore((s) => s.applyPresetData);
@@ -750,6 +752,7 @@ export function PrintifierApp() {
   }, [hydrateLabs, hydrateLang, hydrateTheme, refreshPresets, t]);
 
   return (
+    <MotionConfig reducedMotion={motion === 'calm' ? 'always' : 'never'}>
     <div className="flex min-h-screen flex-col text-foreground">
       {/* ambient animated backdrop (fixed, -z-10, aria-hidden) */}
       <DynamicBackground />
@@ -844,5 +847,6 @@ export function PrintifierApp() {
         </DialogContent>
       </Dialog>
     </div>
+    </MotionConfig>
   );
 }

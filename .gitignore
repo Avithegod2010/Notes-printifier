@@ -45,7 +45,6 @@ yarn-error.log*
 /scripts/dev/
 # sandbox scaffolding demos + runtime tests
 /examples/
-/tests/
 /mini-services/
 /.zscripts/
 /skills/
@@ -63,4 +62,9 @@ next-env.d.ts
 *.idsig
 local-*
 test
+tests/ocr-fixture.pdf
+tests-results/
+playwright-report/
+/.webtest/
 prompt
+test-results/

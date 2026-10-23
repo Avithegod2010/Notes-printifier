@@ -663,6 +663,27 @@ export const DICT: Record<string, [string, string]> = {
   'ly.testOpened': ['Test sheet opened in a new tab — print it at 100% scale.', 'टेस्ट शीट नए टैब में खुली — 100% स्केल पर प्रिंट करें।'],
   'ly.testFail': ['Could not build the test sheet — try again.', 'टेस्ट शीट नहीं बनी — फिर कोशिश करें।'],
 
+  // Margin Doctor — measured printer borders applied per edge
+  'ly.md.hint': ['Measured your borders on the test sheet? Tune the output margins here.', 'टेस्ट शीट पर किनारे नाप लिए? आउटपुट मार्जिन यहाँ ठीक करें।'],
+  'ly.md.open': ['Margin Doctor', 'मार्जिन डॉक्टर'],
+  'ly.md.title': ['Margin Doctor', 'मार्जिन डॉक्टर'],
+  'ly.md.sub': [
+    'Enter the smallest FULL number you can read on each edge of the printed test sheet (mm). Output pages will keep this much clear on that side.',
+    'प्रिंटेड शीट के हर किनारे पर सबसे छोटा पूरा नंबर लिखें (mm)। आउटपुट के पन्नों में उस तरफ इतनी जगह खाली रहेगी।',
+  ],
+  'ly.md.top': ['Top', 'ऊपर'],
+  'ly.md.right': ['Right', 'दाएँ'],
+  'ly.md.bottom': ['Bottom', 'नीचे'],
+  'ly.md.left': ['Left', 'बाएँ'],
+  'ly.md.note': [
+    'Horizontal correction uses the larger of the two side borders, so nothing can clip. Max 12 mm per edge.',
+    'बाएँ/दाएँ में से बड़ा मान दोनों तरफ़ लगता है — कुछ कटेगा नहीं। हर किनारे पर अधिकतम 12 mm।',
+  ],
+  'ly.md.apply': ['Apply calibration', 'कैलिब्रेशन लगाएँ'],
+  'ly.md.reset': ['Reset', 'रीसेट'],
+  'ly.md.applied': ['Margin calibration applied — every output respects your borders now.', 'मार्जिन कैलिब्रेशन लग गया — अब हर आउटपुट आपके किनारों का ध्यान रखेगा।'],
+  'ly.md.active': ['Margin calibration active (T/R/B/L mm)', 'मार्जिन कैलिब्रेशन चालू (ऊ/दा/नी/बा mm)'],
+
   // receipt card
   'rs.receipt.btn': ['Save receipt card', 'रसीद कार्ड सेव करें'],
 
@@ -703,6 +724,32 @@ export const DICT: Record<string, [string, string]> = {
   'pat.diag': ['Diagonal', 'तिरछी रेखाएँ'],
   'pat.plus': ['Plus marks', 'प्लस निशान'],
 
+  // Theme Workshop — look & feel customisation
+  'ws.title': ['Theme Workshop', 'थीम वर्कशॉप'],
+  'ws.sub': ['Density, corners, motion & more — saved on this device.', 'घनत्व, कोने, मोशन और बहुत कुछ — इस डिवाइस पर सेव।'],
+  'ws.density': ['Density', 'घनत्व'],
+  'ws.density.comfy': ['Comfy', 'आराम'],
+  'ws.density.compact': ['Compact', 'कॉम्पैक्ट'],
+  'ws.corners': ['Corners', 'कोने'],
+  'ws.corners.round': ['Rounded', 'गोल'],
+  'ws.corners.sharp': ['Sharp', 'नुकीले'],
+  'ws.motion': ['Motion', 'मोशन'],
+  'ws.motion.full': ['Full', 'पूरा'],
+  'ws.motion.calm': ['Calm', 'शांत'],
+  'ws.confetti': ['Confetti on finish', 'पूरा होने पर कॉन्फ़ेटी'],
+  'ws.confetti.on': ['On', 'चालू'],
+  'ws.confetti.off': ['Off', 'बंद'],
+  'ws.wheel': ['Wheel damping', 'व्हील डैंपिंग'],
+  'ws.wheel.hint': ['Higher = each mouse-wheel tick scrolls less (0 = native speed).', 'ज़्यादा = हर व्हील टिक कम स्क्रॉल करेगा (0 = असली रफ़्तार)।'],
+
+  // six print-heritage themes
+  'th.blueprint': ['Blueprint', 'ब्लूप्रिंट'],
+  'th.kraft': ['Kraft Paper', 'क्राफ़्ट पेपर'],
+  'th.chai': ['Chai Time', 'चाय टाइम'],
+  'th.festive': ['Festive Night', 'त्योहारी रात'],
+  'th.xerox': ['Xerox Mono', 'ज़ेरॉक्स मोनो'],
+  'th.ohp': ['OHP Glow', 'OHP ग्लो'],
+
   // ⌘K command palette
   'cp.open': ['Command menu', 'कमांड मेनू'],
   'cp.ph': ['Type a command or search…', 'कमांड लिखें या खोजें…'],
@@ -736,6 +783,26 @@ export const DICT: Record<string, [string, string]> = {
   'dr.applied': ['Doctor’s suggestion applied', 'डॉक्टर का सुझाव लगाया गया'],
   'dr.fail': ['The Doctor is unavailable right now', 'डॉक्टर अभी उपलब्ध नहीं है'],
   'dr.offline': ['Offline advice', 'ऑफ़लाइन सलाह'],
+
+  // OCR accuracy benchmark (inside the Doctor card)
+  'dr.bench.title': ['OCR Bench — PSM 3 vs 6', 'OCR बेंच — PSM 3 बनाम 6'],
+  'dr.bench.sub': [
+    'Runs the same page through both recognition modes so you can see why the mode switch matters.',
+    'एक ही पन्ने को दोनों मोड में पढ़ता है — फ़र्क़ आँखों से देखिए।',
+  ],
+  'dr.bench.run': ['Run benchmark', 'बेंचमार्क चलाएँ'],
+  'dr.bench.again': ['Run again', 'फिर चलाएँ'],
+  'dr.bench.running': ['Recognizing twice…', 'दो बार पढ़ा जा रहा है…'],
+  'dr.bench.fail': ['Benchmark failed — try another page.', 'बेंचमार्क नहीं चला — दूसरा पन्ना आज़माएँ।'],
+  'dr.bench.page': ['Page {n} of “{name}”', '“{name}” का पन्ना {n}'],
+  'dr.bench.mode': ['Mode', 'मोड'],
+  'dr.bench.conf': ['Confidence', 'कॉन्फ़िडेंस'],
+  'dr.bench.words': ['Words', 'शब्द'],
+  'dr.bench.time': ['Time', 'समय'],
+  'dr.bench.winner': ['PSM {psm} reads this page better', 'इस पन्ने के लिए PSM {psm} बेहतर'],
+  'dr.bench.use6': ['Use single block (6)', 'सिंगल ब्लॉक लगाएँ (6)'],
+  'dr.bench.use3': ['Use auto (3)', 'ऑटो लगाएँ (3)'],
+  'dr.bench.applied': ['Recognition mode set to PSM {psm}', 'पहचान मोड PSM {psm} हो गया'],
   'dr.tip': ['Doctor says', 'डॉक्टर कहते हैं'],
   'dr.goal': ['Goal', 'लक्ष्य'],
   'dr.goal.balanced': ['Balanced', 'संतुलित'],

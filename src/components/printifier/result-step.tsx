@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarChart3,
   BookOpen,
@@ -69,6 +69,8 @@ import { buildReceiptCanvas, receiptCanvasToBlob } from '@/lib/receipt';
 import { ListenButton } from './listen-button';
 import { toast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
+import { useThemeStore } from '@/lib/theme';
+import { fireConfetti } from '@/lib/confetti';
 import { encodeRecipe, recipeUrl } from '@/lib/recipe-link';
 
 /**
@@ -133,6 +135,16 @@ export function ResultStep() {
   const filters = usePrintifyStore((s) => s.filters);
   const layout = usePrintifyStore((s) => s.layout);
   const reset = usePrintifyStore((s) => s.reset);
+  const confettiOn = useThemeStore((s) => s.confetti);
+
+  // Celebration burst when the job lands (Theme Workshop → Confetti).
+  const celebratedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!result || !confettiOn) return;
+    if (celebratedFor.current === result.url) return; // one burst per job
+    celebratedFor.current = result.url;
+    fireConfetti();
+  }, [result, confettiOn]);
 
   // iOS Safari cannot render PDFs inside iframes — show a friendly fallback.
   const [iosLike, setIosLike] = useState(false);
@@ -789,7 +801,10 @@ export function ResultStep() {
           const hintKey =
             avg >= 80 ? 'rs.ocrRep.good' : avg >= 60 ? 'rs.ocrRep.mid' : 'rs.ocrRep.low';
           return (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+            <div
+              data-testid="ocr-report-card"
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5"
+            >
               <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                 <ScanText className="h-4 w-4 text-violet-300" /> {t('rs.ocrRep.title')}
                 <Badge

@@ -1,10 +1,12 @@
 /**
- * i18n-missing.ts — generate MISSING_TRANSLATIONS.md for contributors.
+ * i18n-missing.ts — generate MISSING_TRANSLATIONS.md + i18n-progress.json.
  *
  * Diffs the mr/ta/bn partial dictionaries (EXTRA) against every key in the
  * EN/HI dictionary (DICT) and writes a community-friendly markdown file
  * listing exactly which strings each language is still missing, with the
- * English source text to translate.
+ * English source text to translate. Also writes i18n-progress.json (overall
+ * + per-language %) that powers the README translation badges via
+ * shields.io/dynamic-json.
  *
  * Run:  bun scripts/i18n-missing.ts      (or: bun run i18n:check)
  * Exit code 0 always — this is a report, not a gate.
@@ -16,6 +18,7 @@ import { DICT, EXTRA } from '../src/lib/i18n';
 
 const ROOT = join(import.meta.dir, '..');
 const OUT = join(ROOT, 'MISSING_TRANSLATIONS.md');
+const OUT_JSON = join(ROOT, 'i18n-progress.json');
 
 const LANG_META: Record<keyof typeof EXTRA, { name: string; note: string }> = {
   mr: { name: 'मराठी (Marathi)', note: '`mr` in `src/lib/i18n.ts` → `EXTRA.mr`' },
@@ -85,6 +88,26 @@ have but less urgent.
 const md = header + sections.join('\n') + '\n';
 writeFileSync(OUT, md, 'utf8');
 
+// ---- i18n-progress.json (README badges) ----------------------------------
+// Hindi is baked into DICT itself (fully translated by definition);
+// mr/ta/bn live in EXTRA and are measured against the full key set.
+const pct = (lang: keyof typeof EXTRA): number => {
+  const missing = allKeys.filter((k) => !EXTRA[lang][k]).length;
+  return Math.round(((allKeys.length - missing) / Math.max(1, allKeys.length)) * 100);
+};
+const progress = {
+  hi: 100,
+  mr: pct('mr'),
+  ta: pct('ta'),
+  bn: pct('bn'),
+  overall: Math.round((pct('mr') + pct('ta') + pct('bn')) / 3),
+  totalKeys: allKeys.length,
+};
+writeFileSync(OUT_JSON, JSON.stringify(progress, null, 2) + '\n', 'utf8');
+
 console.log(
-  `MISSING_TRANSLATIONS.md written — ${allKeys.length} total keys, ${total} missing across ${Object.keys(EXTRA).length} languages.`,
+  `MISSING_TRANSLATIONS.md + i18n-progress.json written — ${allKeys.length} total keys, ${total} missing across ${Object.keys(EXTRA).length} languages.`,
+);
+console.log(
+  `Progress: hi ${progress.hi}% · mr ${progress.mr}% · ta ${progress.ta}% · bn ${progress.bn}%`,
 );

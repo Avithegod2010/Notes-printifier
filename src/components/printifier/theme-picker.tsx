@@ -1,14 +1,29 @@
 'use client';
 
-import { Palette } from 'lucide-react';
+import { Palette, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
 import { useT } from '@/lib/i18n';
-import { PATTERNS, THEMES, useThemeStore, type PatternId, type ThemeId } from '@/lib/theme';
+import {
+  PATTERNS,
+  THEMES,
+  WHEEL_DEFAULT,
+  WHEEL_MAX,
+  WHEEL_MIN,
+  useThemeStore,
+  type Corners,
+  type Density,
+  type MotionPref,
+  type PatternId,
+  type ThemeId,
+} from '@/lib/theme';
 
 /**
- * ThemePicker — select one of 12 site themes and a backdrop pattern.
- * Everything is applied instantly (CSS-var swap) and persisted per device.
+ * ThemePicker — select one of 18 site themes and a backdrop pattern, plus a
+ * "Workshop" section for look & feel customisation (density, corners,
+ * motion, confetti, wheel-damping strength). Everything is applied
+ * instantly (CSS-var / data-attribute swap) and persisted per device.
  */
 
 const THEME_NAME_KEY: Record<ThemeId, string> = {
@@ -24,6 +39,12 @@ const THEME_NAME_KEY: Record<ThemeId, string> = {
   noir: 'th.noir',
   sand: 'th.sand',
   mint: 'th.mint',
+  blueprint: 'th.blueprint',
+  kraft: 'th.kraft',
+  chai: 'th.chai',
+  festive: 'th.festive',
+  xerox: 'th.xerox',
+  ohp: 'th.ohp',
 };
 
 const PATTERN_NAME_KEY: Record<PatternId, string> = {
@@ -86,12 +107,53 @@ const PATTERN_PREVIEW: Record<PatternId, React.CSSProperties> = {
   none: {},
 };
 
+/** Chip pair used for the binary Workshop choices — same look as patterns. */
+function ChipPair<T extends string>(props: {
+  value: T;
+  options: Array<{ id: T; label: string }>;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex gap-1.5" role="group">
+      {props.options.map((o) => {
+        const active = o.id === props.value;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => props.onChange(o.id)}
+            aria-pressed={active}
+            className={
+              'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors ' +
+              (active
+                ? 'border-violet-400/60 bg-violet-500/10 text-foreground'
+                : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-violet-500/40 hover:text-foreground')
+            }
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ThemePicker() {
   const t = useT();
   const themeId = useThemeStore((s) => s.themeId);
   const pattern = useThemeStore((s) => s.pattern);
   const setTheme = useThemeStore((s) => s.setTheme);
   const setPattern = useThemeStore((s) => s.setPattern);
+  const density = useThemeStore((s) => s.density);
+  const corners = useThemeStore((s) => s.corners);
+  const motion = useThemeStore((s) => s.motion);
+  const confetti = useThemeStore((s) => s.confetti);
+  const wheel = useThemeStore((s) => s.wheel);
+  const setDensity = useThemeStore((s) => s.setDensity);
+  const setCorners = useThemeStore((s) => s.setCorners);
+  const setMotion = useThemeStore((s) => s.setMotion);
+  const setConfetti = useThemeStore((s) => s.setConfetti);
+  const setWheel = useThemeStore((s) => s.setWheel);
 
   return (
     <Popover>
@@ -107,7 +169,10 @@ export function ThemePicker() {
           <Palette className="h-4 w-4" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[23rem] rounded-2xl border-white/10 bg-popover p-4">
+      <PopoverContent
+        align="end"
+        className="max-h-[min(38rem,80vh)] w-[23rem] overflow-y-auto rounded-2xl border-white/10 bg-popover p-4"
+      >
         <div className="mb-1 flex items-center gap-2">
           <Palette className="h-4 w-4 text-violet-300" aria-hidden="true" />
           <p className="text-sm font-bold">{t('th.pick')}</p>
@@ -174,6 +239,80 @@ export function ThemePicker() {
               </button>
             );
           })}
+        </div>
+
+        {/* ——— Theme Workshop: look & feel beyond colours ——— */}
+        <div className="mt-4 border-t border-white/10 pt-3">
+          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
+            <Settings2 className="h-3.5 w-3.5 text-violet-300" aria-hidden="true" />
+            {t('ws.title')}
+          </p>
+          <p className="mb-3 text-xs text-muted-foreground">{t('ws.sub')}</p>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{t('ws.density')}</span>
+              <ChipPair<Density>
+                value={density}
+                onChange={setDensity}
+                options={[
+                  { id: 'comfy', label: t('ws.density.comfy') },
+                  { id: 'compact', label: t('ws.density.compact') },
+                ]}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{t('ws.corners')}</span>
+              <ChipPair<Corners>
+                value={corners}
+                onChange={setCorners}
+                options={[
+                  { id: 'round', label: t('ws.corners.round') },
+                  { id: 'sharp', label: t('ws.corners.sharp') },
+                ]}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{t('ws.motion')}</span>
+              <ChipPair<MotionPref>
+                value={motion}
+                onChange={setMotion}
+                options={[
+                  { id: 'full', label: t('ws.motion.full') },
+                  { id: 'calm', label: t('ws.motion.calm') },
+                ]}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{t('ws.confetti')}</span>
+              <ChipPair<'on' | 'off'>
+                value={confetti ? 'on' : 'off'}
+                onChange={(v) => setConfetti(v === 'on')}
+                options={[
+                  { id: 'on', label: t('ws.confetti.on') },
+                  { id: 'off', label: t('ws.confetti.off') },
+                ]}
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-muted-foreground">{t('ws.wheel')}</span>
+                <span className="text-[11px] font-semibold tabular-nums text-foreground">
+                  {wheel}%
+                </span>
+              </div>
+              <Slider
+                className="mt-2"
+                value={[wheel]}
+                min={WHEEL_MIN}
+                max={WHEEL_MAX}
+                step={5}
+                onValueChange={(v) => setWheel(v[0] ?? WHEEL_DEFAULT)}
+                aria-label={t('ws.wheel')}
+              />
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{t('ws.wheelHint')}</p>
+            </div>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

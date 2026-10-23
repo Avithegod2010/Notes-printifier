@@ -1419,4 +1419,363 @@ html.theme-light .dyn-bg {
   }
 }
 
-/* bump */
+/* ==========================================================================
+   THEME WORKSHOP — look & feel customisation (density / corners / motion)
+   Applied via data-attributes on <html>; SSR never renders them, so no
+   hydration mismatch. Later in the file = wins specificity ties.
+   ========================================================================== */
+
+/* Compact density — shrink the root font; every rem-based size scales. */
+html[data-density='compact'] {
+  font-size: 14.5px;
+}
+
+/* Sharp corners — photocopy-brutalist mode: no rounding anywhere. */
+html[data-corners='sharp'] {
+  --radius: 0rem;
+}
+html[data-corners='sharp'] *,
+html[data-corners='sharp'] *::before,
+html[data-corners='sharp'] *::after {
+  border-radius: 0 !important;
+}
+
+/* Calm motion — belt-and-braces alongside MotionConfig reducedMotion. */
+html[data-motion='calm'] *,
+html[data-motion='calm'] *::before,
+html[data-motion='calm'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ==========================================================================
+   SIX NEW THEMES — print-shop heritage collection. Same token layout as the
+   blocks above (accent ramp --acc-*, counter-accent --accf-*, dynamic
+   background --dyn-*).
+   ========================================================================== */
+
+/* Blueprint — cyanotype drafting table: chalk-blue lines on deep ink-blue */
+html[data-theme='blueprint'] {
+  color-scheme: dark;
+  --background: #061019;
+  --foreground: #dcecf7;
+  --card: #0a1a29;
+  --card-foreground: #dcecf7;
+  --popover: #0a1a29;
+  --popover-foreground: #dcecf7;
+  --primary: #38bdf8;
+  --primary-foreground: #04212f;
+  --secondary: #0e2133;
+  --secondary-foreground: #dcecf7;
+  --muted: #0e2133;
+  --muted-foreground: #7fa3bd;
+  --accent: #0e2133;
+  --accent-foreground: #dcecf7;
+  --destructive: #fb7185;
+  --border: rgba(125, 200, 240, 0.14);
+  --input: rgba(125, 200, 240, 0.2);
+  --ring: #38bdf8;
+  --header-bg: rgba(6, 16, 25, 0.82);
+  --acc-100: #e0f2fe;
+  --acc-200: #bae6fd;
+  --acc-300: #7dd3fc;
+  --acc-400: #38bdf8;
+  --acc-500: #0ea5e9;
+  --acc-500h: #0369a1;
+  --acc-600: #0284c7;
+  --acc-rgb-400: 56 189 248;
+  --acc-rgb: 14 165 233;
+  --acc-rgb-600: 2 132 199;
+  --acc-rgb-900: 8 47 73;
+  --accf-300: #fcd34d;
+  --accf-400: #fbbf24;
+  --accf-500: #f59e0b;
+  --accf-500h: #b45309;
+  --accf-600: #d97706;
+  --accf-rgb-400: 251 191 36;
+  --accf-rgb: 245 158 11;
+  --accf-rgb-600: 217 119 6;
+}
+html[data-theme='blueprint'] .dyn-bg {
+  --dyn-o1: rgba(56, 189, 248, 0.2);
+  --dyn-o2: rgba(245, 158, 11, 0.07);
+  --dyn-o3: rgba(2, 132, 199, 0.14);
+  --dyn-o4: rgba(125, 211, 252, 0.08);
+  --dyn-grid-line: rgba(125, 211, 252, 0.07);
+  --dyn-dot: rgba(186, 230, 253, 0.5);
+  --dyn-dot-glow: rgba(56, 189, 248, 0.5);
+  --dyn-vignette: rgba(2, 8, 14, 0.6);
+  --dyn-sweep: rgba(125, 211, 252, 0.05);
+}
+
+/* Kraft — brown craft paper: warm cardboard with a leather-brown accent */
+html[data-theme='kraft'] {
+  color-scheme: light;
+  --background: #f1e7d3;
+  --foreground: #3f3120;
+  --card: #faf3e6;
+  --card-foreground: #3f3120;
+  --popover: #faf3e6;
+  --popover-foreground: #3f3120;
+  --primary: #a1662f;
+  --primary-foreground: #fff8ec;
+  --secondary: #ece0c8;
+  --secondary-foreground: #4a3a26;
+  --muted: #ece0c8;
+  --muted-foreground: #8a7355;
+  --accent: #ece0c8;
+  --accent-foreground: #4a3a26;
+  --destructive: #dc2626;
+  --border: rgba(122, 88, 40, 0.2);
+  --input: rgba(122, 88, 40, 0.26);
+  --ring: #a1662f;
+  --header-bg: rgba(241, 231, 211, 0.85);
+  --acc-100: #f7ecd8;
+  --acc-200: #ecd9b8;
+  --acc-300: #d9b781;
+  --acc-400: #c08d4b;
+  --acc-500: #a1662f;
+  --acc-500h: #7c4c21;
+  --acc-600: #8a5527;
+  --acc-rgb-400: 192 141 75;
+  --acc-rgb: 161 102 47;
+  --acc-rgb-600: 138 85 39;
+  --acc-rgb-900: 60 36 14;
+  --accf-300: #a3c06a;
+  --accf-400: #84a845;
+  --accf-500: #6b8f3d;
+  --accf-500h: #4d6a29;
+  --accf-600: #55742e;
+  --accf-rgb-400: 132 168 69;
+  --accf-rgb: 107 143 61;
+  --accf-rgb-600: 85 116 46;
+}
+html[data-theme='kraft'] .dyn-bg {
+  --dyn-o1: rgba(161, 102, 47, 0.14);
+  --dyn-o2: rgba(107, 143, 61, 0.07);
+  --dyn-o3: rgba(192, 141, 75, 0.1);
+  --dyn-o4: rgba(217, 183, 129, 0.12);
+  --dyn-grid-line: rgba(138, 85, 39, 0.06);
+  --dyn-dot: rgba(161, 102, 47, 0.4);
+  --dyn-dot-glow: rgba(161, 102, 47, 0.35);
+  --dyn-vignette: rgba(74, 58, 38, 0.18);
+  --dyn-sweep: rgba(192, 141, 75, 0.05);
+}
+
+/* Chai — milky tea with a cardamom-green counter-accent */
+html[data-theme='chai'] {
+  color-scheme: light;
+  --background: #f8f0e0;
+  --foreground: #42342a;
+  --card: #fffbf0;
+  --card-foreground: #42342a;
+  --popover: #fffbf0;
+  --popover-foreground: #42342a;
+  --primary: #c98a2e;
+  --primary-foreground: #fff9ec;
+  --secondary: #f0e4cc;
+  --secondary-foreground: #4d3d2e;
+  --muted: #f0e4cc;
+  --muted-foreground: #96805f;
+  --accent: #f0e4cc;
+  --accent-foreground: #4d3d2e;
+  --destructive: #dc2626;
+  --border: rgba(150, 128, 95, 0.24);
+  --input: rgba(150, 128, 95, 0.3);
+  --ring: #c98a2e;
+  --header-bg: rgba(248, 240, 224, 0.85);
+  --acc-100: #faf0da;
+  --acc-200: #f3dfb4;
+  --acc-300: #e5c078;
+  --acc-400: #d8a349;
+  --acc-500: #c98a2e;
+  --acc-500h: #96651c;
+  --acc-600: #a9741f;
+  --acc-rgb-400: 216 163 73;
+  --acc-rgb: 201 138 46;
+  --acc-rgb-600: 169 116 31;
+  --acc-rgb-900: 74 50 12;
+  --accf-300: #94c98a;
+  --accf-400: #6fb35f;
+  --accf-500: #5f8f4e;
+  --accf-500h: #456b37;
+  --accf-600: #4a7a3c;
+  --accf-rgb-400: 111 179 95;
+  --accf-rgb: 95 143 78;
+  --accf-rgb-600: 74 122 60;
+}
+html[data-theme='chai'] .dyn-bg {
+  --dyn-o1: rgba(201, 138, 46, 0.13);
+  --dyn-o2: rgba(95, 143, 78, 0.07);
+  --dyn-o3: rgba(216, 163, 73, 0.1);
+  --dyn-o4: rgba(240, 228, 204, 0.2);
+  --dyn-grid-line: rgba(150, 128, 95, 0.07);
+  --dyn-dot: rgba(201, 138, 46, 0.38);
+  --dyn-dot-glow: rgba(201, 138, 46, 0.3);
+  --dyn-vignette: rgba(77, 61, 46, 0.14);
+  --dyn-sweep: rgba(216, 163, 73, 0.05);
+}
+
+/* Festive — Diwali night: saffron lamps and rangoli magenta on deep plum */
+html[data-theme='festive'] {
+  color-scheme: dark;
+  --background: #14061a;
+  --foreground: #f6e7fb;
+  --card: #20092b;
+  --card-foreground: #f6e7fb;
+  --popover: #20092b;
+  --popover-foreground: #f6e7fb;
+  --primary: #f59e0b;
+  --primary-foreground: #271302;
+  --secondary: #2b0f3a;
+  --secondary-foreground: #f6e7fb;
+  --muted: #2b0f3a;
+  --muted-foreground: #b391c4;
+  --accent: #2b0f3a;
+  --accent-foreground: #f6e7fb;
+  --destructive: #fb7185;
+  --border: rgba(245, 158, 11, 0.16);
+  --input: rgba(232, 121, 249, 0.2);
+  --ring: #f59e0b;
+  --header-bg: rgba(20, 6, 26, 0.82);
+  --acc-100: #fef3c7;
+  --acc-200: #fde68a;
+  --acc-300: #fcd34d;
+  --acc-400: #fbbf24;
+  --acc-500: #f59e0b;
+  --acc-500h: #b45309;
+  --acc-600: #d97706;
+  --acc-rgb-400: 251 191 36;
+  --acc-rgb: 245 158 11;
+  --acc-rgb-600: 217 119 6;
+  --acc-rgb-900: 69 39 3;
+  --accf-300: #f0abfc;
+  --accf-400: #e879f9;
+  --accf-500: #d946ef;
+  --accf-500h: #a21caf;
+  --accf-600: #c026d3;
+  --accf-rgb-400: 232 121 249;
+  --accf-rgb: 217 70 239;
+  --accf-rgb-600: 192 38 211;
+}
+html[data-theme='festive'] .dyn-bg {
+  --dyn-o1: rgba(245, 158, 11, 0.2);
+  --dyn-o2: rgba(217, 70, 239, 0.16);
+  --dyn-o3: rgba(236, 72, 153, 0.1);
+  --dyn-o4: rgba(251, 191, 36, 0.08);
+  --dyn-grid-line: rgba(240, 171, 252, 0.05);
+  --dyn-dot: rgba(253, 230, 138, 0.55);
+  --dyn-dot-glow: rgba(245, 158, 11, 0.55);
+  --dyn-vignette: rgba(9, 2, 12, 0.6);
+  --dyn-sweep: rgba(240, 171, 252, 0.05);
+}
+
+/* Xerox — photocopy brutalism: near-black on plain paper, zero colour */
+html[data-theme='xerox'] {
+  color-scheme: light;
+  --background: #f4f4f3;
+  --foreground: #141414;
+  --card: #ffffff;
+  --card-foreground: #141414;
+  --popover: #ffffff;
+  --popover-foreground: #141414;
+  --primary: #1a1a1a;
+  --primary-foreground: #fafafa;
+  --secondary: #ebebea;
+  --secondary-foreground: #141414;
+  --muted: #ebebea;
+  --muted-foreground: #6b6b6b;
+  --accent: #ebebea;
+  --accent-foreground: #141414;
+  --destructive: #dc2626;
+  --border: rgba(0, 0, 0, 0.16);
+  --input: rgba(0, 0, 0, 0.22);
+  --ring: #1a1a1a;
+  --header-bg: rgba(244, 244, 243, 0.88);
+  --acc-100: #f5f5f5;
+  --acc-200: #e5e5e5;
+  --acc-300: #d4d4d4;
+  --acc-400: #737373;
+  --acc-500: #171717;
+  --acc-500h: #404040;
+  --acc-600: #262626;
+  --acc-rgb-400: 115 115 115;
+  --acc-rgb: 23 23 23;
+  --acc-rgb-600: 38 38 38;
+  --acc-rgb-900: 10 10 10;
+  --accf-300: #d4d4d4;
+  --accf-400: #525252;
+  --accf-500: #404040;
+  --accf-500h: #262626;
+  --accf-600: #333333;
+  --accf-rgb-400: 82 82 82;
+  --accf-rgb: 64 64 64;
+  --accf-rgb-600: 51 51 51;
+}
+html[data-theme='xerox'] .dyn-bg {
+  --dyn-o1: rgba(0, 0, 0, 0.05);
+  --dyn-o2: rgba(0, 0, 0, 0.035);
+  --dyn-o3: rgba(0, 0, 0, 0.03);
+  --dyn-o4: rgba(0, 0, 0, 0.025);
+  --dyn-grid-line: rgba(0, 0, 0, 0.05);
+  --dyn-dot: rgba(0, 0, 0, 0.3);
+  --dyn-dot-glow: rgba(0, 0, 0, 0.2);
+  --dyn-vignette: rgba(0, 0, 0, 0.08);
+  --dyn-sweep: rgba(0, 0, 0, 0.02);
+}
+
+/* OHP — overhead projector: warm darkened room, amber projection glow */
+html[data-theme='ohp'] {
+  color-scheme: dark;
+  --background: #151009;
+  --foreground: #f8ecd9;
+  --card: #221a10;
+  --card-foreground: #f8ecd9;
+  --popover: #221a10;
+  --popover-foreground: #f8ecd9;
+  --primary: #fbbf24;
+  --primary-foreground: #2a1c03;
+  --secondary: #2d2214;
+  --secondary-foreground: #f8ecd9;
+  --muted: #2d2214;
+  --muted-foreground: #b3a084;
+  --accent: #2d2214;
+  --accent-foreground: #f8ecd9;
+  --destructive: #fb7185;
+  --border: rgba(251, 191, 36, 0.15);
+  --input: rgba(251, 191, 36, 0.2);
+  --ring: #fbbf24;
+  --header-bg: rgba(21, 16, 9, 0.82);
+  --acc-100: #fef3c7;
+  --acc-200: #fde68a;
+  --acc-300: #fcd34d;
+  --acc-400: #fbbf24;
+  --acc-500: #f59e0b;
+  --acc-500h: #b45309;
+  --acc-600: #d97706;
+  --acc-rgb-400: 251 191 36;
+  --acc-rgb: 245 158 11;
+  --acc-rgb-600: 217 119 6;
+  --acc-rgb-900: 69 39 3;
+  --accf-300: #7dd3fc;
+  --accf-400: #38bdf8;
+  --accf-500: #0ea5e9;
+  --accf-500h: #0369a1;
+  --accf-600: #0284c7;
+  --accf-rgb-400: 56 189 248;
+  --accf-rgb: 14 165 233;
+  --accf-rgb-600: 2 132 199;
+}
+html[data-theme='ohp'] .dyn-bg {
+  --dyn-o1: rgba(251, 191, 36, 0.2);
+  --dyn-o2: rgba(217, 119, 6, 0.12);
+  --dyn-o3: rgba(56, 189, 248, 0.06);
+  --dyn-o4: rgba(252, 211, 77, 0.08);
+  --dyn-grid-line: rgba(252, 211, 77, 0.045);
+  --dyn-dot: rgba(253, 230, 138, 0.5);
+  --dyn-dot-glow: rgba(251, 191, 36, 0.5);
+  --dyn-vignette: rgba(10, 7, 3, 0.62);
+  --dyn-sweep: rgba(252, 211, 77, 0.05);
+}
