@@ -44,7 +44,16 @@ const MAX_OCR_SLIDES = 120; // hard cap — beyond this the wait isn't worth it
  * combos (e.g. ['eng','hin']) straight through; the matching .traineddata.gz
  * files ship self-hosted in /public/tesseract so OCR stays fully offline.
  */
-export type OcrLang = 'eng' | 'hin' | 'tam' | 'guj' | 'pan';
+export type OcrLang =
+  | 'eng'
+  | 'hin'
+  | 'tam'
+  | 'guj'
+  | 'pan'
+  | 'kan'
+  | 'mal'
+  | 'tel'
+  | 'ori';
 
 /**
  * Per-slide OCR quality report — feeds the result-page confidence card
@@ -71,10 +80,11 @@ function sanitize(text: string): string {
 // The old layer drew every word with Helvetica, which is WinAnsi-only, so any
 // Indic word had to be dropped (invisible, but also unsearchable).
 // Now: Latin words still use Helvetica, while Indic words (Devanagari, Tamil,
-// Gujarati, Gurmukhi) draw with self-hosted Noto Sans fonts (registered via
-// @pdf-lib/fontkit). The invisible layer stores real Unicode code points, so
-// Ctrl+F finds Hindi, Tamil, Gujarati and Punjabi text even though not a
-// single visible pixel changes.
+// Gujarati, Gurmukhi, Kannada, Malayalam, Telugu, Oriya) draw with self-hosted
+// Noto Sans fonts (registered via @pdf-lib/fontkit). The invisible layer
+// stores real Unicode code points, so Ctrl+F finds Hindi, Tamil, Gujarati,
+// Punjabi, Kannada, Malayalam, Telugu and Odia text even though not a single
+// visible pixel changes.
 // ---------------------------------------------------------------------------
 
 /** Script detection — first match wins; unknown scripts fall back to Helvetica. */
@@ -90,12 +100,29 @@ function isGujarati(text: string): boolean {
 function isGurmukhi(text: string): boolean {
   return /[\u0A00-\u0A7F]/.test(text);
 }
+function isKannada(text: string): boolean {
+  return /[\u0C80-\u0CFF]/.test(text);
+}
+function isMalayalam(text: string): boolean {
+  return /[\u0D00-\u0D7F]/.test(text);
+}
+function isTelugu(text: string): boolean {
+  return /[\u0C00-\u0C7F]/.test(text);
+}
+function isOriya(text: string): boolean {
+  return /[\u0B00-\u0B7F]/.test(text);
+}
 
+/** Keys are Tesseract script codes; values are self-hosted Noto faces. */
 const FONT_PATHS = {
   deva: '/fonts/NotoSansDevanagari-Regular.ttf',
   tamil: '/fonts/NotoSansTamil-Regular.ttf',
   gujr: '/fonts/NotoSansGujarati-Regular.ttf',
   guru: '/fonts/NotoSansGurmukhi-Regular.ttf',
+  knda: '/fonts/NotoSansKannada-Regular.ttf',
+  mlym: '/fonts/NotoSansMalayalam-Regular.ttf',
+  telu: '/fonts/NotoSansTelugu-Regular.ttf',
+  orya: '/fonts/NotoSansOriya-Regular.ttf',
 } as const;
 
 const fontBytesCache = new Map<string, ArrayBuffer>();
@@ -422,7 +449,8 @@ export async function buildRepaintCanvases(
  * Maps OCR word fractions through each slide's final placement rect.
  *
  * Script-aware: Latin words draw with Helvetica (built into every PDF
- * viewer); Indic words (Devanagari, Tamil, Gujarati, Gurmukhi) draw with
+ * viewer); Indic words (Devanagari, Tamil, Gujarati, Gurmukhi, Kannada,
+ * Malayalam, Telugu, Oriya) draw with
  * self-hosted Noto fonts embedded
  * via fontkit so the Unicode text survives into the PDF (searchable/copyable)
  * even though it renders at opacity 0. Font files are fetched lazily — a
@@ -453,6 +481,10 @@ export async function addOcrTextLayer(
     { kind: 'tamil', test: isTamil },
     { kind: 'gujr', test: isGujarati },
     { kind: 'guru', test: isGurmukhi },
+    { kind: 'knda', test: isKannada },
+    { kind: 'mlym', test: isMalayalam },
+    { kind: 'telu', test: isTelugu },
+    { kind: 'orya', test: isOriya },
   ];
   const embedded = new Map<ScriptFontKind, Awaited<ReturnType<typeof doc.embedFont>>>();
   const wanted = SCRIPT_FONTS.filter((s) => needsScriptFont(wordsByKey, s.test));

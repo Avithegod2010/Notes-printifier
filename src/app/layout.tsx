@@ -38,6 +38,10 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
+    // Kept 'black-translucent' (not 'default'): the app is dark-themed by
+    // default — 'default' would paint a white status-bar strip. The header
+    // pads itself with env(safe-area-inset-top) in standalone mode
+    // (globals.css), so content no longer hides under the status bar.
     statusBarStyle: "black-translucent",
     title: "Printifier",
   },
@@ -45,6 +49,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0b0a10",
+  // Extend the page into notch/home-indicator areas on iOS standalone so
+  // env(safe-area-inset-*) report real values and we can pad for them.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

@@ -79,13 +79,25 @@ const MODE_HINT_KEY: Record<ColorMode, string> = {
 
 const ZOOM_STEPS = [1, 1.5, 2, 2.5, 3] as const;
 
-/** OCR recognition presets offered in the language picker (v1.6.3: + ગુજરાતી, ਪੰਜਾਬੀ). */
+/** OCR recognition presets offered in the language picker (v1.6.3: + ગુજરાતી,
+ *  ਪੰਜਾਬੀ; v1.7.0: + ಕನ್ನಡ, മലയാളം, తెలుగు, ଓଡ଼ିଆ as single combos).
+ *
+ * The "all languages" combo stays at the five established Indian languages
+ * (eng+hin+tam+guj+pan): Tesseract slows down and eats memory per extra
+ * language, a 9-language default would make every "All" job crawl, and the
+ * new languages stay one tap away via their own combos. Saved presets that
+ * hold an unknown combo still migrate to this value (see below).
+ */
 const OCR_LANG_PRESETS = [
   'eng',
   'eng+hin',
   'eng+tam',
   'eng+guj',
   'eng+pan',
+  'eng+kan',
+  'eng+mal',
+  'eng+tel',
+  'eng+ori',
   'eng+hin+tam+guj+pan',
 ] as const;
 
@@ -933,8 +945,8 @@ export function EnhanceStep() {
                   </div>
                   <p className="text-xs leading-relaxed text-muted-foreground">{t('en.ocr.d')}</p>
                   {/* Recognition language — more traineddata = better Hindi,
-                      Tamil, Gujarati and Punjabi decks. Self-hosted, so it
-                      stays fully offline. */}
+                      Tamil, Gujarati, Punjabi, Kannada, Malayalam, Telugu and
+                      Odia decks. Self-hosted, so it stays fully offline. */}
                   {filters.searchable && (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                       <Label htmlFor="ocr-langs" className="text-xs font-medium text-muted-foreground">
@@ -955,6 +967,10 @@ export function EnhanceStep() {
                           <SelectItem value="eng+guj">English + ગુજરાતી</SelectItem>
                           <SelectItem value="eng+pan">English + ਪੰਜਾਬੀ</SelectItem>
                           <SelectItem value="eng+tam">English + தமிழ்</SelectItem>
+                          <SelectItem value="eng+kan">{t('en.ocrLang.kan')}</SelectItem>
+                          <SelectItem value="eng+mal">{t('en.ocrLang.mal')}</SelectItem>
+                          <SelectItem value="eng+tel">{t('en.ocrLang.tel')}</SelectItem>
+                          <SelectItem value="eng+ori">{t('en.ocrLang.ori')}</SelectItem>
                           <SelectItem value="eng+hin+tam+guj+pan">{t('en.ocrLang.all')}</SelectItem>
                         </SelectContent>
                       </Select>

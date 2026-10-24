@@ -5,6 +5,8 @@ import QRCode from 'qrcode';
 import {
   BookmarkPlus,
   Check,
+  DatabaseBackup,
+  FolderUp,
   Leaf,
   Link2,
   QrCode,
@@ -31,6 +33,7 @@ import {
   serializePresets,
 } from '@/lib/presets';
 import { downloadBlob } from '@/lib/recent-jobs';
+import { applyBackup, downloadBackup } from '@/lib/backup';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
@@ -64,11 +67,22 @@ export function PresetsCard() {
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
+  // Full-device backup (presets + impact meter + history metadata)
+  const [bkBusy, setBkBusy] = useState(false);
+  const [bkMsg, setBkMsg] = useState<string | null>(null);
+  const backupRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!importMsg) return;
     const timer = setTimeout(() => setImportMsg(null), 2600);
     return () => clearTimeout(timer);
   }, [importMsg]);
+
+  useEffect(() => {
+    if (!bkMsg) return;
+    const timer = setTimeout(() => setBkMsg(null), 3400);
+    return () => clearTimeout(timer);
+  }, [bkMsg]);
 
   const onExport = useCallback(() => {
     const list = loadPresets();
@@ -106,6 +120,41 @@ export function PresetsCard() {
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 1600);
   };
+
+  const onBackupExport = useCallback(async () => {
+    setBkBusy(true);
+    try {
+      await downloadBackup();
+      setBkMsg(t('bk.exportDone'));
+    } catch {
+      setBkMsg(t('bk.fail'));
+    } finally {
+      setBkBusy(false);
+    }
+  }, [t]);
+
+  const onBackupFile = useCallback(
+    async (file: File | undefined) => {
+      if (!file) return;
+      setBkBusy(true);
+      try {
+        const r = await applyBackup(await file.text());
+        refreshPresets();
+        setBkMsg(
+          t('bk.importDone', {
+            p: r.presets,
+            j: r.jobs,
+            s: r.statsRestored ? t('bk.statsYes') : t('bk.statsNo'),
+          }),
+        );
+      } catch {
+        setBkMsg(t('bk.fail'));
+      } finally {
+        setBkBusy(false);
+      }
+    },
+    [refreshPresets, t],
+  );
 
   // F2 — create a short share link (?p=<id>) for one preset
   const [sharingId, setSharingId] = useState<string | null>(null);
@@ -387,6 +436,57 @@ export function PresetsCard() {
         </Button>
       </div>
       <p className="mt-1.5 text-[11px] text-muted-foreground">{t('en.presets.shareNote')}</p>
+
+      {/* Full backup — presets + impact meter + history metadata in ONE JSON
+          (never PDF bytes). Switch devices or keep a safety copy. */}
+      <div className="mt-4 border-t border-white/10 pt-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold">
+          <DatabaseBackup className="h-3.5 w-3.5 text-violet-300" /> {t('bk.title')}
+        </p>
+        <p className="mb-2 mt-1 text-[11px] text-muted-foreground">{t('bk.desc')}</p>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bkBusy}
+            onClick={() => void onBackupExport()}
+            className="h-8 flex-1 border-white/15 bg-white/5 text-xs hover:bg-white/10"
+          >
+            {bkBusy ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FolderUp className="mr-1.5 h-3.5 w-3.5 text-violet-300" />
+            )}
+            {t('bk.export')}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bkBusy}
+            onClick={() => backupRef.current?.click()}
+            className="h-8 flex-1 border-white/15 bg-white/5 text-xs hover:bg-white/10"
+          >
+            <Upload className="mr-1.5 h-3.5 w-3.5 text-violet-300" /> {t('bk.import')}
+          </Button>
+        </div>
+        {bkMsg && (
+          <p role="status" className="mt-1.5 text-xs font-semibold text-emerald-300">
+            {bkMsg}
+          </p>
+        )}
+        <input
+          ref={backupRef}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={(e) => {
+            void onBackupFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+      </div>
       {importMsg && (
         <p
           role="status"

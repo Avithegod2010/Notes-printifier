@@ -244,6 +244,44 @@ export function resetInkStats(): void {
   s?.removeItem(LS_LOG_KEY);
 }
 
+/**
+ * Restore lifetime totals from a backup file (backup.ts). Numbers are
+ * re-sanitized exactly like loadInkStats so a tampered file can't inject
+ * NaN/negatives into the impact meter.
+ */
+export function saveInkStats(stats: InkStats): void {
+  const s = ls();
+  if (!s) return;
+  const clean: InkStats = {
+    jobs: Math.max(0, Number(stats.jobs) || 0),
+    inputPages: Math.max(0, Number(stats.inputPages) || 0),
+    outputPages: Math.max(0, Number(stats.outputPages) || 0),
+    sheetsSaved: Math.max(0, Number(stats.sheetsSaved) || 0),
+    rupees: Math.max(0, Number(stats.rupees) || 0),
+    ts: Math.max(0, Number(stats.ts) || 0),
+  };
+  try {
+    s.setItem(LS_KEY, JSON.stringify(clean));
+  } catch {
+    // quota — non-fatal
+  }
+}
+
+/** Restore the impact job log from a backup (same sanitizing as loadJobLog). */
+export function saveJobLog(log: number[]): void {
+  const s = ls();
+  if (!s) return;
+  try {
+    const clean = (Array.isArray(log) ? log : [])
+      .map(Number)
+      .filter((n) => Number.isFinite(n) && n > 0)
+      .slice(-LOG_CAP);
+    s.setItem(LS_LOG_KEY, JSON.stringify(clean));
+  } catch {
+    // quota — non-fatal
+  }
+}
+
 /** Trees equivalent for a number of saved sheets (2 decimals). */
 export function treesFor(sheetsSaved: number): number {
   return Math.round((sheetsSaved / SHEETS_PER_TREE) * 100) / 100;

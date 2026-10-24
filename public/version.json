@@ -1,11 +1,11 @@
 {
-  "version": "1.6.3",
-  "updated": "2026-10-23",
+  "version": "1.7.0",
+  "updated": "2026-10-24",
   "notes": [
-    "New: Gujarati + Punjabi OCR — searchable, copyable PDFs now cover five Indic scripts (self-hosted guj/pan traineddata, still lazy-fetched and fully offline)",
-    "The welcome tour now speaks all seven UI languages — मराठी, தமிழ், বাংলা, ગુજરાતી and ਪੰਜਾਬੀ users no longer get English screens",
-    "OCR language picker: new English + ગુજરાતી and English + ਪੰਜਾਬੀ combos; the All preset now runs English + हिन्दी + தமிழ் + ગુજરાતી + ਪੰਜਾਬੀ in one pass",
-    "Invisible text layer embeds Noto Gujarati/Gurmukhi fonts, so Ctrl+F finds Punjabi and Gujarati words in scanned PDFs",
-    "Saved OCR language presets migrate automatically; the service worker caches the two new fonts for offline use"
+    "New: Kannada, Malayalam, Telugu and Odia OCR — searchable, copyable PDFs now cover nine languages (lazy-fetched traineddata + Noto text-layer fonts, fully offline)",
+    "मराठी, தமிழ், বাংলা, ગુજરાતી and ਪੰਜਾਬੀ UI now 100% translated — all 786 strings, no more English fallback screens",
+    "Backup & restore: one JSON file with your presets, impact meter and history list — move devices freely (PDF bytes never leave the backup)",
+    "Custom N-up grids: rows/cols now go to 5×5 (25-up mini handouts), a live custom-grid chip shows the active layout, plus a one-tap 8-up chip",
+    "New “What’s new” viewer in the footer badge + iPhone safe-area polish (notch-aware header, toasts, banners) for installed PWAs"
   ]
 }
