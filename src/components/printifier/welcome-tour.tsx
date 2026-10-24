@@ -291,7 +291,7 @@ export function WelcomeTour() {
             initial="hidden"
             animate="show"
             exit="exit"
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 px-4 pt-safe-4 pb-safe-4 backdrop-blur-sm"
             onClick={close}
             role="presentation"
           >

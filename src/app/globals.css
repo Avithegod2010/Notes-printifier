@@ -1779,3 +1779,35 @@ html[data-theme='ohp'] .dyn-bg {
   --dyn-vignette: rgba(10, 7, 3, 0.62);
   --dyn-sweep: rgba(252, 211, 77, 0.05);
 }
+
+/* ─── iOS PWA safe-area polish (task 7-b) ────────────────────────────────
+   viewport-fit=cover (layout.tsx viewport export) lets the page extend
+   under the notch / status bar / home indicator when the PWA runs in
+   standalone mode. env(safe-area-inset-*) is 0px in normal browser tabs,
+   on desktop and on Android, so everything below is a no-op there —
+   browser rendering is byte-identical. */
+
+/* Utilities (Tailwind 4 @utility — only emitted when used). */
+@utility pt-safe-4 {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+@utility pb-safe-4 {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* The single sticky site header (printifier-app.tsx): in iOS standalone the
+   page renders under the notch (statusBarStyle: black-translucent), so pad
+   the header there — controls clear the status bar and the blurred header
+   backdrop becomes the status-bar backdrop, like a native app. */
+@supports (padding: env(safe-area-inset-top)) {
+  @media (display-mode: standalone) {
+    header.sticky.top-0 {
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+}

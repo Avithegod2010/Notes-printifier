@@ -395,6 +395,8 @@ export function UploadStep() {
                   variant="outline"
                   size="sm"
                   className="h-8 shrink-0"
+                  disabled={!job.blob}
+                  title={job.blob ? undefined : t('up.downloadNone')}
                   onClick={() =>
                     downloadBlob(job.blob, `printified-${job.outputPages}p.pdf`)
                   }

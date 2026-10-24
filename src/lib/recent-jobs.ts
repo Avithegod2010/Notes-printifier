@@ -105,6 +105,27 @@ export async function saveRecentJob(job: NewRecentJob): Promise<string> {
 }
 
 /**
+ * Restore a history entry WITHOUT its output blob (backup import — the JSON
+ * never carries PDF bytes). The row still shows in Recent with its stats;
+ * its download button stays disabled (see upload-step) and re-print is
+ * naturally unavailable because no source file exists for it.
+ */
+export async function restoreRecentJobMeta(
+  meta: Omit<RecentJob, 'blob'>,
+): Promise<boolean> {
+  try {
+    const db = await openDb();
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put({ ...meta });
+    await txDone(tx);
+    db.close();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Keep the ORIGINAL files of a finished job so it can be re-run with other
  * settings. Silently skipped for big uploads (history stays lightweight).
  */

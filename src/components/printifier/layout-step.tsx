@@ -64,7 +64,7 @@ import { estimateSavings, formatRupees } from '@/lib/savings';
 import { useT } from '@/lib/i18n';
 import { toast } from '@/hooks/use-toast';
 
-const ROWS = ['1', '2', '3', '4'];
+const ROWS = ['1', '2', '3', '4', '5'];
 /** Quick "slides per sheet" chips — tap one, get the right grid instantly. */
 const PER_SHEET: Array<{ n: number; rows: number; cols: number }> = [
   { n: 1, rows: 1, cols: 1 },
@@ -72,6 +72,7 @@ const PER_SHEET: Array<{ n: number; rows: number; cols: number }> = [
   { n: 3, rows: 3, cols: 1 },
   { n: 4, rows: 2, cols: 2 },
   { n: 6, rows: 3, cols: 2 },
+  { n: 8, rows: 4, cols: 2 },
   { n: 9, rows: 3, cols: 3 },
 ];
 
@@ -610,6 +611,26 @@ export function LayoutStep() {
                   </Button>
                 );
               })}
+              {/* Custom rows×cols combo (from the selects below) that no chip
+                  covers — shown as a live, non-interactive chip so the active
+                  grid is never a mystery. 4-up landscape = 2×2 + orientation
+                  toggle; 25-up = 5×5 mini handouts; all engine-supported. */}
+              {(() => {
+                const isCustom =
+                  !layout.booklet &&
+                  !PER_SHEET.some((p) => p.rows === layout.rows && p.cols === layout.cols);
+                if (!isCustom) return null;
+                return (
+                  <span
+                    aria-current="true"
+                    title={t('ly.perSheetCustom')}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-3 text-sm font-medium text-primary"
+                  >
+                    <GridGlyph rows={layout.rows} cols={layout.cols} active />
+                    {layout.rows * layout.cols}
+                  </span>
+                );
+              })()}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

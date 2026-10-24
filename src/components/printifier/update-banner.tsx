@@ -51,7 +51,7 @@ export function UpdateBanner() {
           exit={{ opacity: 0, y: 24 }}
           transition={{ duration: 0.25 }}
           role="status"
-          className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-2xl border border-violet-400/40 bg-[var(--header-bg)] p-3 shadow-2xl shadow-black/50 backdrop-blur-md sm:inset-x-auto sm:right-5"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-lg items-center gap-3 rounded-2xl border border-violet-400/40 bg-[var(--header-bg)] p-3 shadow-2xl shadow-black/50 backdrop-blur-md sm:inset-x-auto sm:right-[calc(1.25rem+env(safe-area-inset-right))]"
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600">
             <PartyPopper className="h-4.5 w-4.5 text-white" aria-hidden="true" />

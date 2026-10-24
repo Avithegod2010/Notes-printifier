@@ -88,7 +88,7 @@ import { usePrintifyStore } from '@/lib/printify-store';
 import { useLangStore, useT, LANGUAGES } from '@/lib/i18n';
 import { useThemeStore, isLightTheme } from '@/lib/theme';
 import { MotionConfig } from 'framer-motion';
-import { APP_VERSION } from '@/lib/version';
+import { VersionBadge } from '@/components/printifier/version-history';
 import { cn } from '@/lib/utils';
 import { decodeRecipe } from '@/lib/recipe-link';
 import { useGlobalKeys } from '@/hooks/use-global-keys';
@@ -618,10 +618,8 @@ function Footer() {
             </span>
           </button>
           <p className="mt-3 text-xs text-muted-foreground">{t('ft.webapp')}</p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">
-              v{APP_VERSION}
-            </span>
+          <p className="mt-2 flex items-center text-xs text-muted-foreground">
+            <VersionBadge />
           </p>
         </div>
       </div>
