@@ -69,10 +69,9 @@ export function ExampleDialog({ open, onOpenChange }: ExampleDialogProps) {
             A real example — before &amp; after
           </DialogTitle>
           <DialogDescription>
-            Every page of an actual 41-page lecture PDF, processed with the
-            default settings (Invert + Ink Saver + 3 slides per sheet). Same
-            tool, same pipeline — nothing staged. Scroll each panel to see all
-            pages.
+            Every page of an actual 41-page lecture PDF, processed with
+            Invert + Ink Saver + 3 slides per sheet. Same tool, same pipeline —
+            nothing staged. Scroll each panel to see all pages.
           </DialogDescription>
         </DialogHeader>
         <ExamplePanels />

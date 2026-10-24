@@ -1,11 +1,8 @@
 {
-  "version": "1.7.0",
-  "updated": "2026-10-24",
+  "version": "1.7.1",
+  "updated": "2026-10-25",
   "notes": [
-    "New: Kannada, Malayalam, Telugu and Odia OCR — searchable, copyable PDFs now cover nine languages (lazy-fetched traineddata + Noto text-layer fonts, fully offline)",
-    "मराठी, தமிழ், বাংলা, ગુજરાતી and ਪੰਜਾਬੀ UI now 100% translated — all 786 strings, no more English fallback screens",
-    "Backup & restore: one JSON file with your presets, impact meter and history list — move devices freely (PDF bytes never leave the backup)",
-    "Custom N-up grids: rows/cols now go to 5×5 (25-up mini handouts), a live custom-grid chip shows the active layout, plus a one-tap 8-up chip",
-    "New “What’s new” viewer in the footer badge + iPhone safe-area polish (notch-aware header, toasts, banners) for installed PWAs"
+    "Ink Saver now starts at 0% — your pages print exactly as the source PDF looks until you choose to whitewash; presets (Economy/Balanced/Exam cram) still apply their own values, and the slider is one tap away",
+    "बचत शुरू: Ink Saver अब डिफ़ॉल्ट रूप से बंद रहता है — जब तक आप न चाहें, पेज बिल्कुल असली PDF जैसे छपते हैं"
   ]
 }

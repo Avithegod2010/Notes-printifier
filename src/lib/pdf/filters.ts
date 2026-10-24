@@ -118,9 +118,10 @@ export interface FilterSettings {
 
 export const defaultFilters: FilterSettings = {
   colorMode: 'invert',
-  // Milder default (was 45) — users found 45 too aggressive on fine text;
-  // 30 still whitens the paper wash but keeps thin handwriting intact.
-  inkSaver: 30,
+  // Off by default (was 30, before that 45) — ink saver keeps thin
+  // handwriting intact at low values but still alters every page, so new
+  // sessions start untouched; the slider and presets are one tap away.
+  inkSaver: 0,
   cleanStains: true,
   trimMargins: false,
   penBoost: 0,
