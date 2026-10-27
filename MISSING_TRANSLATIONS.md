@@ -33,35 +33,35 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 0 missing (786/786 done, 100%)
+## मराठी (Marathi) — 0 missing (787/787 done, 100%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
 | Key | English text |
 | --- | --- |
 
-## தமிழ் (Tamil) — 0 missing (786/786 done, 100%)
+## தமிழ் (Tamil) — 0 missing (787/787 done, 100%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
 | Key | English text |
 | --- | --- |
 
-## বাংলা (Bengali) — 0 missing (786/786 done, 100%)
+## বাংলা (Bengali) — 0 missing (787/787 done, 100%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
 | Key | English text |
 | --- | --- |
 
-## ગુજરાતી (Gujarati) — 0 missing (786/786 done, 100%)
+## ગુજરાતી (Gujarati) — 0 missing (787/787 done, 100%)
 
 Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA.gu`:
 
 | Key | English text |
 | --- | --- |
 
-## ਪੰਜਾਬੀ (Punjabi) — 0 missing (786/786 done, 100%)
+## ਪੰਜਾਬੀ (Punjabi) — 0 missing (787/787 done, 100%)
 
 Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA.pa`:
 
