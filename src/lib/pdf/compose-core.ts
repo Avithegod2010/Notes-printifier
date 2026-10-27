@@ -24,6 +24,7 @@ import {
   type AnyCtx,
   type FilterSettings,
 } from './filters';
+import { isBlankishRender } from './render-guard';
 import { PAGE_SIZES } from './layout-settings';
 
 import {
@@ -85,6 +86,13 @@ export interface ComposeCoreResult {
   autoInverted: number;
   /** How many items used a text-repaint canvas instead of a page render. */
   repainted: number;
+  /**
+   * Pages whose render came back blank (pdf.js image-decode failure, worker
+   * race, OOM canvas) or that are essentially empty. Filters — above all
+   * INVERT — were skipped for them so a blank render can never print as a
+   * solid-black sheet. 0 in a healthy run.
+   */
+  blankSkipped: number;
 }
 
 /** Minimal environment the core needs from its host context. */
@@ -363,6 +371,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
   let inkBeforeSum = 0;
   let autoInverted = 0;
   let repainted = 0;
+  let blankSkipped = 0;
   const placements: Placement[] = [];
   const chunks: ComposeItem[][] = [];
   for (let i = 0; i < o.items.length; i += perPage) {
@@ -401,6 +410,8 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       let canvas: AnyCanvas;
       let ctx: AnyCtx;
       let pdfPage: PdfPageLike | null = null;
+      /** Set when the render came back blank — filters must be skipped. */
+      let blankRender = false;
       if (repaintCanvas) {
         canvas = repaintCanvas;
         repainted++;
@@ -429,19 +440,38 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
         const scale = Math.min(4, Math.max(0.3, targetPxW / base.width));
         const viewport = pdfPage.getViewport({ scale, rotation });
 
-        canvas = env.createCanvas(
-          Math.max(1, Math.floor(viewport.width)),
-          Math.max(1, Math.floor(viewport.height)),
-        );
-        const renderCtx = canvas.getContext('2d', {
-          willReadFrequently: true,
-        }) as AnyCtx | null;
-        if (!renderCtx) throw new Error('Canvas 2D context unavailable');
-        ctx = renderCtx;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const renderOnce = async (): Promise<{ canvas: AnyCanvas; ctx: AnyCtx }> => {
+          const c = env.createCanvas(
+            Math.max(1, Math.floor(viewport.width)),
+            Math.max(1, Math.floor(viewport.height)),
+          );
+          const cctx = c.getContext('2d', {
+            willReadFrequently: true,
+          }) as AnyCtx | null;
+          if (!cctx) throw new Error('Canvas 2D context unavailable');
+          cctx.fillStyle = '#ffffff';
+          cctx.fillRect(0, 0, c.width, c.height);
+          await pdfPage!.render({ canvasContext: cctx, viewport }).promise;
+          return { canvas: c, ctx: cctx };
+        };
+        ({ canvas, ctx } = await renderOnce());
 
-        await pdfPage.render({ canvasContext: ctx, viewport }).promise;
+        // Blank-render guard (the "full black page" bug): pdf.js resolves
+        // the render promise even when a JPX/JBIG2 image failed to decode
+        // and NOTHING was drawn. The canvas is pure white here — passing it
+        // through invert would output a solid-black ink bomb. Retry once
+        // (transient worker/wasm races usually clear), then, if the page is
+        // still blank, keep it un-inverted and count it for the UI warning.
+        if (isBlankishRender(canvas)) {
+          ({ canvas, ctx } = await renderOnce());
+          if (isBlankishRender(canvas)) {
+            blankRender = true;
+            blankSkipped++;
+            console.warn(
+              `[compose] p.${item.pageNumber} of doc ${item.docId} rendered blank — filters skipped so it cannot print black`,
+            );
+          }
+        }
       }
 
       // smart per-page invert decision (before any filtering)
@@ -450,7 +480,12 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
       const effFilters = item.override
         ? { ...o.filters, ...item.override }
         : o.filters;
-      const effMode = resolveColorMode(canvas, effFilters.colorMode);
+      // A blank render must never be inverted — a white canvas + invert is
+      // exactly how whole pages printed solid black.
+      const effMode = resolveColorMode(
+        canvas,
+        blankRender ? 'original' : effFilters.colorMode,
+      );
       if (effFilters.colorMode === 'auto' && effMode === 'invert') autoInverted++;
 
       // ink estimate on the first few pages only (cheap)
@@ -543,6 +578,7 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
     placements,
     autoInverted,
     repainted,
+    blankSkipped,
   };
 }
 
@@ -672,7 +708,12 @@ export async function estimateCore(
 
     const before = inkCoverage(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
     const effFilters = item.override ? { ...filters, ...item.override } : filters;
-    const effMode = resolveColorMode(canvas, effFilters.colorMode);
+    // Same blank guard as the composer — a failed sample render must not
+    // skew the estimate through a fake inversion.
+    const effMode = resolveColorMode(
+      canvas,
+      isBlankishRender(canvas) ? 'original' : effFilters.colorMode,
+    );
     const finalCanvas = preparePageCanvas(canvas, effFilters, effMode);
 
     if (before > 0.03) {

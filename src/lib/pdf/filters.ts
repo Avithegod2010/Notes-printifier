@@ -37,6 +37,14 @@
  *      orange art inverse (blue) ... rgb(15,105,195) lum ≈ 88          → kept
  *      green ink inverse (magenta) . rgb(180,19,103) g≪r               → kept
  *
+ *    v1.8 calibration fix — light blue GEL PEN was being wiped wholesale in
+ *    original mode: its stroke bodies sit at lum ≈ 182–215, exactly inside
+ *    the old cyan-cut (≥182, any diff ≥ 12) and tint-cut (≥200, diff ≤ 75)
+ *    kill zones, so strokes printed as broken ghosts. A pixel that is
+ *    BLUE-family ink (b well above r AND g clearly below b) now survives
+ *    every stain rule; the cyan-fill kill additionally requires real
+ *    saturation (diff ≥ 130) so pen cores (diff 60–120) can never match.
+ *
  * Canvas note: every function accepts BOTH HTMLCanvasElement (main thread)
  * and OffscreenCanvas (inside the processing Web Worker), so the exact same
  * pipeline runs in either context.
@@ -131,7 +139,26 @@ export const defaultFilters: FilterSettings = {
   logoRegions: [],
 };
 
-/** Bright-cyan cut (QUESTION pills, option keys, cyan wash cores). */
+/**
+ * Saturated-cyan FILL kill — QUESTION pills sit at diff ≈ 186, so the bar
+ * must stay well above blue pen cores (diff 60–120) or light pens die.
+ */
+const CYAN_FILL_MIN_DIFF = 130;
+/**
+ * A pixel whose blue channel towers over red is BLUE-family INK, not paper
+ * tint — the near-neutral tint kill must never touch it (light blue gel
+ * pens: b−r ≈ 40–80, while washes/shadows stay within ±28).
+ */
+const TINT_MAX_BLUE_SHIFT = 28;
+/**
+ * Blue pen also has green clearly below blue (b−g ≥ 22; cyan WASHES have
+ * g ≈ b). Together with TINT_MAX_BLUE_SHIFT this separates a light blue
+ * stroke rgb(140,180,225) from a pale cyan wash rgb(150,220,235).
+ */
+const BLUE_PEN_MIN_BG_GAP = 22;
+/**
+ * Bright-cyan cut (QUESTION pills, option keys, cyan wash cores).
+ */
 const CYAN_LUM_CUT = 182;
 /** Light-tint cut (watercolor stains, paper tints, soft shadows). */
 const TINT_LUM_CUT = 200;
@@ -214,13 +241,22 @@ function isStainPixel(r: number, g: number, b: number): boolean {
   const diff = max - min;
   if (diff < 8) return false; // neutral grays handled by levels
   const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-  // Bright cyan/blue fills and washes (b dominates, green close to blue).
-  // `b >= g - 4` also catches the mint side of watercolor stains, while
-  // violet ink (g well below r) and green ink (g >> b) are excluded.
-  if (diff >= 12 && b > r + 12 && b >= g - 4 && lum >= CYAN_LUM_CUT) return true;
-  // Light, low-saturation tints of any hue: paper washes, pill halos,
-  // soft drop shadows. Saturated ink cores have diff far above 75.
-  if (diff <= 75 && lum >= TINT_LUM_CUT) return true;
+  // Blue-family ink guard — b ≫ r AND g clearly below b. Blue/violet gel
+  // pens (light bodies included) must survive every rule below.
+  const bluePen = b - r > TINT_MAX_BLUE_SHIFT && b - g >= BLUE_PEN_MIN_BG_GAP;
+  // Bright SATURATED cyan/blue fills (pills, option keys). The high diff bar
+  // keeps pen strokes (diff 60–120) out; lum ≥ CYAN_LUM_CUT keeps diagram
+  // rods rgb(0,157,242) (lum ≈ 120) in.
+  if (diff >= CYAN_FILL_MIN_DIFF && b > r + 12 && b >= g - 4 && lum >= CYAN_LUM_CUT)
+    return true;
+  // Light tints of any hue: paper washes, pill halos, soft drop shadows —
+  // but never blue-family pen strokes.
+  if (lum >= TINT_LUM_CUT) {
+    if (bluePen) return false;
+    if (diff <= 75) return true;
+    // Pale-cyan decorations (diff 75–130, g ≈ b): wash-like, no content.
+    if (b > r + 12 && b >= g - 4) return true;
+  }
   return false;
 }
 

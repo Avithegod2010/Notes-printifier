@@ -80,6 +80,8 @@ interface ProcessResult {
   searchable: boolean;
   /** LABS text repaint: how many pages were re-typeset as crisp text (0 = off / all fell back). */
   repainted: number;
+  /** Pages that rendered blank and were left un-filtered so they cannot print black. */
+  blankSkipped: number;
   /** Set when OCR was requested but failed (PDF itself is still fine). */
   ocrWarning: string | null;
   /** Soft file-size cap the user asked for (MB), null = no cap. */
@@ -487,6 +489,7 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
     autoInverted: composed.autoInverted,
     searchable,
     repainted: composed.repainted,
+    blankSkipped: composed.blankSkipped,
     ocrWarning,
     sizeTargetMB: targetMB,
     sizeAttempts,

@@ -1,4 +1,5 @@
 import { type PdfDocument } from './pdfjs';
+import { isBlankishRender } from './render-guard';
 
 interface RenderOptions {
   /** Render so that the canvas is ~this many CSS pixels wide. */
@@ -29,26 +30,38 @@ export async function renderPageToCanvas(
   pageNumber: number,
   opts: RenderOptions = {},
 ): Promise<HTMLCanvasElement> {
-  const page = await doc.getPage(pageNumber);
-  const base = page.getViewport({ scale: 1 });
+  const render = async (): Promise<HTMLCanvasElement> => {
+    const page = await doc.getPage(pageNumber);
+    const base = page.getViewport({ scale: 1 });
 
-  const scale =
-    opts.scale ?? (opts.targetWidth ? opts.targetWidth / base.width : 1);
-  const rotation =
-    opts.extraRotation && opts.extraRotation > 0
-      ? (base.rotation + opts.extraRotation) % 360
-      : undefined;
+    const scale =
+      opts.scale ?? (opts.targetWidth ? opts.targetWidth / base.width : 1);
+    const rotation =
+      opts.extraRotation && opts.extraRotation > 0
+        ? (base.rotation + opts.extraRotation) % 360
+        : undefined;
 
-  const viewport = page.getViewport({ scale, rotation });
-  const canvas = createCanvas(viewport.width, viewport.height);
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) throw new Error('Canvas 2D context unavailable');
+    const viewport = page.getViewport({ scale, rotation });
+    const canvas = createCanvas(viewport.width, viewport.height);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error('Canvas 2D context unavailable');
 
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-  page.cleanup();
+    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+    page.cleanup();
+    return canvas;
+  };
+
+  const canvas = await render();
+  // Blank-render guard: pdf.js can resolve with nothing drawn (JPX/JBIG2
+  // wasm decode failure, worker race). A blank preview would INVERT to a
+  // solid black cell downstream, so retry once before giving up — the
+  // preview then shows an honest (white) page instead of a black bomb.
+  if (isBlankishRender(canvas)) {
+    return render();
+  }
   return canvas;
 }
 

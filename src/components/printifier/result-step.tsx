@@ -44,6 +44,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { usePrintifyStore } from '@/lib/printify-store';
+import { buildOutputName } from '@/lib/pdf/output-name';
 import { type ColorMode } from '@/lib/pdf/filters';
 import {
   costProfileIsDefault,
@@ -134,7 +135,15 @@ export function ResultStep() {
   const result = usePrintifyStore((s) => s.result);
   const filters = usePrintifyStore((s) => s.filters);
   const layout = usePrintifyStore((s) => s.layout);
+  const docs = usePrintifyStore((s) => s.docs);
   const reset = usePrintifyStore((s) => s.reset);
+
+  // Smart download name — derives from the source document(s) + grid so a
+  // week of downloads stops producing "notes-printifier (19) (1).pdf".
+  const outName = useMemo(
+    () => buildOutputName(docs, layout.rows, layout.cols, result?.outputPages),
+    [docs, layout.rows, layout.cols, result?.outputPages],
+  );
   const confettiOn = useThemeStore((s) => s.confetti);
 
   // Celebration burst when the job lands (Theme Workshop → Confetti).
@@ -546,7 +555,7 @@ export function ResultStep() {
       if (typeof nav.share === 'function' && nav.canShare) {
         try {
           const blob = await fetch(result.url).then((r) => r.blob());
-          const file = new File([blob], 'notes-printifier.pdf', { type: 'application/pdf' });
+          const file = new File([blob], outName, { type: 'application/pdf' });
           if (nav.canShare({ files: [file] })) {
             await nav.share({ files: [file], title: 'Notes Printifier' });
             toast({ description: t('rs.wa.shared') });
@@ -560,7 +569,7 @@ export function ResultStep() {
       // No file-share support (typical desktop): hand over the PDF and open
       // the chat — the stats receipt is deliberately NOT included.
       const blob = await fetch(result.url).then((r) => r.blob());
-      downloadBlob(blob, 'notes-printifier.pdf');
+      downloadBlob(blob, outName);
       const shareUrl =
         target === 'wa'
           ? `https://wa.me/?text=${encodeURIComponent(text)}`
@@ -941,6 +950,12 @@ export function ResultStep() {
         </p>
       )}
 
+      {result.blankSkipped > 0 && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-300">
+          {t('rs.blankSkip', { n: result.blankSkipped })}
+        </p>
+      )}
+
       {/* Personal savings history — pure local data, no account needed */}
       {history && history.length > 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
@@ -983,7 +998,7 @@ export function ResultStep() {
       <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
         <a
           href={result.url}
-          download="notes-printifier.pdf"
+          download={outName}
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 text-sm font-semibold text-white shadow-lg shadow-violet-600/30 transition-all hover:from-violet-500 hover:to-fuchsia-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
         >
           <Download className="h-4 w-4" /> {t('rs.download')}

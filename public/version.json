@@ -1,8 +1,10 @@
 {
-  "version": "1.7.1",
-  "updated": "2026-10-25",
+  "version": "1.8.0",
+  "updated": "2026-10-27",
   "notes": [
-    "Ink Saver now starts at 0% — your pages print exactly as the source PDF looks until you choose to whitewash; presets (Economy/Balanced/Exam cram) still apply their own values, and the slider is one tap away",
-    "बचत शुरू: Ink Saver अब डिफ़ॉल्ट रूप से बंद रहता है — जब तक आप न चाहें, पेज बिल्कुल असली PDF जैसे छपते हैं"
+    "Fixed: pages no longer print as full-black sheets — a page that renders blank (image-decode failure, worker race) is retried once and left white instead of being inverted into an ink bomb, with a warning on the result screen",
+    "Fixed: light-blue gel pen no longer disappears or breaks up — blue-family ink (strokes, boxes, violet pens) now survives stain cleanup; cyan pills, paper tints and watercolor washes are still removed exactly as before",
+    "New: smart output names — downloads are now named after your document + grid (e.g. \"Physical Equilibrium-2x3-printified.pdf\") instead of the same notes-printifier.pdf every time",
+    "Housekeeping: removed unused UI template files"
   ]
 }

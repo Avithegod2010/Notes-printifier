@@ -68,3 +68,8 @@ playwright-report/
 /.webtest/
 prompt
 test-results/
+
+# ── throwaway proof fixtures / local analysis scripts ────────
+/.proof/
+/agent-ctx/
+/scripts/

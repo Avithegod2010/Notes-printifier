@@ -1,6 +1,6 @@
 {
   "name": "notes-printifier",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "private": true,
   "description": "Turn lecture PDFs into paper- and ink-saving print-ready PDFs \u2014 100% client-side, bilingual (EN/\u0939\u093f\u0928\u094d\u0926\u0940), installable as a PWA and an offline Android app.",
   "license": "MIT",
