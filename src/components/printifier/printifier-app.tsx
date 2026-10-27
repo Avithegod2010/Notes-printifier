@@ -109,7 +109,7 @@ const NAV_SECTIONS = [
   { id: 'how', key: 'nav.how' },
   { id: 'features', key: 'nav.features' },
   { id: 'calculator', key: 'nav.calc' },
-  { id: 'impact', key: 'db.eyebrow' },
+  { id: 'impact', key: 'nav.impact' },
   { id: 'faq', key: 'nav.faq' },
 ] as const;
 
@@ -150,7 +150,7 @@ function Logo() {
       </div>
       <div className="leading-tight">
         <p className="whitespace-nowrap text-sm font-extrabold tracking-tight sm:text-base lg:text-lg">Notes Printifier</p>
-        <p className="hidden text-[11px] text-muted-foreground sm:block">
+        <p className="hidden text-[11px] text-muted-foreground xl:block">
           Save paper. Save ink. Print smarter.
         </p>
       </div>
@@ -250,6 +250,38 @@ function SheetThemeRow() {
   );
 }
 
+/** Mobile-sheet language picker — direct chips, no nested popover. */
+function SheetLangRow() {
+  const lang = useLangStore((s) => s.lang);
+  const setLang = useLangStore((s) => s.setLang);
+
+  return (
+    <div className="px-1">
+      <p className="mb-1.5 px-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+        Language / भाषा
+      </p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Language / भाषा">
+        {LANGUAGES.map((l) => (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => setLang(l.id)}
+            aria-pressed={lang === l.id}
+            className={cn(
+              'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+              lang === l.id
+                ? 'border-violet-400/60 bg-violet-500/15 text-primary'
+                : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-violet-500/40 hover:text-foreground',
+            )}
+          >
+            {l.native}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Header() {
   const t = useT();
   const active = useActiveSection(NAV_SECTIONS.map((s) => s.id));
@@ -257,17 +289,17 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-[var(--header-bg)] backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4">
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Back to top"
         >
           <Logo />
         </button>
 
-        <nav aria-label="Site" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Site" className="hidden min-w-0 items-center gap-0.5 md:flex">
           {NAV_SECTIONS.map((l) => (
             <button
               key={l.id}
@@ -275,7 +307,7 @@ function Header() {
               onClick={() => scrollToId(l.id)}
               aria-current={active === l.id ? 'true' : undefined}
               className={cn(
-                'relative rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-foreground',
+                'relative shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-foreground xl:px-3',
                 active === l.id ? 'text-foreground' : 'text-muted-foreground',
               )}
             >
@@ -290,7 +322,7 @@ function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <PaletteButton />
           <InstallButton />
           <ThemePicker />
@@ -301,7 +333,7 @@ function Header() {
             type="button"
             size="sm"
             onClick={() => scrollToId('app')}
-            className="hidden h-9 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 text-sm font-semibold text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-fuchsia-500 sm:inline-flex"
+            className="hidden h-9 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 text-sm font-semibold text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-fuchsia-500 lg:inline-flex"
           >
             <FileUp className="mr-1.5 h-4 w-4" /> {t('nav.start')}
           </Button>
@@ -352,6 +384,11 @@ function Header() {
                 <div className="flex justify-end px-1">
                   <ThemePicker />
                 </div>
+                {/* popover-over-sheet (same pattern as ThemePicker above) */}
+                <div className="flex justify-start px-1">
+                  <LabsPopover />
+                </div>
+                <SheetLangRow />
               </nav>
             </SheetContent>
           </Sheet>
@@ -478,40 +515,109 @@ function Hero() {
 
 function FeatureGrid() {
   const t = useT();
-  const FEATURES = [
-    { icon: Moon, title: t('feat.invert.t'), desc: t('feat.invert.d') },
-    { icon: Contrast, title: t('feat.gray.t'), desc: t('feat.gray.d') },
-    { icon: Droplets, title: t('feat.ink.t'), desc: t('feat.ink.d') },
-    { icon: Grid2x2, title: t('feat.grid.t'), desc: t('feat.grid.d') },
-    { icon: Minus, title: t('feat.sep.t'), desc: t('feat.sep.d') },
-    { icon: Hash, title: t('feat.num.t'), desc: t('feat.num.d') },
-    { icon: SlidersHorizontal, title: t('feat.quality.t'), desc: t('feat.quality.d') },
-    { icon: Lock, title: t('feat.local.t'), desc: t('feat.local.d') },
-    { icon: PenLine, title: t('en.pen'), desc: t('en.pen.d') },
-    { icon: ScanText, title: t('en.ocr'), desc: t('en.ocr.d') },
-    { icon: Sparkles, title: t('en.presets'), desc: t('en.presets.none') },
-    { icon: Globe, title: t('up.cloud'), desc: t('up.cloudHint') },
-    { icon: BookOpen, title: t('feat.booklet.t'), desc: t('feat.booklet.d') },
-    { icon: Type, title: t('feat.wm.t'), desc: t('feat.wm.d') },
-    { icon: FileArchive, title: t('feat.zip.t'), desc: t('feat.zip.d') },
+
+  /** Features grouped by what they actually do, each group with its own accent. */
+  const GROUPS: {
+    key: 'feat.cat.color' | 'feat.cat.layout' | 'feat.cat.power';
+    dot: string;
+    icon: string;
+    cols: string;
+    items: { icon: typeof Moon; title: string; desc: string }[];
+  }[] = [
+    {
+      key: 'feat.cat.color',
+      dot: 'bg-violet-400',
+      icon: 'text-violet-400',
+      cols: 'sm:grid-cols-2 lg:grid-cols-4',
+      items: [
+        { icon: Moon, title: t('feat.invert.t'), desc: t('feat.invert.d') },
+        { icon: Contrast, title: t('feat.gray.t'), desc: t('feat.gray.d') },
+        { icon: Droplets, title: t('feat.ink.t'), desc: t('feat.ink.d') },
+        { icon: PenLine, title: t('en.pen'), desc: t('en.pen.d') },
+      ],
+    },
+    {
+      key: 'feat.cat.layout',
+      dot: 'bg-emerald-400',
+      icon: 'text-emerald-400',
+      cols: 'sm:grid-cols-2 lg:grid-cols-4',
+      items: [
+        { icon: Grid2x2, title: t('feat.grid.t'), desc: t('feat.grid.d') },
+        { icon: Minus, title: t('feat.sep.t'), desc: t('feat.sep.d') },
+        { icon: Hash, title: t('feat.num.t'), desc: t('feat.num.d') },
+        { icon: BookOpen, title: t('feat.booklet.t'), desc: t('feat.booklet.d') },
+      ],
+    },
+    {
+      key: 'feat.cat.power',
+      dot: 'bg-amber-400',
+      icon: 'text-amber-400',
+      cols: 'sm:grid-cols-2 lg:grid-cols-3',
+      items: [
+        { icon: ScanText, title: t('en.ocr'), desc: t('en.ocr.d') },
+        { icon: Sparkles, title: t('en.presets'), desc: t('en.presets.none') },
+        { icon: Globe, title: t('up.cloud'), desc: t('up.cloudHint') },
+        { icon: Type, title: t('feat.wm.t'), desc: t('feat.wm.d') },
+        { icon: FileArchive, title: t('feat.zip.t'), desc: t('feat.zip.d') },
+        { icon: SlidersHorizontal, title: t('feat.quality.t'), desc: t('feat.quality.d') },
+      ],
+    },
   ];
 
   return (
     <section id="features" aria-label={t('feat.title')} className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-14">
       <SectionHead eyebrow="feat.eyebrow" title="feat.title" sub="feat.sub" />
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {FEATURES.map((f, i) => (
-          <Reveal key={f.title} delay={(i % 4) * 0.07}>
-            <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center transition-all hover:-translate-y-0.5 hover:border-violet-500/40 hover:bg-violet-500/5">
-              <span className="mx-auto mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-                <f.icon className="h-5 w-5 text-violet-400" aria-hidden="true" />
-              </span>
-              <p className="text-sm font-semibold">{f.title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{f.desc}</p>
-            </div>
+
+      {GROUPS.map((g, gi) => (
+        <div key={g.key} className={gi === 0 ? 'mt-8' : 'mt-10'}>
+          <Reveal>
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <span aria-hidden="true" className={cn('h-2 w-2 rounded-full', g.dot)} />
+              {t(g.key)}
+            </p>
           </Reveal>
-        ))}
-      </div>
+          <div className={cn('mt-3 grid grid-cols-1 gap-3', g.cols)}>
+            {g.items.map((f, i) => (
+              <Reveal key={f.title} delay={(i % 4) * 0.07}>
+                <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.05]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+                      <f.icon className={cn('h-4.5 w-4.5', g.icon)} aria-hidden="true" />
+                    </span>
+                    <p className="text-sm font-semibold leading-snug">{f.title}</p>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* privacy banner — the one guarantee that applies to everything above */}
+      <Reveal>
+        <div className="mt-10 flex flex-col gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-5 sm:flex-row sm:items-center">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10">
+            <Lock className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold">
+              {t('feat.cat.private')} — {t('feat.local.t')}
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t('feat.local.d')}</p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="outline" className="border-white/15 bg-white/5 font-normal">
+              <ShieldCheck className="mr-1 h-3 w-3 text-emerald-400" aria-hidden="true" />
+              {t('trust.private')}
+            </Badge>
+            <Badge variant="outline" className="border-white/15 bg-white/5 font-normal">
+              <WifiOff className="mr-1 h-3 w-3 text-fuchsia-300" aria-hidden="true" />
+              {t('trust.offline')}
+            </Badge>
+          </div>
+        </div>
+      </Reveal>
     </section>
   );
 }

@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 import { THEMES, PATTERNS, useThemeStore, type PatternId, type ThemeId } from '@/lib/theme';
 import { usePrintifyStore } from '@/lib/printify-store';
+import { ThemeSwatch } from './theme-swatch';
 import { ExampleDialog } from './example-dialog';
 
 const LS_SEEN = 'printifier.tour';
@@ -196,12 +197,16 @@ export function WelcomeTour() {
             ? 'border-white/50 shadow-md'
             : 'border-white/20',
       )}
-      style={{
-        background: `linear-gradient(135deg, ${th.swatch[0]} 0% 55%, ${th.swatch[2]} 55% 100%)`,
-      }}
     >
+      {/* clean two-tone disc: page background + accent dot (no diagonal split) */}
+      <ThemeSwatch th={th} className="h-full w-full" showDot={themeId !== th.id} />
       {themeId === th.id && (
-        <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-md" />
+        <Check
+          className={cn(
+            'absolute inset-0 m-auto h-4 w-4 drop-shadow-md',
+            th.light ? 'text-zinc-900' : 'text-white',
+          )}
+        />
       )}
     </motion.button>
   );
@@ -308,7 +313,7 @@ export function WelcomeTour() {
               <button
                 type="button"
                 onClick={close}
-                className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+                className="absolute right-4 top-4 inline-flex h-10 items-center rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {t('tour.skip')}
               </button>

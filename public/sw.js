@@ -13,7 +13,7 @@
  * never break the page.
  */
 
-const CACHE_NAME = 'printifier-v4';
+const CACHE_NAME = 'printifier-v5';
 
 // GitHub Pages hosts project sites under /<repo>/ — derive the base from the
 // registration scope so the same file works at the root (dev, APK) and under

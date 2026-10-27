@@ -18,6 +18,7 @@ import {
   type PatternId,
   type ThemeId,
 } from '@/lib/theme';
+import { ThemeSwatch } from './theme-swatch';
 
 /**
  * ThemePicker — select one of 18 site themes and a backdrop pattern, plus a
@@ -196,15 +197,7 @@ export function ThemePicker() {
                     : 'border-white/10 bg-white/[0.03] hover:border-violet-500/40')
                 }
               >
-                <span className="flex -space-x-1">
-                  {th.swatch.map((c, i) => (
-                    <span
-                      key={i}
-                      className="inline-block h-3 w-3 rounded-full border border-white/20"
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </span>
+                <ThemeSwatch th={th} className="h-6 w-6" />
                 <span className="w-full truncate text-[10px] font-semibold leading-none">
                   {t(THEME_NAME_KEY[th.id])}
                 </span>

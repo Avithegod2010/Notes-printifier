@@ -40,6 +40,7 @@ import {
   type ThemeId,
 } from '@/lib/theme';
 import { toast } from '@/hooks/use-toast';
+import { ThemeSwatch } from './theme-swatch';
 
 /**
  * CommandPalette — ⌘K / Ctrl+K quick actions for power users.
@@ -263,15 +264,7 @@ export function CommandPalette() {
                 value={`${t(THEME_KEY[th.id])} theme`}
                 onSelect={() => run(() => setTheme(th.id))}
               >
-                <span className="mr-2 flex shrink-0 -space-x-1">
-                  {th.swatch.map((c, i) => (
-                    <span
-                      key={i}
-                      className="inline-block h-3.5 w-3.5 rounded-full border border-white/25"
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </span>
+                <ThemeSwatch th={th} className="mr-2 h-4 w-4 shrink-0" />
                 <span className="flex-1">{t(THEME_KEY[th.id])}</span>
                 {themeId === th.id && <Zap className="h-3.5 w-3.5 text-violet-300" />}
               </CommandItem>

@@ -45,8 +45,8 @@ need_pass() {
 
 EXTRA_LINK=()
 if [ "$CHANNEL" = "beta" ]; then
-  BETA_VERSION_CODE="${BETA_VERSION_CODE:-8}"
-  BETA_VERSION_NAME="${BETA_VERSION_NAME:-1.6.0}"
+  BETA_VERSION_CODE="${BETA_VERSION_CODE:-15}"
+  BETA_VERSION_NAME="${BETA_VERSION_NAME:-1.8.1}"
   EXTRA_LINK=(--version-code "$BETA_VERSION_CODE" --version-name "$BETA_VERSION_NAME" --replace-version)
   OUT_APK="$ROOT/public/printifier.apk"
 else
