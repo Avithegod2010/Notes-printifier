@@ -28,12 +28,14 @@ export function UpdateBanner() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const t1 = setTimeout(() => {
+    let cancelled = false;
+    const check = () => {
       fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/version.json?_=${Date.now()}`, {
         cache: 'no-store',
       })
         .then((r) => (r.ok ? r.json() : null))
         .then((data: { version?: string } | null) => {
+          if (cancelled) return;
           const v = data?.version;
           if (!v || !isNewerVersion(v, APP_VERSION)) return;
           // A previously dismissed version never re-prompts…
@@ -42,11 +44,24 @@ export function UpdateBanner() {
           } catch {
             // private mode — always prompt
           }
-          setRemote(v);
+          setRemote((prev) => prev ?? v);
         })
         .catch(() => undefined);
-    }, 4000);
-    return () => clearTimeout(t1);
+    };
+    // first check shortly after load, then every 10 minutes and whenever the
+    // tab becomes visible again — catches deploys made mid-session.
+    const t1 = setTimeout(check, 4000);
+    const iv = setInterval(check, 10 * 60 * 1000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') check();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      cancelled = true;
+      clearTimeout(t1);
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
 
   const dismiss = () => {

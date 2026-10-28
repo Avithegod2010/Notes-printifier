@@ -1,10 +1,9 @@
 {
-  "version": "2.0.0",
-  "updated": "2026-10-29",
+  "version": "2.1.0",
+  "updated": "2026-10-28",
   "notes": [
-    "New: the ink-visibility guarantee now covers EVERY color — light pink, red, orange, yellow and green writing is darkened within its own hue so every stroke prints clearly visible and stays whole (light blue already did since the last release)",
-    "Fixed: light-colored writing can no longer be cut out by B&W/grayscale thresholding or stain cleanup — the boost runs before every rule that could erase it, and background washes are still cleaned to white thanks to a new spatial wash detector",
-    "New: update popup — when the installed app is out of date, a centered dialog appears with a big “Refresh now” button that clears the old cache and reloads straight onto the new version",
-    "Improved: “Everything a student needs” is now a compact chip list (hover a chip for details) instead of a tall card grid, and the stray progress bars at the bottom of the How-it-works cards are gone"
+    "New: tap any feature in “Everything a student needs” to see what it does — the three stacked groups are now one clean chip list with a live detail panel that works on touch screens",
+    "Improved: the savings calculator grew a “Where do you print?” mode (photocopy shop per-page rates vs own printer paper+ink), a semester / year / whole-degree period selector, a paper-vs-ink cost breakdown and a 4-year degree projection",
+    "Improved: update checks now re-run every 10 minutes and whenever you return to the tab, so mid-session deploys are caught too"
   ]
 }
