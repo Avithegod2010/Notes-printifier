@@ -33,37 +33,47 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 0 missing (792/792 done, 100%)
+## मराठी (Marathi) — 2 missing (792/794 done, 100%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
 | Key | English text |
 | --- | --- |
+| `en.dropBlue` | Remove light blue ink |
+| `en.dropBlue.d` | Light-blue strokes, answer boxes and underlines print as barely-visible ghosts — this erases them completely instead. Dark blue, green, red and black ink always survive. |
 
-## தமிழ் (Tamil) — 0 missing (792/792 done, 100%)
+## தமிழ் (Tamil) — 2 missing (792/794 done, 100%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
 | Key | English text |
 | --- | --- |
+| `en.dropBlue` | Remove light blue ink |
+| `en.dropBlue.d` | Light-blue strokes, answer boxes and underlines print as barely-visible ghosts — this erases them completely instead. Dark blue, green, red and black ink always survive. |
 
-## বাংলা (Bengali) — 0 missing (792/792 done, 100%)
+## বাংলা (Bengali) — 2 missing (792/794 done, 100%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
 | Key | English text |
 | --- | --- |
+| `en.dropBlue` | Remove light blue ink |
+| `en.dropBlue.d` | Light-blue strokes, answer boxes and underlines print as barely-visible ghosts — this erases them completely instead. Dark blue, green, red and black ink always survive. |
 
-## ગુજરાતી (Gujarati) — 0 missing (792/792 done, 100%)
+## ગુજરાતી (Gujarati) — 2 missing (792/794 done, 100%)
 
 Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA.gu`:
 
 | Key | English text |
 | --- | --- |
+| `en.dropBlue` | Remove light blue ink |
+| `en.dropBlue.d` | Light-blue strokes, answer boxes and underlines print as barely-visible ghosts — this erases them completely instead. Dark blue, green, red and black ink always survive. |
 
-## ਪੰਜਾਬੀ (Punjabi) — 0 missing (792/792 done, 100%)
+## ਪੰਜਾਬੀ (Punjabi) — 2 missing (792/794 done, 100%)
 
 Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA.pa`:
 
 | Key | English text |
 | --- | --- |
+| `en.dropBlue` | Remove light blue ink |
+| `en.dropBlue.d` | Light-blue strokes, answer boxes and underlines print as barely-visible ghosts — this erases them completely instead. Dark blue, green, red and black ink always survive. |
