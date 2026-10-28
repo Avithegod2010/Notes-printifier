@@ -513,85 +513,126 @@ function Hero() {
   );
 }
 
+/** One row per feature: icon, i18n keys, category + accent color. */
+const FEATURE_ITEMS: {
+  icon: typeof Moon;
+  t: string;
+  d: string;
+  cat: 'feat.cat.color' | 'feat.cat.layout' | 'feat.cat.power';
+  dot: string;
+  tone: string;
+}[] = [
+  { icon: Moon, t: 'feat.invert.t', d: 'feat.invert.d', cat: 'feat.cat.color', dot: 'bg-violet-400', tone: 'text-violet-400' },
+  { icon: Contrast, t: 'feat.gray.t', d: 'feat.gray.d', cat: 'feat.cat.color', dot: 'bg-violet-400', tone: 'text-violet-400' },
+  { icon: Droplets, t: 'feat.ink.t', d: 'feat.ink.d', cat: 'feat.cat.color', dot: 'bg-violet-400', tone: 'text-violet-400' },
+  { icon: PenLine, t: 'en.pen', d: 'en.pen.d', cat: 'feat.cat.color', dot: 'bg-violet-400', tone: 'text-violet-400' },
+  { icon: Grid2x2, t: 'feat.grid.t', d: 'feat.grid.d', cat: 'feat.cat.layout', dot: 'bg-emerald-400', tone: 'text-emerald-400' },
+  { icon: Minus, t: 'feat.sep.t', d: 'feat.sep.d', cat: 'feat.cat.layout', dot: 'bg-emerald-400', tone: 'text-emerald-400' },
+  { icon: Hash, t: 'feat.num.t', d: 'feat.num.d', cat: 'feat.cat.layout', dot: 'bg-emerald-400', tone: 'text-emerald-400' },
+  { icon: BookOpen, t: 'feat.booklet.t', d: 'feat.booklet.d', cat: 'feat.cat.layout', dot: 'bg-emerald-400', tone: 'text-emerald-400' },
+  { icon: ScanText, t: 'en.ocr', d: 'en.ocr.d', cat: 'feat.cat.power', dot: 'bg-amber-400', tone: 'text-amber-400' },
+  { icon: Sparkles, t: 'en.presets', d: 'en.presets.none', cat: 'feat.cat.power', dot: 'bg-amber-400', tone: 'text-amber-400' },
+  { icon: Globe, t: 'up.cloud', d: 'up.cloudHint', cat: 'feat.cat.power', dot: 'bg-amber-400', tone: 'text-amber-400' },
+  { icon: Type, t: 'feat.wm.t', d: 'feat.wm.d', cat: 'feat.cat.power', dot: 'bg-amber-400', tone: 'text-amber-400' },
+  { icon: FileArchive, t: 'feat.zip.t', d: 'feat.zip.d', cat: 'feat.cat.power', dot: 'bg-amber-400', tone: 'text-amber-400' },
+  { icon: SlidersHorizontal, t: 'feat.quality.t', d: 'feat.quality.d', cat: 'feat.cat.power', dot: 'bg-amber-400', tone: 'text-amber-400' },
+];
+
 function FeatureGrid() {
   const t = useT();
-
-  /** Features grouped by what they actually do, each group with its own accent. */
-  const GROUPS: {
-    key: 'feat.cat.color' | 'feat.cat.layout' | 'feat.cat.power';
-    dot: string;
-    icon: string;
-    items: { icon: typeof Moon; title: string; desc: string }[];
-  }[] = [
-    {
-      key: 'feat.cat.color',
-      dot: 'bg-violet-400',
-      icon: 'text-violet-400',
-      items: [
-        { icon: Moon, title: t('feat.invert.t'), desc: t('feat.invert.d') },
-        { icon: Contrast, title: t('feat.gray.t'), desc: t('feat.gray.d') },
-        { icon: Droplets, title: t('feat.ink.t'), desc: t('feat.ink.d') },
-        { icon: PenLine, title: t('en.pen'), desc: t('en.pen.d') },
-      ],
-    },
-    {
-      key: 'feat.cat.layout',
-      dot: 'bg-emerald-400',
-      icon: 'text-emerald-400',
-      items: [
-        { icon: Grid2x2, title: t('feat.grid.t'), desc: t('feat.grid.d') },
-        { icon: Minus, title: t('feat.sep.t'), desc: t('feat.sep.d') },
-        { icon: Hash, title: t('feat.num.t'), desc: t('feat.num.d') },
-        { icon: BookOpen, title: t('feat.booklet.t'), desc: t('feat.booklet.d') },
-      ],
-    },
-    {
-      key: 'feat.cat.power',
-      dot: 'bg-amber-400',
-      icon: 'text-amber-400',
-      items: [
-        { icon: ScanText, title: t('en.ocr'), desc: t('en.ocr.d') },
-        { icon: Sparkles, title: t('en.presets'), desc: t('en.presets.none') },
-        { icon: Globe, title: t('up.cloud'), desc: t('up.cloudHint') },
-        { icon: Type, title: t('feat.wm.t'), desc: t('feat.wm.d') },
-        { icon: FileArchive, title: t('feat.zip.t'), desc: t('feat.zip.d') },
-        { icon: SlidersHorizontal, title: t('feat.quality.t'), desc: t('feat.quality.d') },
-      ],
-    },
-  ];
+  const reduce = useReducedMotion();
+  const [active, setActive] = useState(0);
+  const F = FEATURE_ITEMS[active] ?? FEATURE_ITEMS[0];
 
   return (
     <section id="features" aria-label={t('feat.title')} className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-14">
       <SectionHead eyebrow="feat.eyebrow" title="feat.title" sub="feat.sub" />
 
-      {/* Compact: one chip row per category — hover a chip for its full
-          description. Replaces the tall 14-card grid that pushed everything
-          below the fold. */}
-      {GROUPS.map((g, gi) => (
-        <div key={g.key} className={gi === 0 ? 'mt-7' : 'mt-5'}>
-          <Reveal>
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              <span aria-hidden="true" className={cn('h-2 w-2 rounded-full', g.dot)} />
-              {t(g.key)}
-            </p>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {g.items.map((f) => (
-                <span
-                  key={f.title}
-                  title={f.desc}
-                  aria-label={`${f.title} — ${f.desc}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-medium transition-colors hover:border-white/25 hover:bg-white/[0.06]"
-                >
-                  <f.icon className={cn('h-3.5 w-3.5 shrink-0', g.icon)} aria-hidden="true" />
-                  {f.title}
-                </span>
-              ))}
-            </div>
-          </Reveal>
+      <Reveal>
+        <p className="mt-5 text-center text-xs font-medium text-muted-foreground">
+          {t('feat.tap')}
+        </p>
+      </Reveal>
+
+      {/* One unified chip cloud — tap/click any feature to open its detail
+          below. Replaces the three stacked category groups (which read as
+          three repeated sections) AND the hover-only tooltips that never
+          worked on touch screens. */}
+      <Reveal delay={0.05}>
+        <div
+          role="group"
+          aria-label={t('feat.title')}
+          className="mt-3 flex flex-wrap justify-center gap-1.5"
+        >
+          {FEATURE_ITEMS.map((f, i) => {
+            const selected = i === active;
+            return (
+              <button
+                key={f.t}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setActive(i)}
+                className={cn(
+                  'inline-flex min-h-[38px] items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  selected
+                    ? 'border-violet-400/60 bg-violet-500/15 text-foreground shadow-sm shadow-violet-900/30'
+                    : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/25 hover:bg-white/[0.06] hover:text-foreground',
+                )}
+              >
+                <span aria-hidden="true" className={cn('h-1.5 w-1.5 shrink-0 rounded-full', f.dot)} />
+                <f.icon
+                  aria-hidden="true"
+                  className={cn('h-3.5 w-3.5 shrink-0', selected ? f.tone : 'opacity-70')}
+                />
+                {t(f.t)}
+              </button>
+            );
+          })}
         </div>
-      ))}
+      </Reveal>
+
+      {/* detail panel — announces itself to screen readers when it changes */}
+      <Reveal delay={0.1}>
+        <div
+          aria-live="polite"
+          className="mt-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6"
+        >
+          <motion.div
+            key={active}
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={reduce ? undefined : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="flex flex-col gap-4 sm:flex-row sm:items-start"
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]"
+            >
+              <F.icon className={cn('h-6 w-6', F.tone)} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="flex flex-wrap items-center gap-2">
+                <span className="text-base font-bold sm:text-lg">{t(F.t)}</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t(F.cat)}
+                </span>
+              </p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                {t(F.d)}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => scrollToId('app')}
+                className="mt-3 h-9 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
+              >
+                {t('how.cta')}
+                <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </Reveal>
 
       {/* privacy banner — the one guarantee that applies to everything above */}
       <Reveal>
