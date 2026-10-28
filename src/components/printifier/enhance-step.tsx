@@ -114,33 +114,75 @@ function normalizeOcrLangs(langs: string[] | undefined): string {
 }
 
 /**
- * Tiny visual glyph for each color-mode tile. Pure CSS swatches keep the
- * picker square + compact; the "invert" tile gets a light "A" on a dark
- * chip so it reads as "dark slide becomes light page" at a glance.
+ * Tiny visual glyph for each color-mode tile — a miniature before/after of
+ * what the mode does to a page, so the picker reads at a glance:
+ *   auto      → stacked dark/light mini-pages (decides per page)
+ *   invert    → dark "A" page → light "A" page (same content, flipped)
+ *   original  → colored ink dots kept on paper
+ *   grayscale → ink becomes a gray ramp
+ *   bw        → hard black/white split (pure threshold)
+ * Pure CSS keeps the tiles square + compact on every screen.
  */
 function ModeSwatch({ mode }: { mode: ColorMode }) {
   if (mode === 'invert') {
     return (
       <span
         aria-hidden
-        className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-zinc-900"
+        className="relative block h-7 w-full overflow-hidden rounded-md border border-white/10"
+        style={{ background: 'linear-gradient(100deg, #18181b 0 60%, #fafafa 60% 100%)' }}
       >
-        <span className="text-[10px] font-bold leading-none text-zinc-100">A</span>
+        <span className="absolute left-[7%] top-[8%] text-[9px] font-extrabold leading-none text-zinc-100">A</span>
+        <span className="absolute left-[12%] top-[62%] h-0.5 w-[26%] rounded-full bg-zinc-400" />
+        <span className="absolute right-[7%] top-[8%] text-[9px] font-extrabold leading-none text-zinc-700">A</span>
+        <span className="absolute right-[12%] top-[62%] h-0.5 w-[26%] rounded-full bg-zinc-400" />
       </span>
     );
   }
-  const bg: Record<Exclude<ColorMode, 'invert'>, React.CSSProperties> = {
-    auto: { background: 'linear-gradient(135deg, #27272a 50%, #fafafa 50%)' },
-    original: { background: 'linear-gradient(135deg, #8b5cf6, #d946ef 55%, #f59e0b)' },
-    grayscale: { background: 'linear-gradient(135deg, #52525b, #d4d4d8)' },
-    bw: { background: 'linear-gradient(90deg, #000 50%, #fff 50%)' },
-  };
+  if (mode === 'auto') {
+    return (
+      <span
+        aria-hidden
+        className="relative block h-7 w-full overflow-hidden rounded-md border border-white/10"
+        style={{ background: 'linear-gradient(180deg, #27272a 0 55%, #fafafa 55% 100%)' }}
+      >
+        <span className="absolute left-[12%] top-[24%] h-0.5 w-[40%] rounded-full bg-zinc-400" />
+        <span className="absolute left-[12%] top-[76%] h-0.5 w-[40%] rounded-full bg-zinc-600" />
+      </span>
+    );
+  }
+  if (mode === 'original') {
+    return (
+      <span
+        aria-hidden
+        className="relative block h-7 w-full overflow-hidden rounded-md border border-white/10 bg-zinc-50"
+      >
+        <span className="absolute left-[16%] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-violet-500" />
+        <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500" />
+        <span className="absolute right-[16%] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-emerald-500" />
+      </span>
+    );
+  }
+  if (mode === 'grayscale') {
+    return (
+      <span
+        aria-hidden
+        className="relative block h-7 w-full overflow-hidden rounded-md border border-white/10"
+        style={{ background: 'linear-gradient(90deg, #3f3f46 0%, #a1a1aa 55%, #f4f4f5 100%)' }}
+      >
+        <span className="absolute left-[12%] top-1/2 h-0.5 w-[76%] -translate-y-1/2 rounded-full bg-zinc-700/70" />
+      </span>
+    );
+  }
+  // bw — hard black/white split with a stroke surviving on both sides
   return (
     <span
       aria-hidden
-      className="block h-7 w-full rounded-md border border-white/10"
-      style={bg[mode]}
-    />
+      className="relative block h-7 w-full overflow-hidden rounded-md border border-white/10"
+      style={{ background: 'linear-gradient(90deg, #09090b 0 50%, #ffffff 50% 100%)' }}
+    >
+      <span className="absolute left-[8%] top-1/2 h-0.5 w-[34%] -translate-y-1/2 rounded-full bg-zinc-300" />
+      <span className="absolute right-[8%] top-1/2 h-0.5 w-[34%] -translate-y-1/2 rounded-full bg-zinc-800" />
+    </span>
   );
 }
 
@@ -322,8 +364,9 @@ export function EnhanceStep() {
     inkBefore > 0.05 ? Math.max(0, Math.round(((inkBefore - inkAfter) / inkBefore) * 100)) : 0;
 
   // how many of the advanced toggles are active — surfaced on the collapsed
-  // header (stains, trim, pen, deskew, OCR)
+  // header (blue ink, stains, trim, pen, deskew, OCR)
   const activeAdv =
+    (filters.dropLightBlue !== false ? 1 : 0) +
     (filters.cleanStains ? 1 : 0) +
     (filters.trimMargins ? 1 : 0) +
     (filters.penBoost > 0 ? 1 : 0) +
@@ -863,6 +906,28 @@ export function EnhanceStep() {
                     {filters.colorMode === 'invert'
                       ? t('en.stains.inv')
                       : t('en.stains.light')}
+                  </p>
+                </div>
+
+                {/* Light-blue ink eraser — ON by default: faint cyan strokes,
+                    answer boxes and underlines print as illegible ghosts,
+                    so the safe default is to remove them entirely. */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                      <Droplets className="h-4 w-4 text-sky-400" /> {t('en.dropBlue')}
+                      <Badge className="ml-1 border-0 bg-fuchsia-500/20 text-[10px] text-fuchsia-200">
+                        {t('en.badge.new')}
+                      </Badge>
+                    </h4>
+                    <Switch
+                      checked={filters.dropLightBlue !== false}
+                      onCheckedChange={(v) => setFilters({ dropLightBlue: v })}
+                      aria-label={t('en.dropBlue')}
+                    />
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {t('en.dropBlue.d')}
                   </p>
                 </div>
 

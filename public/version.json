@@ -1,10 +1,10 @@
 {
-  "version": "1.8.1",
-  "updated": "2026-10-27",
+  "version": "1.9.0",
+  "updated": "2026-10-28",
   "notes": [
-    "Improved: the welcome-tour color picker is now clean two-tone discs (background + accent dot) — the confusing diagonal-split circles are gone, in the tour, the theme popover and the ⌘K palette alike",
-    "Improved: the tour's Skip button is a big, clearly visible pill instead of a tiny text link",
-    "Improved: header navigation never wraps or squishes anymore — shorter 'Impact' label, roomier layout, and the mobile menu now has language chips + Labs so nothing is out of reach",
-    "Improved: the features section is organised into labelled groups (Color & ink · Layout & paper saving · Power tools) with a privacy banner, in all 7 languages"
+    "New: light blue ink is now removed completely, on by default — faint cyan strokes, answer boxes and underlines can never again print as illegible ghosts; dark blue, green, red and black ink always survive (toggle in Enhance → Advanced if you ever want it kept)",
+    "Fixed: Recent-conversions rows no longer squish into one-word-per-line on phones — the name and details sit on their own line, with full-width Download / Re-printify buttons below",
+    "Fixed: more black-page safety — the default color mode is now 'auto' (dark slides inverted, light pages untouched), dark pages are pre-inverted before B&W/grayscale so they can never flood a sheet black, and old saved 'invert' preferences migrate to 'auto'",
+    "Improved: the color-mode tiles now show a miniature before/after of what each mode does, and the tour Skip button is a bigger 48px pill"
   ]
 }

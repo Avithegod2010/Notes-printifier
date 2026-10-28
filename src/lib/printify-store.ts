@@ -45,6 +45,20 @@ import {
 import { translateStatic, useLangStore, type Lang } from './i18n';
 import { HAS_SERVER_API } from './server-api';
 
+/**
+ * v1.9 settings migration — the factory default colorMode used to be
+ * 'invert', which silently turned every light page of a default-settings
+ * job into a solid black print (the "pages came out all black" report).
+ * Devices that saved prefs under the old default carry 'invert' without
+ * ever having chosen it; remap those to 'auto' (smart per-page invert) so
+ * a restored session can never regress to black pages. Deliberate choices
+ * of the other modes pass through untouched.
+ */
+function migrateFilters(f: FilterSettings): FilterSettings {
+  if (f.colorMode === 'invert') return { ...f, colorMode: 'auto' };
+  return f;
+}
+
 interface DocInfo {
   id: number;
   name: string;
@@ -1147,7 +1161,10 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
       labsTextRepaint: repaint,
       filters:
         prefs?.filters && typeof prefs.filters === 'object'
-          ? { ...s.filters, ...(prefs.filters as Partial<FilterSettings>) }
+          ? migrateFilters({
+              ...s.filters,
+              ...(prefs.filters as Partial<FilterSettings>),
+            })
           : s.filters,
       layout:
         prefs?.layout && typeof prefs.layout === 'object'

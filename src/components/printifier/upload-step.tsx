@@ -380,61 +380,66 @@ export function UploadStep() {
             {recent.map((job) => (
               <div
                 key={job.id}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5"
+                className="flex flex-col gap-2.5 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3"
               >
-                <FileText className="h-5 w-5 shrink-0 text-violet-400" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{job.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {job.inputPages} → {job.outputPages} pages ·{' '}
-                    {formatBytes(job.outputBytes)} · {timeAgo(job.ts)}
-                  </p>
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileText className="h-5 w-5 shrink-0 text-violet-400" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{job.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {job.inputPages} → {job.outputPages} pages ·{' '}
+                      {formatBytes(job.outputBytes)} · {timeAgo(job.ts)}
+                    </p>
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
-                  disabled={!job.blob}
-                  title={job.blob ? undefined : t('up.downloadNone')}
-                  onClick={() =>
-                    downloadBlob(job.blob, `printified-${job.outputPages}p.pdf`)
-                  }
-                >
-                  {t('up.download')}
-                </Button>
-                {reprintable.has(job.id) && (
+                {/* Buttons drop to their own full-width row on phones — inline
+                    flexing squeezed the metadata to zero width and stacked it
+                    one word per line (the mobile overflow report). */}
+                <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={reprinting || loadingDocs}
-                    aria-label={t('up.reprint')}
-                    title={t('up.reprintHint')}
-                    className="h-8 shrink-0 border-violet-400/40 text-violet-200 hover:bg-violet-500/15"
-                    onClick={() => void reprint(job)}
+                    className="h-8 flex-1 sm:flex-none"
+                    disabled={!job.blob}
+                    title={job.blob ? undefined : t('up.downloadNone')}
+                    onClick={() => downloadBlob(job.blob, job.name || `printified-${job.outputPages}p.pdf`)}
                   >
-                    {reprinting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RotateCcw className="h-3.5 w-3.5" />
-                    )}
-                    {t('up.reprint')}
+                    {t('up.download')}
                   </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`${t('up.remove')} ${job.name}`}
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-red-400"
-                  onClick={() => {
-                    void removeRecentJob(job.id);
-                    setRecent((r) => r.filter((j) => j.id !== job.id));
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  {reprintable.has(job.id) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={reprinting || loadingDocs}
+                      aria-label={t('up.reprint')}
+                      title={t('up.reprintHint')}
+                      className="h-8 flex-1 border-violet-400/40 text-violet-200 hover:bg-violet-500/15 sm:flex-none"
+                      onClick={() => void reprint(job)}
+                    >
+                      {reprinting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      )}
+                      {t('up.reprint')}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`${t('up.remove')} ${job.name}`}
+                    className="ml-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-red-400 sm:ml-0"
+                    onClick={() => {
+                      void removeRecentJob(job.id);
+                      setRecent((r) => r.filter((j) => j.id !== job.id));
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

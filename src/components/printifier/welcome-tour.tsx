@@ -313,7 +313,7 @@ export function WelcomeTour() {
               <button
                 type="button"
                 onClick={close}
-                className="absolute right-4 top-4 inline-flex h-10 items-center rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="absolute right-4 top-4 inline-flex h-12 min-w-28 items-center justify-center rounded-full border border-white/25 bg-white/10 px-6 text-base font-bold text-foreground shadow-sm transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {t('tour.skip')}
               </button>
