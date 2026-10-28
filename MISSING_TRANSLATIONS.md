@@ -39,8 +39,8 @@ Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA
 
 | Key | English text |
 | --- | --- |
-| `en.blueBoost` | Darken blue ink |
-| `en.blueBoost.d` | Faint blue & cyan pen strokes, answer boxes and underlines print as clearly visible deep blue — strokes stay whole instead of breaking up. Red, green, black and dark-blue ink are never touched. |
+| `en.blueBoost` | Darken light ink |
+| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
 
 ## தமிழ் (Tamil) — 2 missing (792/794 done, 100%)
 
@@ -48,8 +48,8 @@ Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA
 
 | Key | English text |
 | --- | --- |
-| `en.blueBoost` | Darken blue ink |
-| `en.blueBoost.d` | Faint blue & cyan pen strokes, answer boxes and underlines print as clearly visible deep blue — strokes stay whole instead of breaking up. Red, green, black and dark-blue ink are never touched. |
+| `en.blueBoost` | Darken light ink |
+| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
 
 ## বাংলা (Bengali) — 2 missing (792/794 done, 100%)
 
@@ -57,8 +57,8 @@ Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA
 
 | Key | English text |
 | --- | --- |
-| `en.blueBoost` | Darken blue ink |
-| `en.blueBoost.d` | Faint blue & cyan pen strokes, answer boxes and underlines print as clearly visible deep blue — strokes stay whole instead of breaking up. Red, green, black and dark-blue ink are never touched. |
+| `en.blueBoost` | Darken light ink |
+| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
 
 ## ગુજરાતી (Gujarati) — 2 missing (792/794 done, 100%)
 
@@ -66,8 +66,8 @@ Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA
 
 | Key | English text |
 | --- | --- |
-| `en.blueBoost` | Darken blue ink |
-| `en.blueBoost.d` | Faint blue & cyan pen strokes, answer boxes and underlines print as clearly visible deep blue — strokes stay whole instead of breaking up. Red, green, black and dark-blue ink are never touched. |
+| `en.blueBoost` | Darken light ink |
+| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
 
 ## ਪੰਜਾਬੀ (Punjabi) — 2 missing (792/794 done, 100%)
 
@@ -75,5 +75,5 @@ Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA
 
 | Key | English text |
 | --- | --- |
-| `en.blueBoost` | Darken blue ink |
-| `en.blueBoost.d` | Faint blue & cyan pen strokes, answer boxes and underlines print as clearly visible deep blue — strokes stay whole instead of breaking up. Red, green, black and dark-blue ink are never touched. |
+| `en.blueBoost` | Darken light ink |
+| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
