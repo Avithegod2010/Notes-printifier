@@ -45,18 +45,24 @@
  *    every stain rule; the cyan-fill kill additionally requires real
  *    saturation (diff ≥ 130) so pen cores (diff 60–120) can never match.
  *
- *    v1.9 user decision — light blue ink is ERASED by default (dropLightBlue).
- *    The blue-pen guard above kept faint cyan strokes alive, and users who
- *    print lecture notes got illegible ghosts: visible enough to waste toner,
- *    too faint to read. When light blue is unwanted, isLightBlueInk erases
- *    EVERY light blue-family pixel (strokes, boxes, halos) in one uniform
- *    rule — no more half-killed boxes dissociating from their text. Dark
- *    blue, green and warm inks never match, so readable content survives by
- *    construction. Two more print-safety changes ship with it: bw/grayscale
- *    pages are measured first and DARK pages are pre-inverted (thresholding
- *    a dark page used to flood the sheet black), and the factory default
- *    colorMode is now 'auto' instead of 'invert' so a light page can never
- *    turn black under default settings.
+ *    v1.9 user decision — light blue ink is DARKENED, never erased
+ *    (boostBlueInk, default ON). Measured against a real processed lecture
+ *    PDF: blue/cyan pen stroke cores sit at lum 140–179 with saturation
+ *    0.35–0.50, and the old tint-cut ERASED every stroke part at lum ≥ 200
+ *    — which is exactly why strokes printed "broken" / dissociated. The
+ *    blue-ink boost runs BEFORE every stain rule and the bw/grayscale
+ *    conversion: blue-family ink pixels (blue or cyan pens, answer boxes,
+ *    underlines — sat 0.20–0.66, lum 132–216) are re-mapped to a clearly
+ *    visible deep blue (lum ≈ 65, hue preserved), anti-aliased/JPEG halos
+ *    are blended 0.75 toward the same target so strokes reconnect.
+ *    Saturated cyan FILLS (QUESTION pills, sat > 0.66) still die via the
+ *    stain rules, green/warm inks and dark blue cores never match, and
+ *    because the boost runs before thresholding, bw/grayscale output keeps
+ *    blue ink as solid black instead of erasing it. Two print-safety
+ *    changes ship with it: bw/grayscale pages are measured first and DARK
+ *    pages are pre-inverted (thresholding a dark page used to flood the
+ *    sheet black), and the factory default colorMode is now 'auto' instead
+ *    of 'invert' so a light page can never turn black under defaults.
  *
  * Canvas note: every function accepts BOTH HTMLCanvasElement (main thread)
  * and OffscreenCanvas (inside the processing Web Worker), so the exact same
@@ -90,13 +96,15 @@ export interface FilterSettings {
   /** Remove light cyan/blue background washes + cyan label fills. */
   cleanStains: boolean;
   /**
-   * Erase light blue/cyan INK (strokes, answer boxes, underlines, halos).
-   * Default true: light blue prints as an illegible ghost — visible enough
-   * to cost toner, too faint to read. Dark blue, green and warm inks always
-   * survive. Optional in the type so preset recipes hardcoded before this
-   * field existed keep type-checking; absent === erased (safe default).
+   * DARKEN light blue/cyan INK so it prints clearly visible (default ON).
+   * Blue-family strokes, answer boxes and underlines are re-mapped to a
+   * deep, readable blue — and the boost runs before the stain rules and
+   * before bw/grayscale, so blue ink can never be erased or broken by
+   * them. Red, green, dark inks and saturated cyan decorations are never
+   * touched. Optional in the type so preset recipes hardcoded before this
+   * field existed keep type-checking; absent === boosted (safe default).
    */
-  dropLightBlue?: boolean;
+  boostBlueInk?: boolean;
   /** Auto-crop near-white margins so content fills each grid cell. */
   trimMargins: boolean;
   /** 0–100 — darkens handwriting strokes, keeps paper white. */
@@ -157,9 +165,9 @@ export const defaultFilters: FilterSettings = {
   // sessions start untouched; the slider and presets are one tap away.
   inkSaver: 0,
   cleanStains: true,
-  // Light blue ink is erased by default (v1.9) — a faint cyan ghost costs
-  // toner and cannot be read back, so erasing beats ghosting.
-  dropLightBlue: true,
+  // Blue ink is DARKENED by default (v1.9) — faint cyan strokes were the
+  // #1 legibility complaint; now they print as clearly visible deep blue.
+  boostBlueInk: true,
   trimMargins: false,
   penBoost: 0,
   searchable: false,
@@ -185,19 +193,34 @@ const TINT_MAX_BLUE_SHIFT = 28;
  * stroke rgb(140,180,225) from a pale cyan wash rgb(150,220,235).
  */
 const BLUE_PEN_MIN_BG_GAP = 22;
-/**
- * Light-blue ink erase (dropLightBlue) — faint cyan/blue strokes, answer
- * boxes and underlines sit at lum ≈ 172–230 in real lecture PDFs and print
- * as illegible ghosts. Every blue-family pixel at or above this luminance
- * is erased to paper white. Medium blue diagram lines rgb(0,157,242)
- * (lum ≈ 120), blue pen cores (lum ≈ 100–120) and green ink (g ≫ b)
- * stay far below the cut, so readable content is untouched by construction.
- */
-const LIGHT_BLUE_LUM_CUT = 168;
+// ---------------------------------------------------------------------------
+// Blue-ink boost (boostBlueInk) — calibrated on a real processed lecture
+// PDF whose cyan pen strokes measured lum 140–179 / sat 0.35–0.50 and whose
+// stroke middles (lum ≥ 200) had been erased by the old tint cut ("broken
+// blue"). Thresholds below separate INK from background:
+//   stroke cores ........... rgb(120,190,200) sat 0.40 · rgb(120,140,210)
+//                            sat 0.43 · rgb(90,160,240) sat 0.63 → boost
+//   QUESTION pill fills .... rgb(68,254,254) sat 0.73            → stain cut
+//   pale washes/shadows .... sat ≤ 0.17, b−r < 30                → stain cut
+// ---------------------------------------------------------------------------
+/** Luminance the boost maps blue ink to — dark enough to print clearly. */
+const BLUE_INK_TARGET_LUM = 65;
+/** Below this luminance blue ink is already visible — leave it alone. */
+const BLUE_INK_MIN_LUM = 132;
+/** Strong tier ceiling; above it only the halo tier may act. */
+const BLUE_INK_MAX_LUM = 216;
+/** Saturation window for real ink (washes below, cyan pills above). */
+const BLUE_INK_MIN_SAT = 0.2;
+const BLUE_INK_MAX_SAT = 0.66;
+/** Halo tier: anti-aliased/JPEG stroke edges — reconnected, not erased. */
+const BLUE_HALO_MIN_SAT = 0.17;
+const BLUE_HALO_MIN_BR_GAP = 30;
+/** Halo blend — 0.75 keeps edges soft but firmly readable (~lum 100). */
+const BLUE_HALO_BLEND = 0.75;
 /** Blue-family gate: blue must clearly dominate red. */
-const LIGHT_BLUE_MIN_BR_GAP = 10;
-/** Green-family guard: green ink has g far above b and is never erased. */
-const GREEN_FAMILY_MAX_GB_GAP = 12;
+const BLUE_INK_MIN_BR_GAP = 10;
+/** Green-family guard: green ink has g far above b and is never touched. */
+const GREEN_FAMILY_MAX_GB_GAP = 14;
 /**
  * Bright-cyan cut (QUESTION pills, option keys, cyan wash cores).
  */
@@ -303,25 +326,61 @@ function isStainPixel(r: number, g: number, b: number): boolean {
 }
 
 /**
- * Light-blue ink detector for dropLightBlue — deliberately SEPARATE from
- * isStainPixel (whose blue-pen guard PROTECTS blue ink). When the user asks
- * for light blue to be gone, every light blue-family pixel must die as one
- * uniform rule: strokes, answer boxes, underlines, anti-aliased halos.
- * Partial rules are exactly what produced "text dissociated from its blue
- * box" — the light parts of one shape vanished while darker parts stood.
+ * Blue-ink boost detector — deliberately SEPARATE from isStainPixel (whose
+ * blue-pen guard PROTECTS blue-family pixels from stain cuts). Returns:
+ *   0 → not blue ink (leave the pixel alone)
+ *   1 → stroke body (lum 132–216, sat 0.20–0.66) → darken HARD to lum ≈ 65
+ *   2 → stroke halo (blue-tinted, sat ≥ 0.17) → blended 0.75 toward the
+ *       target so anti-aliased/JPEG edges reconnect instead of dissociating
  * A pixel matches only when ALL hold:
  *   - blue clearly dominates red            (b − r ≥ 10 → not warm/neutral)
- *   - it is NOT green-family                (g ≤ b + 12 → green ink survives)
- *   - it is LIGHT                           (lum ≥ 168 → the faint-ghost zone)
- * Dark blue boxes rgb(0,120,220) (lum ≈ 105) and violet pens (lum < 168)
- * never match; light cyan rgb(150,220,235) and light-blue pen
- * rgb(140,180,225) always do.
+ *   - it is NOT green-family                (g ≤ b + 14 → green ink survives)
+ *   - it is faint                           (lum ≥ 132 — darker blue already
+ *                                             reads fine on white paper)
+ *   - saturation says INK, not background   (0.20–0.66 window; paper tints
+ *                                             sit below, cyan pills above)
+ * Red/orange pens (b < r), green ink, dark blue cores (lum < 132) and
+ * saturated cyan fills (sat > 0.66 → stain rules) never match.
  */
-function isLightBlueInk(r: number, g: number, b: number): boolean {
-  if (b - r < LIGHT_BLUE_MIN_BR_GAP) return false;
-  if (g - b > GREEN_FAMILY_MAX_GB_GAP) return false;
+function blueInkBoostTier(r: number, g: number, b: number): 0 | 1 | 2 {
+  if (b - r < BLUE_INK_MIN_BR_GAP) return 0;
+  if (g - b > GREEN_FAMILY_MAX_GB_GAP) return 0;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const sat = (max - min) / max;
+  if (sat > BLUE_INK_MAX_SAT) return 0; // cyan pill / decoration → stain cut
   const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-  return lum >= LIGHT_BLUE_LUM_CUT;
+  if (lum < BLUE_INK_MIN_LUM) return 0; // already visible
+  const halo = sat >= BLUE_HALO_MIN_SAT && b - r >= BLUE_HALO_MIN_BR_GAP;
+  if (lum <= BLUE_INK_MAX_LUM) {
+    if (sat >= BLUE_INK_MIN_SAT) return 1;
+    return halo ? 2 : 0;
+  }
+  return halo ? 2 : 0;
+}
+
+/**
+ * Re-map one blue-ink pixel to the target deep blue, preserving hue:
+ * every channel scales by targetLum/lum, and blue gets a small extra
+ * multiplier so the result still reads as BLUE rather than gray.
+ */
+function boostBluePixel(
+  r: number,
+  g: number,
+  b: number,
+  lum: number,
+  blend: number,
+): [number, number, number] {
+  const k = Math.min(1, BLUE_INK_TARGET_LUM / Math.max(1, lum));
+  let nr = r * k;
+  let ng = g * k;
+  let nb = Math.min(255, b * k * 1.15);
+  if (blend < 1) {
+    nr = r + (nr - r) * blend;
+    ng = g + (ng - g) * blend;
+    nb = b + (nb - b) * blend;
+  }
+  return [nr, ng, nb];
 }
 
 /**
@@ -401,12 +460,12 @@ export function applyFilters(
     }
     if (n > 0 && sum / n < AUTO_INVERT_THRESHOLD) preInvert = true;
   }
-  // Light-blue erase runs in every non-inverted path (the invert path keeps
+  // Blue-ink boost runs in every non-inverted path (the invert path keeps
   // dark-slide light-blue labels, which are readable content there).
   // `!== false` keeps preset recipes that predate the field on the safe
-  // default: erased.
-  const dropBlue =
-    s.dropLightBlue !== false && mode !== 'invert' && !preInvert;
+  // default: boosted.
+  const boostBlue =
+    s.boostBlueInk !== false && mode !== 'invert' && !preInvert;
 
   const strength = Math.min(100, Math.max(0, s.inkSaver)) / 100;
   const useLevels = strength > 0;
@@ -436,11 +495,24 @@ export function applyFilters(
         continue;
       }
     } else {
-      if (dropBlue && isLightBlueInk(r, g, b)) {
-        d[i] = 255;
-        d[i + 1] = 255;
-        d[i + 2] = 255;
-        continue;
+      // Boost BEFORE the stain rules and before the gray/bw conversion:
+      // darkened blue ink can never match a stain cut, and in bw/grayscale
+      // it survives thresholding as solid black instead of vanishing.
+      if (boostBlue) {
+        const tier = blueInkBoostTier(r, g, b);
+        if (tier) {
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          const [nr, ng, nb] = boostBluePixel(
+            r,
+            g,
+            b,
+            lum,
+            tier === 1 ? 1 : BLUE_HALO_BLEND,
+          );
+          r = nr;
+          g = ng;
+          b = nb;
+        }
       }
       if (clean && isStainPixel(r, g, b)) {
         d[i] = 255;

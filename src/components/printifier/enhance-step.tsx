@@ -366,7 +366,7 @@ export function EnhanceStep() {
   // how many of the advanced toggles are active — surfaced on the collapsed
   // header (blue ink, stains, trim, pen, deskew, OCR)
   const activeAdv =
-    (filters.dropLightBlue !== false ? 1 : 0) +
+    (filters.boostBlueInk !== false ? 1 : 0) +
     (filters.cleanStains ? 1 : 0) +
     (filters.trimMargins ? 1 : 0) +
     (filters.penBoost > 0 ? 1 : 0) +
@@ -909,25 +909,25 @@ export function EnhanceStep() {
                   </p>
                 </div>
 
-                {/* Light-blue ink eraser — ON by default: faint cyan strokes,
-                    answer boxes and underlines print as illegible ghosts,
-                    so the safe default is to remove them entirely. */}
+                {/* Blue-ink boost — ON by default: faint cyan strokes,
+                    answer boxes and underlines print as clearly visible
+                    deep blue instead of illegible ghosts. */}
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
-                      <Droplets className="h-4 w-4 text-sky-400" /> {t('en.dropBlue')}
+                      <Droplets className="h-4 w-4 text-sky-400" /> {t('en.blueBoost')}
                       <Badge className="ml-1 border-0 bg-fuchsia-500/20 text-[10px] text-fuchsia-200">
                         {t('en.badge.new')}
                       </Badge>
                     </h4>
                     <Switch
-                      checked={filters.dropLightBlue !== false}
-                      onCheckedChange={(v) => setFilters({ dropLightBlue: v })}
-                      aria-label={t('en.dropBlue')}
+                      checked={filters.boostBlueInk !== false}
+                      onCheckedChange={(v) => setFilters({ boostBlueInk: v })}
+                      aria-label={t('en.blueBoost')}
                     />
                   </div>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    {t('en.dropBlue.d')}
+                    {t('en.blueBoost.d')}
                   </p>
                 </div>
 

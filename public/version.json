@@ -2,9 +2,9 @@
   "version": "1.9.0",
   "updated": "2026-10-28",
   "notes": [
-    "New: light blue ink is now removed completely, on by default — faint cyan strokes, answer boxes and underlines can never again print as illegible ghosts; dark blue, green, red and black ink always survive (toggle in Enhance → Advanced if you ever want it kept)",
-    "Fixed: Recent-conversions rows no longer squish into one-word-per-line on phones — the name and details sit on their own line, with full-width Download / Re-printify buttons below",
-    "Fixed: more black-page safety — the default color mode is now 'auto' (dark slides inverted, light pages untouched), dark pages are pre-inverted before B&W/grayscale so they can never flood a sheet black, and old saved 'invert' preferences migrate to 'auto'",
+    "New: blue ink is now darkened to a clearly visible deep blue, on by default \u2014 faint cyan strokes, answer boxes and underlines print dark and whole instead of faint and broken; red, green, black and dark-blue ink are never touched (toggle in Enhance \u2192 Advanced)",
+    "Fixed: Recent-conversions rows no longer squish into one-word-per-line on phones \u2014 the name and details sit on their own line, with full-width Download / Re-printify buttons below",
+    "Fixed: more black-page safety \u2014 the default color mode is now 'auto' (dark slides inverted, light pages untouched), dark pages are pre-inverted before B&W/grayscale so they can never flood a sheet black, and old saved 'invert' preferences migrate to 'auto'",
     "Improved: the color-mode tiles now show a miniature before/after of what each mode does, and the tour Skip button is a bigger 48px pill"
   ]
 }
