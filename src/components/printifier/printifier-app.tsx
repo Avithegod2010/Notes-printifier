@@ -521,14 +521,12 @@ function FeatureGrid() {
     key: 'feat.cat.color' | 'feat.cat.layout' | 'feat.cat.power';
     dot: string;
     icon: string;
-    cols: string;
     items: { icon: typeof Moon; title: string; desc: string }[];
   }[] = [
     {
       key: 'feat.cat.color',
       dot: 'bg-violet-400',
       icon: 'text-violet-400',
-      cols: 'sm:grid-cols-2 lg:grid-cols-4',
       items: [
         { icon: Moon, title: t('feat.invert.t'), desc: t('feat.invert.d') },
         { icon: Contrast, title: t('feat.gray.t'), desc: t('feat.gray.d') },
@@ -540,7 +538,6 @@ function FeatureGrid() {
       key: 'feat.cat.layout',
       dot: 'bg-emerald-400',
       icon: 'text-emerald-400',
-      cols: 'sm:grid-cols-2 lg:grid-cols-4',
       items: [
         { icon: Grid2x2, title: t('feat.grid.t'), desc: t('feat.grid.d') },
         { icon: Minus, title: t('feat.sep.t'), desc: t('feat.sep.d') },
@@ -552,7 +549,6 @@ function FeatureGrid() {
       key: 'feat.cat.power',
       dot: 'bg-amber-400',
       icon: 'text-amber-400',
-      cols: 'sm:grid-cols-2 lg:grid-cols-3',
       items: [
         { icon: ScanText, title: t('en.ocr'), desc: t('en.ocr.d') },
         { icon: Sparkles, title: t('en.presets'), desc: t('en.presets.none') },
@@ -568,35 +564,38 @@ function FeatureGrid() {
     <section id="features" aria-label={t('feat.title')} className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-14">
       <SectionHead eyebrow="feat.eyebrow" title="feat.title" sub="feat.sub" />
 
+      {/* Compact: one chip row per category — hover a chip for its full
+          description. Replaces the tall 14-card grid that pushed everything
+          below the fold. */}
       {GROUPS.map((g, gi) => (
-        <div key={g.key} className={gi === 0 ? 'mt-8' : 'mt-10'}>
+        <div key={g.key} className={gi === 0 ? 'mt-7' : 'mt-5'}>
           <Reveal>
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
               <span aria-hidden="true" className={cn('h-2 w-2 rounded-full', g.dot)} />
               {t(g.key)}
             </p>
           </Reveal>
-          <div className={cn('mt-3 grid grid-cols-1 gap-3', g.cols)}>
-            {g.items.map((f, i) => (
-              <Reveal key={f.title} delay={(i % 4) * 0.07}>
-                <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.05]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-                      <f.icon className={cn('h-4.5 w-4.5', g.icon)} aria-hidden="true" />
-                    </span>
-                    <p className="text-sm font-semibold leading-snug">{f.title}</p>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal delay={0.05}>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {g.items.map((f) => (
+                <span
+                  key={f.title}
+                  title={f.desc}
+                  aria-label={`${f.title} — ${f.desc}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-medium transition-colors hover:border-white/25 hover:bg-white/[0.06]"
+                >
+                  <f.icon className={cn('h-3.5 w-3.5 shrink-0', g.icon)} aria-hidden="true" />
+                  {f.title}
+                </span>
+              ))}
+            </div>
+          </Reveal>
         </div>
       ))}
 
       {/* privacy banner — the one guarantee that applies to everything above */}
       <Reveal>
-        <div className="mt-10 flex flex-col gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-5 sm:flex-row sm:items-center">
+        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-4 sm:flex-row sm:items-center">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10">
             <Lock className="h-5 w-5 text-emerald-400" aria-hidden="true" />
           </span>

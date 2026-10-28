@@ -1,10 +1,10 @@
 {
-  "version": "1.9.0",
-  "updated": "2026-10-28",
+  "version": "2.0.0",
+  "updated": "2026-10-29",
   "notes": [
-    "New: blue ink is now darkened to a clearly visible deep blue, on by default \u2014 faint cyan strokes, answer boxes and underlines print dark and whole instead of faint and broken; red, green, black and dark-blue ink are never touched (toggle in Enhance \u2192 Advanced)",
-    "Fixed: Recent-conversions rows no longer squish into one-word-per-line on phones \u2014 the name and details sit on their own line, with full-width Download / Re-printify buttons below",
-    "Fixed: more black-page safety \u2014 the default color mode is now 'auto' (dark slides inverted, light pages untouched), dark pages are pre-inverted before B&W/grayscale so they can never flood a sheet black, and old saved 'invert' preferences migrate to 'auto'",
-    "Improved: the color-mode tiles now show a miniature before/after of what each mode does, and the tour Skip button is a bigger 48px pill"
+    "New: the ink-visibility guarantee now covers EVERY color — light pink, red, orange, yellow and green writing is darkened within its own hue so every stroke prints clearly visible and stays whole (light blue already did since the last release)",
+    "Fixed: light-colored writing can no longer be cut out by B&W/grayscale thresholding or stain cleanup — the boost runs before every rule that could erase it, and background washes are still cleaned to white thanks to a new spatial wash detector",
+    "New: update popup — when the installed app is out of date, a centered dialog appears with a big “Refresh now” button that clears the old cache and reloads straight onto the new version",
+    "Improved: “Everything a student needs” is now a compact chip list (hover a chip for details) instead of a tall card grid, and the stray progress bars at the bottom of the How-it-works cards are gone"
   ]
 }

@@ -64,6 +64,25 @@
  *    sheet black), and the factory default colorMode is now 'auto' instead
  *    of 'invert' so a light page can never turn black under defaults.
  *
+ *    v2.0 visibility guarantee — the SAME protection now covers EVERY ink
+ *    color, not just blue ("any writing must be visible and never cut
+ *    out"). The blue detector keeps its calibrated two-tier shape test;
+ *    a second, general detector catches light pink/red/orange/yellow/green
+ *    ink (sat ≥ 0.30, lum 132–200) and darkens it within its own hue to
+ *    lum ≈ 85, again BEFORE the stain rules and before bw/grayscale:
+ *      - light pink rgb(240,150,170) → dark rose (visible)  — was washed
+ *        toward white by the levels/pen stages and, at lum ≥ 200, ERASED
+ *        outright by the tint cut
+ *      - bright green rgb(100,220,130) (lum ≈ 174) → dark green — was
+ *        WHITE-THRESHOLDED away in bw mode (174 ≥ the 150 cut)
+ *      - yellow pen rgb(200,180,30) (lum ≈ 164) → dark olive-yellow
+ *    The window deliberately stops at lum 200 so background washes the
+ *    tint cut owns can never be rescued as dark blotches, and it starts
+ *    at sat 0.30 so paper tints / cream backgrounds never match. Nothing
+ *    is ever erased by the boost — it only darkens within the pixel's own
+ *    hue, and it runs before every rule that could cut or threshold the
+ *    stroke away.
+ *
  * Canvas note: every function accepts BOTH HTMLCanvasElement (main thread)
  * and OffscreenCanvas (inside the processing Web Worker), so the exact same
  * pipeline runs in either context.
@@ -96,13 +115,16 @@ export interface FilterSettings {
   /** Remove light cyan/blue background washes + cyan label fills. */
   cleanStains: boolean;
   /**
-   * DARKEN light blue/cyan INK so it prints clearly visible (default ON).
-   * Blue-family strokes, answer boxes and underlines are re-mapped to a
-   * deep, readable blue — and the boost runs before the stain rules and
-   * before bw/grayscale, so blue ink can never be erased or broken by
-   * them. Red, green, dark inks and saturated cyan decorations are never
-   * touched. Optional in the type so preset recipes hardcoded before this
-   * field existed keep type-checking; absent === boosted (safe default).
+   * DARKEN light INK of ANY color so it prints clearly visible (default
+   * ON). Blue-family strokes get the calibrated deep-blue treatment;
+   * light pink/red/orange/yellow/green ink is darkened within its own
+   * hue. The boost runs before the stain rules and before bw/grayscale,
+   * so light ink can never be erased, washed out or broken by them —
+   * nothing is removed, only made visible. Dark inks, paper tints and
+   * saturated cyan decorations are never touched. Optional in the type
+   * so preset recipes hardcoded before this field existed keep
+   * type-checking; absent === boosted (safe default). The historical
+   * field name (blue) is kept for saved-preset compatibility.
    */
   boostBlueInk?: boolean;
   /** Auto-crop near-white margins so content fills each grid cell. */
@@ -326,6 +348,81 @@ function isStainPixel(r: number, g: number, b: number): boolean {
 }
 
 /**
+ * Colorimetric signature of a PALE CYAN/BLUE WASH pixel (background, no
+ * content). Deliberately BROAD — pen-stroke halos match it too — because
+ * the real separation happens spatially in pageHasPaleWash (solid blob vs
+ * thin band), not here.
+ */
+function paleWashClass(r: number, g: number, b: number): boolean {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const sat = max === 0 ? 0 : (max - min) / max;
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  return (
+    lum >= 200 &&
+    sat >= 0.06 &&
+    sat <= 0.24 &&
+    b - r >= 25 &&
+    b - g >= 0 &&
+    b - g <= 14
+  );
+}
+
+/** Grid width of the downsampled wash map (height follows the aspect). */
+const WASH_GRID_W = 160;
+
+/**
+ * Does this page carry a REAL pale-cyan wash (a solid light-blue background
+ * blob), as opposed to light-blue PEN strokes?
+ *
+ * The two are colorimetrically IDENTICAL pixel-by-pixel — a stroke's
+ * anti-aliased edge and a watercolor wash land on the same rgb values —
+ * so the decision is made SPATIALLY: the page is decimated into a coarse
+ * grid (~A4 → 160 columns) and a wash-classified cell only counts when its
+ * 3×3 neighborhood is almost fully wash-classified too (an INTERIOR cell).
+ * A solid background blob survives decimation as a block of interior
+ * cells; thin stroke halos (1–3 px bands) collapse into sparse lines whose
+ * cells never gather 6/8 neighbors. This lets the blue halo boost keep
+ * reconnecting stroke edges on clean pages while solid washes stay with
+ * the stain rules (which whiten them) instead of being rescued as dark
+ * slate blotches by the halo blend.
+ */
+function pageHasPaleWash(d: Uint8ClampedArray, w: number, h: number): boolean {
+  const gw = Math.min(WASH_GRID_W, Math.max(8, w));
+  const gh = Math.max(8, Math.round((gw * h) / w));
+  const cls = new Uint8Array(gw * gh);
+  const cellW = w / gw;
+  const cellH = h / gh;
+  for (let gy = 0; gy < gh; gy++) {
+    const sy = Math.min(h - 1, Math.floor((gy + 0.5) * cellH));
+    for (let gx = 0; gx < gw; gx++) {
+      const sx = Math.min(w - 1, Math.floor((gx + 0.5) * cellW));
+      const i = (sy * w + sx) * 4;
+      cls[gy * gw + gx] = paleWashClass(d[i], d[i + 1], d[i + 2]) ? 1 : 0;
+    }
+  }
+  const interiorLimit = gw * gh * 0.004; // 0.4% of cells as solid-blob evidence
+  let interior = 0;
+  for (let gy = 1; gy < gh - 1; gy++) {
+    for (let gx = 1; gx < gw - 1; gx++) {
+      if (!cls[gy * gw + gx]) continue;
+      let on = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const row = (gy + dy) * gw;
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx !== 0 || dy !== 0) on += cls[row + gx + dx];
+        }
+      }
+      if (on >= 6) {
+        interior++;
+        if (interior > interiorLimit) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Blue-ink boost detector — deliberately SEPARATE from isStainPixel (whose
  * blue-pen guard PROTECTS blue-family pixels from stain cuts). Returns:
  *   0 → not blue ink (leave the pixel alone)
@@ -341,8 +438,17 @@ function isStainPixel(r: number, g: number, b: number): boolean {
  *                                             sit below, cyan pills above)
  * Red/orange pens (b < r), green ink, dark blue cores (lum < 132) and
  * saturated cyan fills (sat > 0.66 → stain rules) never match.
+ *
+ * `hasWash` (page-level, spatial) guards the halo tier — see
+ * pageHasPaleWash: on pages with a REAL solid wash, near-white
+ * wash-class pixels are NOT boosted so the stain rules can whiten them.
  */
-function blueInkBoostTier(r: number, g: number, b: number): 0 | 1 | 2 {
+function blueInkBoostTier(
+  r: number,
+  g: number,
+  b: number,
+  hasWash: boolean,
+): 0 | 1 | 2 {
   if (b - r < BLUE_INK_MIN_BR_GAP) return 0;
   if (g - b > GREEN_FAMILY_MAX_GB_GAP) return 0;
   const max = Math.max(r, g, b);
@@ -356,6 +462,13 @@ function blueInkBoostTier(r: number, g: number, b: number): 0 | 1 | 2 {
     if (sat >= BLUE_INK_MIN_SAT) return 1;
     return halo ? 2 : 0;
   }
+  // Above the stroke-body ceiling the pixel is nearly white: either a
+  // stroke's outermost anti-aliased edge or part of a background wash —
+  // colorimetrically identical. When the page carries a REAL wash (solid
+  // blob, detected spatially), near-white wash-class pixels are left for
+  // the stain rules to whiten; on clean pages the halo blend reconnects
+  // stroke edges as before.
+  if (hasWash && paleWashClass(r, g, b)) return 0;
   return halo ? 2 : 0;
 }
 
@@ -381,6 +494,52 @@ function boostBluePixel(
     nb = b + (nb - b) * blend;
   }
   return [nr, ng, nb];
+}
+
+// ---------------------------------------------------------------------------
+// General light-ink boost (v2.0) — extends the blue-ink guarantee to every
+// other hue. Calibrated to leave backgrounds alone:
+//   light pink pen rgb(240,150,170) sat 0.38 · lum 179 → boost (dark rose)
+//   bright green pen rgb(100,220,130) sat 0.55 · lum 174 → boost (dark green)
+//   yellow pen rgb(200,180,30) sat 0.85 · lum 164 → boost (dark olive)
+//   cream paper rgb(255,245,220) sat 0.14 → untouched (sat too low)
+//   light orange wash rgb(255,220,180) sat 0.29 → untouched (sat too low)
+//   beige tint rgb(240,200,160) lum 207 → untouched (stain-rule territory)
+//   red ink rgb(200,40,60) lum 90 → untouched (already visible)
+// ---------------------------------------------------------------------------
+/** Luminance the general boost maps light ink to — visible in every mode. */
+const LIGHT_INK_TARGET_LUM = 85;
+/** Below this luminance ink is already clearly visible — leave it alone. */
+const LIGHT_INK_MIN_LUM = 132;
+/** Above this luminance the stain rules own the pixel — never rescue it. */
+const LIGHT_INK_MAX_LUM = 200;
+/** Real colored ink only — washes/tints/paper sit below this saturation. */
+const LIGHT_INK_MIN_SAT = 0.3;
+
+/**
+ * General light-ink detector — the all-hue companion to blueInkBoostTier.
+ * Returns true for faint-but-saturated ink of any NON-blue hue; the pixel
+ * is then darkened within its own hue (never erased). A pixel matches only
+ * when ALL hold:
+ *   - it is NOT blue-family (the calibrated blue detector owns those)
+ *   - saturation says INK, not paper/wash (sat ≥ 0.30)
+ *   - it is faint        (lum ≥ 132 — darker ink already reads fine)
+ *   - it is not wash territory (lum < 200 — the tint cut owns ≥ 200 and
+ *     boosting those would rescue background stains as dark blotches)
+ * Blue-family pixels (b well above r, g below b) always return false here
+ * even when they fall outside the blue detector's windows: their handling
+ * (boost halo / stain cut) is deliberately left exactly as calibrated.
+ */
+function isLightInkPixel(r: number, g: number, b: number): boolean {
+  // Blue-family gate — mirrors the blue detector's family shape test.
+  if (b - r >= BLUE_INK_MIN_BR_GAP && g - b <= GREEN_FAMILY_MAX_GB_GAP)
+    return false;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const sat = (max - min) / max;
+  if (sat < LIGHT_INK_MIN_SAT) return false;
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  return lum >= LIGHT_INK_MIN_LUM && lum < LIGHT_INK_MAX_LUM;
 }
 
 /**
@@ -460,12 +619,17 @@ export function applyFilters(
     }
     if (n > 0 && sum / n < AUTO_INVERT_THRESHOLD) preInvert = true;
   }
-  // Blue-ink boost runs in every non-inverted path (the invert path keeps
-  // dark-slide light-blue labels, which are readable content there).
-  // `!== false` keeps preset recipes that predate the field on the safe
-  // default: boosted.
+  // Light-ink visibility boost runs in every non-inverted path (the invert
+  // path keeps dark-slide labels, which are readable content there) — blue
+  // ink via the calibrated two-tier detector, every other light hue via the
+  // general all-hue detector. `!== false` keeps preset recipes that predate
+  // the field on the safe default: boosted.
   const boostBlue =
     s.boostBlueInk !== false && mode !== 'invert' && !preInvert;
+  // Spatial wash detection runs ONCE per page (not per pixel): a solid
+  // pale-cyan background blob hands the near-white band back to the stain
+  // rules so washes are whitened, not rescued as dark blotches.
+  const hasWash = boostBlue ? pageHasPaleWash(d, canvas.width, canvas.height) : false;
 
   const strength = Math.min(100, Math.max(0, s.inkSaver)) / 100;
   const useLevels = strength > 0;
@@ -499,7 +663,7 @@ export function applyFilters(
       // darkened blue ink can never match a stain cut, and in bw/grayscale
       // it survives thresholding as solid black instead of vanishing.
       if (boostBlue) {
-        const tier = blueInkBoostTier(r, g, b);
+        const tier = blueInkBoostTier(r, g, b, hasWash);
         if (tier) {
           const lum = 0.299 * r + 0.587 * g + 0.114 * b;
           const [nr, ng, nb] = boostBluePixel(
@@ -512,6 +676,17 @@ export function applyFilters(
           r = nr;
           g = ng;
           b = nb;
+        } else if (isLightInkPixel(r, g, b)) {
+          // All-hue visibility guarantee: darken light pink/red/orange/
+          // yellow/green ink within its own hue BEFORE the stain rules
+          // and bw/grayscale can wash or threshold it away. Channel
+          // scaling preserves hue and saturation exactly — nothing is
+          // erased, every stroke stays whole and prints clearly.
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          const k = Math.min(1, LIGHT_INK_TARGET_LUM / Math.max(1, lum));
+          r *= k;
+          g *= k;
+          b *= k;
         }
       }
       if (clean && isStainPixel(r, g, b)) {

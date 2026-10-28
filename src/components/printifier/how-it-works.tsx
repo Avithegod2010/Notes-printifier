@@ -159,24 +159,6 @@ function StepCard({
           </div>
         </div>
         <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
-
-        {/* per-card step progress (conveyor indicator) */}
-        {!reduce && (
-          <div className="mt-4 flex gap-1.5" aria-hidden="true">
-            {[0, 1, 2].map((i) => (
-              <span key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
-                <motion.span
-                  className="block h-full origin-left rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400"
-                  animate={{ scaleX: i === active ? 1 : 0 }}
-                  transition={{
-                    duration: i === active ? STEP_MS / 1000 : 0.25,
-                    ease: 'linear',
-                  }}
-                />
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </Reveal>
   );

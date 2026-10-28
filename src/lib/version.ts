@@ -1,5 +1,5 @@
 /** The running app version — keep in sync with public/version.json. */
-export const APP_VERSION = '1.9.0';
+export const APP_VERSION = '2.0.0';
 
 /**
  * Compare dotted versions; returns true when `remote` is NEWER than `local`.
