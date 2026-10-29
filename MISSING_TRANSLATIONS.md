@@ -33,117 +33,37 @@ falls back to English (never to a raw key, the app always works).
 enhance → layout → result) matter most; FAQ / marketing strings are nice to
 have but less urgent.
 
-## मराठी (Marathi) — 16 missing (792/808 done, 98%)
+## मराठी (Marathi) — 0 missing (808/808 done, 100%)
 
 Translate into the language and add them to `mr` in `src/lib/i18n.ts` → `EXTRA.mr`:
 
 | Key | English text |
 | --- | --- |
-| `calc.bdInk` | ink saved |
-| `calc.bdPaper` | paper saved |
-| `calc.bdShop` | You pay for only {n} pages instead of {m} |
-| `calc.degreeAvg` | That averages {p} every year of your degree |
-| `calc.degreeLine` | Keep this up for a full 4-year degree → about {p} and {n} sheets saved |
-| `calc.pDegree` | Full degree (4 yrs) |
-| `calc.pSem` | One semester |
-| `calc.pYear` | One year |
-| `calc.period` | Savings period |
-| `calc.sheetsUnit` | sheets |
-| `calc.where` | Where do you print? |
-| `calc.whereOwn` | Own printer — paper + ink |
-| `calc.whereShop` | Photocopy shop — pay per page |
-| `en.blueBoost` | Darken light ink |
-| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
-| `feat.tap` | Tap any feature to see what it does for you |
 
-## தமிழ் (Tamil) — 16 missing (792/808 done, 98%)
+## தமிழ் (Tamil) — 0 missing (808/808 done, 100%)
 
 Translate into the language and add them to `ta` in `src/lib/i18n.ts` → `EXTRA.ta`:
 
 | Key | English text |
 | --- | --- |
-| `calc.bdInk` | ink saved |
-| `calc.bdPaper` | paper saved |
-| `calc.bdShop` | You pay for only {n} pages instead of {m} |
-| `calc.degreeAvg` | That averages {p} every year of your degree |
-| `calc.degreeLine` | Keep this up for a full 4-year degree → about {p} and {n} sheets saved |
-| `calc.pDegree` | Full degree (4 yrs) |
-| `calc.pSem` | One semester |
-| `calc.pYear` | One year |
-| `calc.period` | Savings period |
-| `calc.sheetsUnit` | sheets |
-| `calc.where` | Where do you print? |
-| `calc.whereOwn` | Own printer — paper + ink |
-| `calc.whereShop` | Photocopy shop — pay per page |
-| `en.blueBoost` | Darken light ink |
-| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
-| `feat.tap` | Tap any feature to see what it does for you |
 
-## বাংলা (Bengali) — 16 missing (792/808 done, 98%)
+## বাংলা (Bengali) — 0 missing (808/808 done, 100%)
 
 Translate into the language and add them to `bn` in `src/lib/i18n.ts` → `EXTRA.bn`:
 
 | Key | English text |
 | --- | --- |
-| `calc.bdInk` | ink saved |
-| `calc.bdPaper` | paper saved |
-| `calc.bdShop` | You pay for only {n} pages instead of {m} |
-| `calc.degreeAvg` | That averages {p} every year of your degree |
-| `calc.degreeLine` | Keep this up for a full 4-year degree → about {p} and {n} sheets saved |
-| `calc.pDegree` | Full degree (4 yrs) |
-| `calc.pSem` | One semester |
-| `calc.pYear` | One year |
-| `calc.period` | Savings period |
-| `calc.sheetsUnit` | sheets |
-| `calc.where` | Where do you print? |
-| `calc.whereOwn` | Own printer — paper + ink |
-| `calc.whereShop` | Photocopy shop — pay per page |
-| `en.blueBoost` | Darken light ink |
-| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
-| `feat.tap` | Tap any feature to see what it does for you |
 
-## ગુજરાતી (Gujarati) — 16 missing (792/808 done, 98%)
+## ગુજરાતી (Gujarati) — 0 missing (808/808 done, 100%)
 
 Translate into the language and add them to `gu` in `src/lib/i18n.ts` → `EXTRA.gu`:
 
 | Key | English text |
 | --- | --- |
-| `calc.bdInk` | ink saved |
-| `calc.bdPaper` | paper saved |
-| `calc.bdShop` | You pay for only {n} pages instead of {m} |
-| `calc.degreeAvg` | That averages {p} every year of your degree |
-| `calc.degreeLine` | Keep this up for a full 4-year degree → about {p} and {n} sheets saved |
-| `calc.pDegree` | Full degree (4 yrs) |
-| `calc.pSem` | One semester |
-| `calc.pYear` | One year |
-| `calc.period` | Savings period |
-| `calc.sheetsUnit` | sheets |
-| `calc.where` | Where do you print? |
-| `calc.whereOwn` | Own printer — paper + ink |
-| `calc.whereShop` | Photocopy shop — pay per page |
-| `en.blueBoost` | Darken light ink |
-| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
-| `feat.tap` | Tap any feature to see what it does for you |
 
-## ਪੰਜਾਬੀ (Punjabi) — 16 missing (792/808 done, 98%)
+## ਪੰਜਾਬੀ (Punjabi) — 0 missing (808/808 done, 100%)
 
 Translate into the language and add them to `pa` in `src/lib/i18n.ts` → `EXTRA.pa`:
 
 | Key | English text |
 | --- | --- |
-| `calc.bdInk` | ink saved |
-| `calc.bdPaper` | paper saved |
-| `calc.bdShop` | You pay for only {n} pages instead of {m} |
-| `calc.degreeAvg` | That averages {p} every year of your degree |
-| `calc.degreeLine` | Keep this up for a full 4-year degree → about {p} and {n} sheets saved |
-| `calc.pDegree` | Full degree (4 yrs) |
-| `calc.pSem` | One semester |
-| `calc.pYear` | One year |
-| `calc.period` | Savings period |
-| `calc.sheetsUnit` | sheets |
-| `calc.where` | Where do you print? |
-| `calc.whereOwn` | Own printer — paper + ink |
-| `calc.whereShop` | Photocopy shop — pay per page |
-| `en.blueBoost` | Darken light ink |
-| `en.blueBoost.d` | Any light-colored writing — blue, pink, red, orange, yellow or green — is darkened within its own color so every stroke prints clearly visible and stays whole: nothing washes out, breaks up or gets cut off. Dark inks and backgrounds are never touched. |
-| `feat.tap` | Tap any feature to see what it does for you |

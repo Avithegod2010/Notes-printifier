@@ -184,6 +184,52 @@ export async function composePdf(o: ComposeOptions): Promise<ComposeResult> {
         transfer,
         o.onProgress,
       )) as ComposeCoreResult;
+
+      // Blank-render fallback (the "whole deck printed blank" bug): inside
+      // the worker pdf.js can silently resolve a render with NOTHING drawn
+      // (nested-worker wasm/JPX races on some mobile browsers) while the
+      // SAME page renders perfectly on the main thread — that is exactly
+      // what the Enhance/Layout previews showed. A worker pass that reports
+      // blank cells is therefore not trustworthy: re-run the whole compose
+      // on the main thread and keep whichever pass rendered more pages.
+      // Genuinely blank source pages re-blank identically in both passes
+      // and cost one extra pass only when a blank was actually seen.
+      if (result.blankSkipped > 0) {
+        console.warn(
+          `[compose] worker pass rendered ${result.blankSkipped} blank page(s) — re-running on the main thread to compare`,
+        );
+        try {
+          const mainResult = await composePdfMainThread({
+            ...o,
+            // OffscreenCanvas repaint buffers were TRANSFERRED into the
+            // worker (neutered on this thread) — a detached canvas cannot
+            // be redrawn, so degrade to plain page rendering rather than
+            // risk a second blank output (same trade as the catch path).
+            repaintCanvases: repaintList.length > 0 ? null : o.repaintCanvases,
+          });
+          if (mainResult.blankSkipped <= result.blankSkipped) {
+            return {
+              ...mainResult,
+              blob: new Blob([mainResult.pdfBytes as BlobPart], {
+                type: 'application/pdf',
+              }),
+            };
+          }
+          // The worker result won — but a pass that blanks most of a deck
+          // leaves poisoned state behind (dead nested pdf.js worker, broken
+          // wasm cache). Terminate it so the NEXT job starts fresh instead
+          // of inheriting the failure.
+          try {
+            sharedWorker?.terminate();
+          } catch {
+            // already gone
+          }
+          sharedWorker = null;
+        } catch (fallbackErr) {
+          console.warn('Main-thread fallback compose failed.', fallbackErr);
+        }
+      }
+
       return {
         ...result,
         blob: new Blob([result.pdfBytes as BlobPart], { type: 'application/pdf' }),

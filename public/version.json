@@ -1,9 +1,16 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "updated": "2026-10-28",
   "notes": [
-    "New: tap any feature in “Everything a student needs” to see what it does — the three stacked groups are now one clean chip list with a live detail panel that works on touch screens",
-    "Improved: the savings calculator grew a “Where do you print?” mode (photocopy shop per-page rates vs own printer paper+ink), a semester / year / whole-degree period selector, a paper-vs-ink cost breakdown and a 4-year degree projection",
-    "Improved: update checks now re-run every 10 minutes and whenever you return to the tab, so mid-session deploys are caught too"
+    "Fixed — IMPORTANT: a bug could print most pages of your PDF blank (empty grid cells with only the cut lines) even when the preview looked perfect. The app now detects this, re-processes on the reliable main-thread pipeline and keeps the correctly-rendered result — your notes always come out complete",
+    "Fixed: the footer no longer shows the outdated “Stable v1.0” label on the Android download button",
+    "New: release notes in the “What's new” dialog are now available in हिन्दी too",
+    "New: मराठी, தமிழ், বাংলা, ગુજરાતી and ਪੰਜਾਬੀ are now 100% translated — every string in the app is available in all 7 languages"
+  ],
+  "notes_hi": [
+    "सुधरा — महत्वपूर्ण: एक बग कभी-कभी आपकी PDF के ज़्यादातर पन्ने खाली छाप देता था (सिर्फ़ कट लाइनें दिखती थीं) भले ही प्रीव्यू बिल्कुल सही दिखे। ऐप अब इसे पकड़ लेता है, भरोसेमंद मुख्य-थ्रेड पाइपलाइन से दोबारा प्रोसेस करता है और सही बने नतीजे को रखता है — आपके नोट्स हमेशा पूरे आएँगे",
+    "सुधरा: फ़ुटर में Android डाउनलोड बटन पर पुराना “Stable v1.0” लेबल अब नहीं दिखेगा",
+    "नया: “What's new” डायलॉग के रिलीज़ नोट्स अब हिन्दी में भी उपलब्ध हैं",
+    "नया: मराठी, தமிழ், বাংলা, ગુજરાતી और ਪੰਜਾਬੀ अब 100% अनुवादित हैं — ऐप की हर स्ट्रिंग सभी 7 भाषाओं में उपलब्ध है"
   ]
 }

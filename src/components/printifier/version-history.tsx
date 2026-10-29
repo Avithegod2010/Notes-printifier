@@ -11,12 +11,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { APP_VERSION } from '@/lib/version';
-import { useT } from '@/lib/i18n';
+import { useLangStore, useT } from '@/lib/i18n';
 
 interface VersionManifest {
   version: string;
   updated: string;
   notes: string[];
+  /** Hindi release notes (falls back to `notes` for other languages). */
+  notes_hi?: string[];
 }
 
 const RELEASES_URL = 'https://github.com/Avithegod2010/Notes-printifier/releases';
@@ -30,6 +32,7 @@ const RELEASES_URL = 'https://github.com/Avithegod2010/Notes-printifier/releases
  */
 export function VersionBadge() {
   const t = useT();
+  const lang = useLangStore((s) => s.lang);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [manifest, setManifest] = useState<VersionManifest | null>(null);
@@ -67,6 +70,14 @@ export function VersionBadge() {
 
   const isLatest =
     manifest !== null && manifest.version.replace(/^v/, '') === APP_VERSION.replace(/^v/, '');
+
+  // Hindi users get the हिन्दी notes when the deployed manifest ships them.
+  const shownNotes =
+    manifest === null
+      ? []
+      : lang === 'hi' && manifest.notes_hi && manifest.notes_hi.length > 0
+        ? manifest.notes_hi
+        : manifest.notes;
 
   return (
     <>
@@ -138,7 +149,7 @@ export function VersionBadge() {
                   </span>
                 </p>
                 <ul className="space-y-2">
-                  {manifest.notes.map((note, i) => (
+                  {shownNotes.map((note, i) => (
                     <li
                       key={i}
                       className="flex gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs leading-relaxed"
