@@ -144,6 +144,8 @@ export const DICT: Record<string, [string, string]> = {
   'pg.skipBlank': ['Skip blank pages', 'खाली पन्ने छोड़ें'],
   'pg.selectAll': ['Select all', 'सब चुनें'],
   'pg.clear': ['Clear', 'हटा दें'],
+  'pg.density': ['Slides per row', 'पंक्ति में स्लाइड'],
+  'pg.density.auto': ['Auto', 'ऑटो'],
   'pg.skipped': ['Skipped {n} blank page(s)', '{n} खाली पन्ने छोड़े गए'],
   'pg.noBlank': ['No blank pages found', 'कोई खाली पन्ना नहीं मिला'],
   'pg.scanFail': ['Could not scan pages', 'पन्ने स्कैन नहीं हो सके'],

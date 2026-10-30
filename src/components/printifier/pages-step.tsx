@@ -11,6 +11,7 @@ import {
   Loader2,
   Palette,
   RotateCw,
+  Rows3,
   ScanLine,
   SlidersHorizontal,
   Trash2,
@@ -127,7 +128,32 @@ export function PagesStep() {
   // @tanstack/react-virtual: only the visible rows (plus overscan) exist in
   // the DOM, while lazy thumbnails, drag & drop and keyboard shortcuts keep
   // working on whichever cells are currently mounted.
-  const cols = gridW < 560 ? 2 : gridW < 960 ? 3 : gridW < 1240 ? 4 : 5;
+  /** Thumbnail grid density — 'auto' follows the measured container width;
+   *  a number pins slides-per-row so users can enlarge thumbnails and still
+   *  read slide content while deciding keep / remove. Persisted locally. */
+  const [density, setDensity] = useState<'auto' | 2 | 3 | 4>('auto');
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('printifier.arrangeCols');
+      if (v === '2' || v === '3' || v === '4') {
+        setDensity(Number(v) as 2 | 3 | 4);
+      }
+    } catch {
+      // storage unavailable (private mode) — auto stays
+    }
+  }, []);
+  const pickDensity = useCallback((d: 'auto' | 2 | 3 | 4) => {
+    setDensity(d);
+    try {
+      if (d === 'auto') localStorage.removeItem('printifier.arrangeCols');
+      else localStorage.setItem('printifier.arrangeCols', String(d));
+    } catch {
+      // ignore — persistence is best-effort
+    }
+  }, []);
+
+  const autoCols = gridW < 560 ? 2 : gridW < 960 ? 3 : gridW < 1240 ? 4 : 5;
+  const cols = density === 'auto' ? autoCols : density;
   const rowCount = Math.ceil(pageCount / cols);
   const virtualizer = useVirtualizer({
     count: rowCount,
@@ -448,6 +474,33 @@ export function PagesStep() {
           {rotateMsg}
         </p>
       )}
+
+      {/* Slides-per-row density — a pinned value enlarges thumbnails so
+          slide content stays readable while choosing keep / remove. */}
+      <div className="flex flex-wrap items-center justify-between gap-1.5">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <Rows3 className="h-3.5 w-3.5 text-violet-300" />
+          {t('pg.density')}
+        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(['auto', 2, 3, 4] as const).map((d) => (
+            <button
+              key={String(d)}
+              type="button"
+              onClick={() => pickDensity(d)}
+              aria-pressed={density === d}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums transition-colors',
+                density === d
+                  ? 'border-violet-500/60 bg-violet-500/15 text-foreground'
+                  : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-violet-500/40 hover:text-foreground',
+              )}
+            >
+              {d === 'auto' ? t('pg.density.auto') : d}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div
         ref={gridRef}
