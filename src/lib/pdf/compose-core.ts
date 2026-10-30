@@ -24,7 +24,10 @@ import {
   type AnyCtx,
   type FilterSettings,
 } from './filters';
-import { isBlankishRender } from './render-guard';
+import {
+  canvasLooksLikeFailedRender,
+  isBlankishRender,
+} from './render-guard';
 import { PAGE_SIZES } from './layout-settings';
 
 import {
@@ -462,9 +465,17 @@ export async function composePdfCore(env: ComposeEnv, o: ComposeOptions): Promis
         // through invert would output a solid-black ink bomb. Retry once
         // (transient worker/wasm races usually clear), then, if the page is
         // still blank, keep it un-inverted and count it for the UI warning.
-        if (isBlankishRender(canvas)) {
+        // canvasLooksLikeFailedRender adds the uniform-canvas failure mode:
+        // a render can also come back as ONE flat colour (all-black pages
+        // measure ~100% ink, so the ink-count guard alone missed them).
+        const failedRender =
+          isBlankishRender(canvas) || canvasLooksLikeFailedRender(canvas);
+        if (failedRender) {
           ({ canvas, ctx } = await renderOnce());
-          if (isBlankishRender(canvas)) {
+          if (
+            isBlankishRender(canvas) ||
+            canvasLooksLikeFailedRender(canvas)
+          ) {
             blankRender = true;
             blankSkipped++;
             console.warn(

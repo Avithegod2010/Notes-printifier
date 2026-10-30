@@ -59,3 +59,34 @@ export function inkFractionOf(canvas: AnyCanvas): number {
 export function isBlankishRender(canvas: AnyCanvas): boolean {
   return inkFractionOf(canvas) <= BLANK_INK_FRACTION;
 }
+
+/**
+ * True when EVERY sampled pixel is (nearly) identical — pdf.js occasionally
+ * "finishes" a page render before a dependent (JPX/JBIG2) image decodes,
+ * leaving only the flat background. Unlike isBlankishRender (near-white
+ * empties only), this also catches the all-black / all-one-colour failure
+ * mode: an all-black page measures ~100% ink and sailed straight through
+ * the ink-count guard into the output (verified in the user's broken PDFs).
+ * Sampled stride keeps it negligible; worker-safe (no DOM types).
+ */
+export function canvasLooksLikeFailedRender(canvas: AnyCanvas): boolean {
+  const ctx = canvas.getContext('2d', {
+    willReadFrequently: true,
+  }) as AnyCtx | null;
+  if (!ctx) return false;
+  let d: Uint8ClampedArray;
+  try {
+    d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  } catch {
+    return false; // unreadable/tainted — assume content, never skip filters
+  }
+  let min = 255;
+  let max = 0;
+  for (let i = 0; i < d.length; i += 4 * 61) {
+    const v = (d[i] + d[i + 1] + d[i + 2]) / 3;
+    if (v < min) min = v;
+    if (v > max) max = v;
+    if (max - min > 2) return false;
+  }
+  return true;
+}

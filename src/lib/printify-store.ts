@@ -427,9 +427,15 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
     recipeQrPng,
     onProgress: (done, total) => onProgress({ done, total }),
   });
-  // Repaint canvases were consumed by compose (and possibly transferred
-  // to the worker) — let the map go out of scope, no manual dispose.
-  repaintCanvases = null;
+  // OffscreenCanvas repaint buffers may have been TRANSFERRED into the
+  // worker (neutered on this thread — a detached canvas reports 0×0), while
+  // DOM-canvas runs keep them intact. Keep the map alive when possible so
+  // size-target recompress passes can still reuse the text-repaint instead
+  // of silently shipping scan-only output.
+  const repaintAlive =
+    repaintCanvases !== null &&
+    Array.from(repaintCanvases.values()).every((c) => c.width > 0);
+  if (!repaintAlive) repaintCanvases = null;
 
   // File-size target: if the user set a soft cap (e.g. 5 MB for a print
   // shop's upload form), re-compose with progressively lower JPEG quality
@@ -448,6 +454,7 @@ export async function runComposeJob(o: ComposeJobInput): Promise<ComposeJobOutpu
         items,
         filters,
         layout: effLayout,
+        repaintCanvases,
         coverSheetData,
         recipeQrPng,
         jpegQualityOverride: q,
