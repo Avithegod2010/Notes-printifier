@@ -30,7 +30,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: "1.4.4"
 
       # i18n.ts imports zustand (→ react), so the script needs node_modules.
       - name: Install dependencies
