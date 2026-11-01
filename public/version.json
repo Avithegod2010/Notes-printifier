@@ -1,16 +1,12 @@
 {
-  "version": "2.3.0",
+  "version": "2.4.0",
   "updated": "2026-11-01",
   "notes": [
-    "Fixed — IMPORTANT: light-blue pen strokes no longer vanish when ink-saving is on. Pale blue handwriting and highlights are rescued from the wash rules and stay clearly visible in your printout",
-    "Fixed: pages no longer keep a pale background halo at the edges — page borders are forced to paper white, so scanned-page edges stop wasting toner",
-    "New: in the Arrange step you can now choose how many slide columns to pack per row — Auto, 2, 3 or 4 — for denser handouts or bigger slides (your choice is remembered)",
-    "Fixed: a rare failure where a rendered page came out as one solid colour (all-black or all-white sheet) is now detected and automatically re-processed"
+    "New — edit anytime: after processing, tap the new “Change layout & re-process” button (or click any earlier step in the progress bar) to go back, tweak the layout, page selection or ink settings, and process again — as many times as you like, without re-uploading your PDF",
+    "Improved: repeated re-processing no longer keeps old output PDFs in memory, so many quick edits stay light on RAM"
   ],
   "notes_hi": [
-    "सुधरा — महत्वपूर्ण: ink-saving चालू होने पर हल्की नीली कलम की लकीरें ग़ायब हो जाया करती थीं। अब हल्की नीली लिखाई और हाइलाइट्स धुलाई के नियमों से बचा ली जाती हैं और प्रिंट में साफ़ दिखती हैं",
-    "सुधरा: अब पन्नों के किनारों पर हल्का बैकग्राउंड नहीं रहता — किनारे सफ़ेद काग़ज़ जैसे सेट होते हैं, जिससे स्कैन किए पन्नों के बॉर्डर टोनर बर्बाद नहीं करते",
-    "नया: Arrange चरण में अब चुन सकते हैं कि हर पंक्ति में कितने स्लाइड हों — Auto, 2, 3 या 4 — एक पन्ने पर ज़्यादा स्लाइड्स या बड़ी स्लाइड्स के लिए (आपकी पसंद याद रखी जाती है)",
-    "सुधरा: कभी-कभार बना पन्ना पूरी तरह एक ही रंग का निकल जाता था (पूरा काला या सफ़ेद) — ऐप अब ऐसा पन्ना पकड़कर अपने-आप दोबारा प्रोसेस करता है"
+    "नया — कभी भी बदलें: प्रोसेस करने के बाद नया “लेआउट बदलें और दोबारा बनाएँ” बटन दबाएँ (या प्रोग्रेस बार में कोई भी पिछला चरण चुनें), लेआउट/पेज/स्याही सेटिंग बदलें और दोबारा प्रोसेस करें — जितनी बार चाहें, बिना अपनी PDF दोबारा अपलोड किए",
+    "सुधरा: बार-बार दोबारा प्रोसेस करने पर अब पुराना आउटपुट PDF मेमोरी में नहीं रहता — तेज़-तेज़ बदलावों पर भी ऐप हल्का चलता है"
   ]
 }

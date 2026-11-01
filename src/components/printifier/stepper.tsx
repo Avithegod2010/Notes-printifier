@@ -22,7 +22,10 @@ export function Stepper() {
           const label = t(key);
           const isDone = i < step;
           const isCurrent = i === step;
-          const clickable = i < step && step < 4;
+          // Backward navigation is always allowed — including from the result
+          // step (4), so users can revisit Arrange/Enhance/Layout and
+          // re-process with different settings as often as they like.
+          const clickable = i < step;
           return (
             <li key={key} className="flex items-center">
               <button

@@ -21,6 +21,7 @@ import {
   RotateCcw,
   ScanText,
   Scissors,
+  SlidersHorizontal,
   Smartphone,
   Type,
   Leaf,
@@ -137,6 +138,7 @@ export function ResultStep() {
   const layout = usePrintifyStore((s) => s.layout);
   const docs = usePrintifyStore((s) => s.docs);
   const reset = usePrintifyStore((s) => s.reset);
+  const setStep = usePrintifyStore((s) => s.setStep);
 
   // Smart download name — derives from the source document(s) + grid so a
   // week of downloads stops producing "notes-printifier (19) (1).pdf".
@@ -1044,6 +1046,16 @@ export function ResultStep() {
         >
           {waBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TelegramIcon className="mr-2 h-4 w-4" />}
           {t('rs.tg')}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={() => setStep(3)}
+          aria-label={t('rs.tweak')}
+          className="w-full sm:w-auto"
+        >
+          <SlidersHorizontal className="mr-2 h-4 w-4" /> {t('rs.tweak')}
         </Button>
         <Button type="button" variant="outline" size="lg" onClick={reset} className="w-full sm:w-auto">
           <RotateCcw className="mr-2 h-4 w-4" /> {t('rs.another')}

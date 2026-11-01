@@ -1208,6 +1208,10 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
 
       const url = URL.createObjectURL(out.blob);
       const result: ProcessResult = { ...out.result, url };
+      // Re-process loop: free the previous output's blob so editing the
+      // layout many times doesn't pile up object URLs in memory.
+      const prevUrl = get().result?.url;
+      if (prevUrl && prevUrl !== url) URL.revokeObjectURL(prevUrl);
       // Impact meter BEFORE the step switch — ResultStep reads the totals on
       // mount, and recordJob is a cheap synchronous localStorage write while
       // the IndexedDB history saves below are async.
