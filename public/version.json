@@ -1,16 +1,16 @@
 {
-  "version": "2.2.0",
-  "updated": "2026-10-28",
+  "version": "2.3.0",
+  "updated": "2026-11-01",
   "notes": [
-    "Fixed — IMPORTANT: a bug could print most pages of your PDF blank (empty grid cells with only the cut lines) even when the preview looked perfect. The app now detects this, re-processes on the reliable main-thread pipeline and keeps the correctly-rendered result — your notes always come out complete",
-    "Fixed: the footer no longer shows the outdated “Stable v1.0” label on the Android download button",
-    "New: release notes in the “What's new” dialog are now available in हिन्दी too",
-    "New: मराठी, தமிழ், বাংলা, ગુજરાતી and ਪੰਜਾਬੀ are now 100% translated — every string in the app is available in all 7 languages"
+    "Fixed — IMPORTANT: light-blue pen strokes no longer vanish when ink-saving is on. Pale blue handwriting and highlights are rescued from the wash rules and stay clearly visible in your printout",
+    "Fixed: pages no longer keep a pale background halo at the edges — page borders are forced to paper white, so scanned-page edges stop wasting toner",
+    "New: in the Arrange step you can now choose how many slide columns to pack per row — Auto, 2, 3 or 4 — for denser handouts or bigger slides (your choice is remembered)",
+    "Fixed: a rare failure where a rendered page came out as one solid colour (all-black or all-white sheet) is now detected and automatically re-processed"
   ],
   "notes_hi": [
-    "सुधरा — महत्वपूर्ण: एक बग कभी-कभी आपकी PDF के ज़्यादातर पन्ने खाली छाप देता था (सिर्फ़ कट लाइनें दिखती थीं) भले ही प्रीव्यू बिल्कुल सही दिखे। ऐप अब इसे पकड़ लेता है, भरोसेमंद मुख्य-थ्रेड पाइपलाइन से दोबारा प्रोसेस करता है और सही बने नतीजे को रखता है — आपके नोट्स हमेशा पूरे आएँगे",
-    "सुधरा: फ़ुटर में Android डाउनलोड बटन पर पुराना “Stable v1.0” लेबल अब नहीं दिखेगा",
-    "नया: “What's new” डायलॉग के रिलीज़ नोट्स अब हिन्दी में भी उपलब्ध हैं",
-    "नया: मराठी, தமிழ், বাংলা, ગુજરાતી और ਪੰਜਾਬੀ अब 100% अनुवादित हैं — ऐप की हर स्ट्रिंग सभी 7 भाषाओं में उपलब्ध है"
+    "सुधरा — महत्वपूर्ण: ink-saving चालू होने पर हल्की नीली कलम की लकीरें ग़ायब हो जाया करती थीं। अब हल्की नीली लिखाई और हाइलाइट्स धुलाई के नियमों से बचा ली जाती हैं और प्रिंट में साफ़ दिखती हैं",
+    "सुधरा: अब पन्नों के किनारों पर हल्का बैकग्राउंड नहीं रहता — किनारे सफ़ेद काग़ज़ जैसे सेट होते हैं, जिससे स्कैन किए पन्नों के बॉर्डर टोनर बर्बाद नहीं करते",
+    "नया: Arrange चरण में अब चुन सकते हैं कि हर पंक्ति में कितने स्लाइड हों — Auto, 2, 3 या 4 — एक पन्ने पर ज़्यादा स्लाइड्स या बड़ी स्लाइड्स के लिए (आपकी पसंद याद रखी जाती है)",
+    "सुधरा: कभी-कभार बना पन्ना पूरी तरह एक ही रंग का निकल जाता था (पूरा काला या सफ़ेद) — ऐप अब ऐसा पन्ना पकड़कर अपने-आप दोबारा प्रोसेस करता है"
   ]
 }
