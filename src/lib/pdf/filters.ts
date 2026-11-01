@@ -646,13 +646,6 @@ export function applyFilters(
   // the field on the safe default: boosted.
   const boostBlue =
     s.boostBlueInk !== false && mode !== 'invert' && !preInvert;
-  // Spatial wash detection runs ONCE per page (not per pixel): a solid
-  // pale-cyan background blob hands the near-white band back to the stain
-  // rules so washes are whitened, not rescued as dark blotches. Also
-  // computed for cleanStains alone — the stain rules now branch on it.
-  const hasWash =
-    boostBlue || clean ? pageHasPaleWash(d, canvas.width, canvas.height) : false;
-
   const strength = Math.min(100, Math.max(0, s.inkSaver)) / 100;
   const useLevels = strength > 0;
   const whiteCut = 255 - strength * 90; // e.g. 45% → 214.5 … 80% → 183
@@ -662,6 +655,12 @@ export function applyFilters(
   // Cleanup now runs in EVERY mode — in invert mode it clears the cyan cast
   // that dark brown/navy backgrounds pick up when inverted.
   const clean = s.cleanStains;
+  // Spatial wash detection runs ONCE per page (not per pixel): a solid
+  // pale-cyan background blob hands the near-white band back to the stain
+  // rules so washes are whitened, not rescued as dark blotches. Also
+  // computed for cleanStains alone — the stain rules now branch on it.
+  const hasWash =
+    boostBlue || clean ? pageHasPaleWash(d, canvas.width, canvas.height) : false;
   const boost = Math.min(100, Math.max(0, s.penBoost)) / 100;
   const usePen = boost > 0 && mode !== 'bw';
 
