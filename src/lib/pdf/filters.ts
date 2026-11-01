@@ -322,7 +322,12 @@ function levels(v: number, blackCut: number, whiteCut: number): number {
  * cyan fill: they carry no information but cost ink. Dark/saturated content
  * (handwriting, diagram lines) never matches.
  */
-function isStainPixel(r: number, g: number, b: number): boolean {
+function isStainPixel(
+  r: number,
+  g: number,
+  b: number,
+  hasWash: boolean,
+): boolean {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const diff = max - min;
@@ -331,6 +336,21 @@ function isStainPixel(r: number, g: number, b: number): boolean {
   // Blue-family ink guard — b ≫ r AND g clearly below b. Blue/violet gel
   // pens (light bodies included) must survive every rule below.
   const bluePen = b - r > TINT_MAX_BLUE_SHIFT && b - g >= BLUE_PEN_MIN_BG_GAP;
+  // Pale-cyan/blue INK guard (the "light blue vanishing" fix): pale
+  // washes are nearly neutral (sat ≤ ~0.20) while the LIGHTEST real
+  // cyan/blue pen strokes land at sat 0.22–0.60 with blue far above red —
+  // and those strokes were being whitened by the tint rules below.
+  //   page WITHOUT a solid wash blob → the whole light cyan/blue family is
+  //   ink (a real wash would have been detected spatially) → protect it;
+  //   page WITH a wash → only the inky saturation window is protected,
+  //   wash-class pixels (sat ≤ 0.20) stay with the stain rules.
+  // Cyan pill fills (sat ≥ 0.645) stay outside the window so the
+  // bright-cyan fill rule below keeps killing them.
+  if (b - r >= 25 && g - b <= 14 && lum >= TINT_LUM_CUT) {
+    if (!hasWash) return false;
+    const sat = diff / max;
+    if (sat >= 0.22 && sat <= 0.6) return false;
+  }
   // Bright SATURATED cyan/blue fills (pills, option keys). The high diff bar
   // keeps pen strokes (diff 60–120) out; lum ≥ CYAN_LUM_CUT keeps diagram
   // rods rgb(0,157,242) (lum ≈ 120) in.
@@ -628,8 +648,10 @@ export function applyFilters(
     s.boostBlueInk !== false && mode !== 'invert' && !preInvert;
   // Spatial wash detection runs ONCE per page (not per pixel): a solid
   // pale-cyan background blob hands the near-white band back to the stain
-  // rules so washes are whitened, not rescued as dark blotches.
-  const hasWash = boostBlue ? pageHasPaleWash(d, canvas.width, canvas.height) : false;
+  // rules so washes are whitened, not rescued as dark blotches. Also
+  // computed for cleanStains alone — the stain rules now branch on it.
+  const hasWash =
+    boostBlue || clean ? pageHasPaleWash(d, canvas.width, canvas.height) : false;
 
   const strength = Math.min(100, Math.max(0, s.inkSaver)) / 100;
   const useLevels = strength > 0;
@@ -689,7 +711,28 @@ export function applyFilters(
           b *= k;
         }
       }
-      if (clean && isStainPixel(r, g, b)) {
+      // Paper-white normalization (the "light background at the page edges"
+      // fix): screenshots carry the capture app's off-white backdrop, soft
+      // rounded-corner shadows and JPEG white-ringing at the sheet borders —
+      // near-neutral very-bright pixels that escape every stain rule
+      // (diff < 8) and every levels pass (ink saver off). All of it is
+      // paper: force pure white so cells print on clean white instead of a
+      // pale gray-blue wash. Ink can never match (any hue has diff > 8 or
+      // sits far below this luminance).
+      if (clean) {
+        const mx = r > g ? (r > b ? r : b) : g > b ? g : b;
+        const mn = r < g ? (r < b ? r : b) : g < b ? g : b;
+        if (
+          mx - mn <= 8 &&
+          0.299 * r + 0.587 * g + 0.114 * b >= 238
+        ) {
+          d[i] = 255;
+          d[i + 1] = 255;
+          d[i + 2] = 255;
+          continue;
+        }
+      }
+      if (clean && isStainPixel(r, g, b, hasWash)) {
         d[i] = 255;
         d[i + 1] = 255;
         d[i + 2] = 255;
