@@ -13,6 +13,7 @@
 
 import { defaultFilters, type FilterSettings } from './pdf/filters';
 import { defaultLayout, type LayoutSettings } from './pdf/layout-settings';
+import { sanitizeFiltersPatch, sanitizeLayoutPatch } from './settings-validate';
 
 const MAX_ENCODE_LEN = 1400; // QR-safe ceiling (version ~25 at ECC-M)
 
@@ -84,16 +85,13 @@ export function decodeRecipe(code: string): DecodedRecipe | null {
     if (data.v !== 1) return null;
     if (typeof data.f !== 'object' || data.f === null) return null;
     if (typeof data.l !== 'object' || data.l === null) return null;
-    // Keep only known keys — unknown fields are dropped (forward compat).
-    const f: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(data.f)) {
-      if (k in defaultFilters) f[k] = v;
-    }
-    const l: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(data.l)) {
-      if (k in defaultLayout) l[k] = v;
-    }
-    return { filters: f, layout: l };
+    // Whitelist + clamp: only known keys survive AND every value is
+    // type-checked/ranged — a crafted ?r= link must not be able to set
+    // rows=9999 or an unknown colorMode (see settings-validate.ts).
+    return {
+      filters: sanitizeFiltersPatch(data.f),
+      layout: sanitizeLayoutPatch(data.l),
+    };
   } catch {
     return null;
   }

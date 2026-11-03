@@ -1,6 +1,6 @@
 {
   "version": "2.4.0",
-  "updated": "2026-11-01",
+  "updated": "2026-11-03",
   "notes": [
     "New — edit anytime: after processing, tap the new “Change layout & re-process” button (or click any earlier step in the progress bar) to go back, tweak the layout, page selection or ink settings, and process again — as many times as you like, without re-uploading your PDF",
     "Improved: repeated re-processing no longer keeps old output PDFs in memory, so many quick edits stay light on RAM"

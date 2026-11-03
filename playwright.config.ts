@@ -8,6 +8,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  // only the Playwright smoke specs — tests/unit + tests/api are node:test
+  // suites run by `bun test` (see ci.yml), not browser tests.
+  testMatch: /.*\.spec\.ts$/,
   timeout: 300_000, // a 41-page deck still processes in well under this
   expect: { timeout: 30_000 },
   fullyParallel: false,

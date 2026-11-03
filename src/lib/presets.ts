@@ -7,8 +7,9 @@
  * nothing ever leaves the device.
  */
 
-import { defaultFilters, type FilterSettings } from './pdf/filters';
-import { defaultLayout, type LayoutSettings } from './pdf/layout-settings';
+import type { FilterSettings } from './pdf/filters';
+import type { LayoutSettings } from './pdf/layout-settings';
+import { sanitizeFilters, sanitizeLayout } from './settings-validate';
 
 const LS_KEY = 'printifier.presets.v1';
 export const MAX_PRESETS = 24;
@@ -128,13 +129,15 @@ export function loadPresets(): Preset[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Preset[];
     if (!Array.isArray(parsed)) return [];
-    // migrate old snapshots: fill fields added later with defaults
+    // migrate old snapshots: fill fields added later with defaults —
+    // sanitized, because localStorage is an untrusted input too
+    // (anything on the device that can write it can poison settings)
     return parsed
       .filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string')
       .map((p) => ({
         ...p,
-        filters: { ...defaultFilters, ...(p.filters ?? {}) },
-        layout: { ...defaultLayout, ...(p.layout ?? {}) },
+        filters: sanitizeFilters(p.filters ?? {}),
+        layout: sanitizeLayout(p.layout ?? {}),
       }));
   } catch {
     return [];
@@ -209,8 +212,8 @@ export function mergeImportedPresets(text: string): number {
       id: typeof p.id === 'string' && p.id ? p.id : makePresetId(),
       name: p.name.slice(0, 40).trim() || 'Imported',
       ts: typeof p.ts === 'number' ? p.ts : Date.now(),
-      filters: { ...defaultFilters, ...(p.filters ?? {}) },
-      layout: { ...defaultLayout, ...(p.layout ?? {}) },
+      filters: sanitizeFilters(p.filters ?? {}),
+      layout: sanitizeLayout(p.layout ?? {}),
     });
   }
 

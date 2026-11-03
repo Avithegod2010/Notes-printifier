@@ -36,7 +36,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSharedPdf } from '@/hooks/use-shared-pdf';
-import { HAS_SERVER_API } from '@/lib/server-api';
 import { ServerFeatureDialog, showServerFeature } from '@/components/printifier/server-feature';
 import {
   Accordion,
@@ -103,6 +102,16 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 
+/**
+ * Compile-time switch: static exports / the APK ship no server, so every
+ * server-only feature must be DEAD-CODE-ELIMINATED, not just switched off at
+ * runtime. That's why this is a per-module inline expression instead of an
+ * import from server-api.ts — the bundler only constant-folds WITHIN a
+ * module, so a shared import would keep every fetch('/api/…') call site in
+ * the static bundle (scripts/static-export.sh fails builds that ship them).
+ */
+const HAS_SERVER_API = process.env.NEXT_PUBLIC_STATIC !== '1';
+
 const FAQ_KEYS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 const NAV_SECTIONS = [
@@ -159,7 +168,6 @@ function Logo() {
 }
 
 function LangToggle() {
-  const t = useT();
   const lang = useLangStore((s) => s.lang);
   const setLang = useLangStore((s) => s.setLang);
 

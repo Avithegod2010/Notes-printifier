@@ -6,8 +6,17 @@ import { Button } from '@/components/ui/button';
 import { usePrintifyStore } from '@/lib/printify-store';
 import { useT } from '@/lib/i18n';
 import { toast } from '@/hooks/use-toast';
-import { HAS_SERVER_API } from '@/lib/server-api';
 import { showServerFeature } from '@/components/printifier/server-feature';
+
+/**
+ * Compile-time switch: static exports / the APK ship no server, so every
+ * server-only feature must be DEAD-CODE-ELIMINATED, not just switched off at
+ * runtime. That's why this is a per-module inline expression instead of an
+ * import from server-api.ts — the bundler only constant-folds WITHIN a
+ * module, so a shared import would keep every fetch('/api/…') call site in
+ * the static bundle (scripts/static-export.sh fails builds that ship them).
+ */
+const HAS_SERVER_API = process.env.NEXT_PUBLIC_STATIC !== '1';
 
 /**
  * VoiceBar — speak your print settings.
@@ -99,6 +108,12 @@ export function VoiceBar() {
 
   const transcribeAndApply = useCallback(
     async (blob: Blob) => {
+      // Inline compile-time guard (same reason as in start()): this folds to
+      // `false` in static builds so the ASR upload is dead-code-eliminated.
+      if (!HAS_SERVER_API) {
+        setPhase('idle');
+        return;
+      }
       setPhase('processing');
       try {
         const b64 = await new Promise<string>((resolve, reject) => {

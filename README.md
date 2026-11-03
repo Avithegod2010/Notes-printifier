@@ -114,12 +114,28 @@ must uninstall/reinstall to update — back it up.
 
 ### 🗄 Database (optional, self-hosting only)
 
-Static builds need no database. The full server uses Prisma + SQLite for two optional features —
-copy `.env.example` → `.env` and `bun run db:push`:
+Static builds need no database. The full server uses Prisma + SQLite for the optional server
+features — copy `.env.example` → `.env` (it's committed, so git won't ignore it) and set up the
+schema, then `bun run dev`:
 
-- `POST /api/prints` — anonymous usage stats (hashed file name + page counts)
-- `POST /api/presets` — shareable preset links & QR codes
-- `GET /api/cloud-import?url=…` — Drive/Dropbox proxy (75 MB cap, per-hop SSRF validation)
+```bash
+cp .env.example .env      # set DATABASE_URL (SQLite file path)
+bun run db:migrate        # create + apply migrations (or: bun run db:push for a quick sync)
+```
+
+| Environment variable | Used by | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Prisma (`/api/*`) | SQLite file for usage stats + shared presets. **Required for server mode.** |
+| `TRUST_PROXY` | rate limiting (`src/lib/rate-limit.ts`) | Set to `1` only behind a reverse proxy that OVERWRITES `X-Forwarded-For`/`X-Real-IP`. Without it those headers are treated as client-spoofable and clients are throttled per user-agent bucket instead. |
+| `FRAME_ANCESTORS` | security headers (`next.config.ts`) | CSP `frame-ancestors` for server mode. Default `'self'` (clickjacking-safe). Set `*` or a host list only if you must embed the app cross-origin. |
+| `Z_AI_API_KEY` (+ SDK vars) | `/api/ai/*` | Enables the LLM-backed Print Doctor / voice / TTS features via `z-ai-web-dev-sdk`. **Without credentials those routes answer with local heuristics — nothing is sent to a third party.** |
+| `NEXT_PUBLIC_BASE_PATH` | build | Serve under a subpath (e.g. GitHub Pages `/Notes-printifier`). |
+| `NEXT_PUBLIC_STATIC` / `STATIC_EXPORT` | build | Set by `scripts/static-export.sh` — compiles server-only features out of static exports and APKs. Don't set manually. |
+
+Server features: anonymous usage stats (`/api/prints` — hashed file name only), shareable preset
+links & QR codes (`/api/presets`, expire after 30 days), the Drive/Dropbox import proxy
+(`/api/cloud-import` — 75 MB cap, per-hop SSRF validation + IP pinning, rate-limited) and the AI
+routes (`/api/ai/*`).
 
 ## 🧭 Repository layout
 
@@ -139,8 +155,15 @@ docs/screenshots/           the images above
 - **Files never leave your device.** Parsing, filtering and PDF generation all run locally —
   load the page once and it even works offline.
 - History, presets and the impact meter live in IndexedDB/localStorage. Clear them any time.
-- The only server call on self-hosted mode is an anonymous usage ping whose "file name" is a
-  truncated SHA-256 hash, not the real name. On GitHub Pages, there are no server calls at all.
+- **Static builds (GitHub Pages / APK) make no server calls at all** — server-only features are
+  compiled out at build time (`NEXT_PUBLIC_STATIC=1`, enforced by a CI check).
+- **Self-hosted server mode** adds optional calls: an anonymous usage ping whose "file name" is a
+  16-hex truncated SHA-256 hash (the server REJECTS anything that isn't a hash, so titles can
+  never be stored), shared-preset links (settings only, expire in 30 days), the cloud-import
+  proxy (fetches the URL you paste, keeps nothing), and — only if you configured LLM
+  credentials — the AI features, which send the Print Doctor the document's file name and your
+  current settings, and voice commands the recorded audio, to the configured LLM provider.
+  Don't want that? Leave `Z_AI_*` unset — the AI routes degrade to local heuristics.
 - Security model and reporting: [SECURITY.md](SECURITY.md).
 
 ## 🏷 Versioning & releases

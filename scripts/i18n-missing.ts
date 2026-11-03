@@ -1,18 +1,25 @@
 /**
- * i18n-missing.ts — generate MISSING_TRANSLATIONS.md + i18n-progress.json.
+ * i18n-missing.ts — translation audit + generator.
  *
- * Diffs the mr/ta/bn partial dictionaries (EXTRA) against every key in the
- * EN/HI dictionary (DICT) and writes a community-friendly markdown file
- * listing exactly which strings each language is still missing, with the
- * English source text to translate. Also writes i18n-progress.json (overall
- * + per-language %) that powers the README translation badges via
- * shields.io/dynamic-json.
+ * Default (no flags): regenerates MISSING_TRANSLATIONS.md +
+ * i18n-progress.json from the DICT (en/hi) + EXTRA (mr/ta/bn/gu/pa) sources.
  *
- * Run:  bun scripts/i18n-missing.ts      (or: bun run i18n:check)
- * Exit code 0 always — this is a report, not a gate.
+ * --check: non-mutating CI mode. Writes NOTHING, exits 1 when the i18n data
+ * is inconsistent:
+ *   - an EXTRA key that doesn't exist in DICT (orphan — usually a typo),
+ *   - a DICT entry that isn't a proper [en, hi] pair,
+ *   - i18n-progress.json that no longer matches the actual key counts.
+ * MISSING translations are explicitly NOT a failure — they fall back to
+ * English by design; the report + badges exist to show the gap honestly.
+ *
+ * Percentages use Math.floor so a language is only "100%" when literally
+ * every key is translated (809/811 used to render as a fake "100%").
+ *
+ * Run:  bun scripts/i18n-missing.ts          (generate)
+ *       bun scripts/i18n-missing.ts --check  (CI gate, no writes)
  */
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DICT, EXTRA } from '../src/lib/i18n';
 
@@ -30,6 +37,70 @@ const LANG_META: Record<keyof typeof EXTRA, { name: string; note: string }> = {
 
 const allKeys = Object.keys(DICT).sort();
 
+/** Floor — never show 100% until the last key lands. */
+const pctOf = (lang: keyof typeof EXTRA): number => {
+  const missing = allKeys.filter((k) => !EXTRA[lang][k]).length;
+  return Math.floor(((allKeys.length - missing) / Math.max(1, allKeys.length)) * 100);
+};
+
+const check = process.argv.includes('--check');
+
+if (check) {
+  let failures = 0;
+  // 1. every EXTRA key must exist in DICT (typo/orphan detection)
+  for (const lang of Object.keys(EXTRA) as Array<keyof typeof EXTRA>) {
+    for (const k of Object.keys(EXTRA[lang])) {
+      if (!(k in DICT)) {
+        console.error(`  ✗ orphan key in EXTRA.${lang}: '${k}' is not in DICT`);
+        failures++;
+      }
+    }
+  }
+  // 2. every DICT entry must be a proper [en, hi] pair of non-empty strings
+  for (const [k, pair] of Object.entries(DICT)) {
+    if (
+      !Array.isArray(pair) ||
+      pair.length !== 2 ||
+      typeof pair[0] !== 'string' || pair[0].length === 0 ||
+      typeof pair[1] !== 'string' || pair[1].length === 0
+    ) {
+      console.error(`  ✗ malformed DICT entry: '${k}' must be [string, string]`);
+      failures++;
+    }
+  }
+  // 3. committed i18n-progress.json must match reality (floor %)
+  try {
+    const committed = JSON.parse(readFileSync(OUT_JSON, 'utf8')) as Record<string, number>;
+    for (const lang of Object.keys(EXTRA) as Array<keyof typeof EXTRA>) {
+      const actual = pctOf(lang);
+      if (committed[lang] !== actual) {
+        console.error(
+          `  ✗ i18n-progress.json ${lang}=${committed[lang]} but actual is ${actual} — regenerate with: bun run i18n:gen`,
+        );
+        failures++;
+      }
+    }
+    if (committed.totalKeys !== allKeys.length) {
+      console.error(
+        `  ✗ i18n-progress.json totalKeys=${committed.totalKeys} but DICT has ${allKeys.length} — regenerate`,
+      );
+      failures++;
+    }
+  } catch {
+    console.error('  ✗ i18n-progress.json missing/unreadable — regenerate with: bun run i18n:gen');
+    failures++;
+  }
+
+  if (failures > 0) {
+    console.error(`\ni18n check FAILED (${failures} problem(s)).`);
+    process.exit(1);
+  }
+  console.log(`i18n check OK — ${allKeys.length} keys, all EXTRA keys valid, progress file current`);
+  process.exit(0);
+}
+
+// ── generation mode (default) ────────────────────────────────────────────────
+
 let total = 0;
 const sections: string[] = [];
 
@@ -37,7 +108,7 @@ for (const lang of Object.keys(LANG_META) as Array<keyof typeof EXTRA>) {
   const missing = allKeys.filter((k) => !EXTRA[lang][k]);
   total += missing.length;
   const done = allKeys.length - missing.length;
-  const pct = Math.round((done / Math.max(1, allKeys.length)) * 100);
+  const pct = pctOf(lang);
 
   sections.push(
     `\n## ${LANG_META[lang].name} — ${missing.length} missing (${done}/${allKeys.length} done, ${pct}%)\n`,
@@ -51,12 +122,16 @@ for (const lang of Object.keys(LANG_META) as Array<keyof typeof EXTRA>) {
   }
 }
 
+const partialLangs = Object.keys(LANG_META)
+  .map((l) => LANG_META[l as keyof typeof EXTRA].name.split(' ')[0])
+  .join(', ');
+
 const header = `<!-- Generated by scripts/i18n-missing.ts — DO NOT EDIT BY HAND.
-     Regenerate with: bun run i18n:check -->
+     Regenerate with: bun run i18n:gen -->
 
 # Missing translations — help make Printifier multilingual! 🌍
 
-Printifier's UI is fully English + हिन्दी. मराठी, தமிழ் and বাংলা are
+Printifier's UI is fully English + हिन्दी. ${partialLangs} are
 **partial** — the most visible strings are translated and everything else
 falls back to English (never to a raw key, the app always works).
 
@@ -94,23 +169,19 @@ writeFileSync(OUT, md, 'utf8');
 // Hindi is baked into DICT itself (fully translated by definition);
 // the partial languages live in EXTRA and are measured against the full
 // key set — gu/pa are picked up automatically from the EXTRA keys.
-const pct = (lang: keyof typeof EXTRA): number => {
-  const missing = allKeys.filter((k) => !EXTRA[lang][k]).length;
-  return Math.round(((allKeys.length - missing) / Math.max(1, allKeys.length)) * 100);
-};
 const extraLangs = Object.keys(EXTRA) as Array<keyof typeof EXTRA>;
-const progress: Record<string, number> = {
+const progress: Record<string, number | string> = {
   hi: 100,
 };
-for (const lang of extraLangs) progress[lang] = pct(lang);
-progress.overall = Math.round(
-  extraLangs.reduce((sum, lang) => sum + pct(lang), 0) / Math.max(1, extraLangs.length),
+for (const lang of extraLangs) progress[lang] = pctOf(lang);
+progress.overall = Math.floor(
+  extraLangs.reduce((sum, lang) => sum + pctOf(lang), 0) / Math.max(1, extraLangs.length),
 );
 progress.totalKeys = allKeys.length;
 writeFileSync(OUT_JSON, JSON.stringify(progress, null, 2) + '\n', 'utf8');
 
 console.log(
-  `MISSING_TRANSLATIONS.md + i18n-progress.json written — ${allKeys.length} total keys, ${total} missing across ${Object.keys(EXTRA).length} languages.`,
+  `MISSING_TRANSLATIONS.md + i18n-progress.json written — ${allKeys.length} total keys, ${total} missing across ${extraLangs.length} languages.`,
 );
 console.log(
   `Progress: ${extraLangs.map((l) => `${l} ${progress[l]}%`).join(' · ')} (hi 100%)`,

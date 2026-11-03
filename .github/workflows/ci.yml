@@ -26,8 +26,28 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Version consistency
+        run: node scripts/check-version.mjs
+
+      # SECURITY.md: "TypeScript errors are fatal" — actually true now.
+      - name: Typecheck
+        run: bunx tsc --noEmit
+
       - name: Lint
         run: bun run lint
+
+      # Pure-logic units + real route-handler integration tests (temp SQLite).
+      - name: Unit + API tests
+        run: bun test tests/unit tests/api
+
+      - name: Vendored binary provenance
+        run: node scripts/sync-vendor.mjs --check
+
+      # Non-mutating i18n audit: orphan keys, malformed entries, stale
+      # progress file. Missing translations are allowed (English fallback);
+      # inconsistencies are not.
+      - name: i18n consistency
+        run: bun scripts/i18n-missing.ts --check
 
       - name: Static export build
         run: bun run build:static

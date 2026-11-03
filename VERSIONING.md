@@ -24,15 +24,17 @@ The project runs **two release lines from one codebase**:
 ```bash
 git checkout main                       # start from the reviewed dev state
 # … final QA pass …
+node scripts/sync-version.mjs           # 1.1.0 → version.ts + version.json + AndroidManifest
+git commit -am "Release v1.1.0"         # the version bump IS part of the release commit
 git checkout stable
 git merge --ff-only main                # or merge selectively / cherry-pick
 git tag v1.1.0-stable
 # rebuild the static export + stable APK from THIS branch:
-STATIC_EXPORT=1 bun x next build
+bash scripts/static-export.sh           # sets STATIC_EXPORT=1 + NEXT_PUBLIC_STATIC=1 itself
 bash android/build-apk.sh stable        # manifest versions = release versions
 # archive it so it can never be overwritten by dev builds:
 cp public/printifier-stable.apk public/releases/printifier-v1.1.0.apk
-git add -A && git commit -m "Release v1.1.0-stable" && git checkout main
+git checkout main
 ```
 
 Releasing a **bugfix** to stable without taking new features:
@@ -42,22 +44,50 @@ Releasing a **bugfix** to stable without taking new features:
 
 ```bash
 # after landing features on main:
-STATIC_EXPORT=1 bun x next build
-BETA_VERSION_CODE=3 BETA_VERSION_NAME=1.2.0-beta bash android/build-apk.sh beta
+bash scripts/static-export.sh
+bash android/build-apk.sh beta
 ```
 
-Always bump `BETA_VERSION_CODE` — Android refuses "updates" that don't
-increase it. Same package + same signing key means installing the beta
+The beta versionCode/Name DEFAULT to a value derived from `package.json`
+(see `android/build-apk.sh`) so they can never drift from the web manifest;
+override with `BETA_VERSION_CODE` / `BETA_VERSION_NAME` when you need to force
+an upgrade. Always bump the versionCode — Android refuses "updates" that
+don't increase it. Same package + same signing key means installing the beta
 **upgrades** the installed stable app (and vice-versa only if the versionCode
 is higher).
 
+## Single version source
+
+`package.json` → `"version"` is the ONLY version anyone edits.
+Everything else is generated + verified:
+
+- `node scripts/sync-version.mjs` — rewrites `src/lib/version.ts`,
+  `public/version.json` (version + updated fields only) and
+  `android/AndroidManifest.xml` (`versionName`; versionCode =
+  `major*10000 + minor*100 + patch`, e.g. 2.4.0 → 20400).
+- `node scripts/check-version.mjs` — CI gate that FAILS when any of those
+  drift from `package.json` (this used to happen: the manifest sat at 2.2.0
+  while the web shipped 2.4.0, breaking APK upgrades).
+- The in-app update banner compares `public/version.json` against
+  `APP_VERSION`, and Android uses `versionCode` — drift in either direction
+  causes false "update available" banners or un-installable APKs.
+
 ## Static export for the APKs
 
-`STATIC_EXPORT=1 bun x next build` produces the fully static site in
-`.next-static/` (the API route is moved aside automatically is NOT needed —
-the export build simply excludes `src/app/api`; run the build with the route
-moved out if Next complains). The WebView serves these files locally, so the
-app is 100% offline.
+`bash scripts/static-export.sh` produces the fully static site in
+`.next-static/`:
+
+- it moves `src/app/api` aside into a repo-local stash and ALWAYS restores it
+  (trap on EXIT/INT/TERM/HUP; a crashed run's stash is recovered on the next
+  start; a lock prevents two concurrent builds from racing the move);
+- it exports `STATIC_EXPORT=1` (static output) and `NEXT_PUBLIC_STATIC=1`
+  (compiles server-only features out of the client bundle — every static
+  build path — Pages, APK release, smoke, local — goes through this script);
+- it fails the build if the shipped bundle still references `/api/`.
+
+The WebView serves these files locally, so the app is 100% offline. bun is
+used when available; otherwise the script falls back to `npx next build`
+(node + npm works too).
 
 ## When you get real hosting (Vercel / Netlify / any static host)
 

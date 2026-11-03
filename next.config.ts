@@ -22,17 +22,21 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || undefined;
  *  - CSP: self-only defaults; inline styles/scripts are unavoidable with Next;
  *    'wasm-unsafe-eval' is required by the self-hosted Tesseract OCR engine,
  *    blob: for pdf.js worker + canvas/audio exports. Nothing external is allowed.
- *    NOTE: no frame-ancestors / X-Frame-Options — sandbox previews (and some
- *    host dashboards) embed the app in an iframe, and the real production host
- *    (GitHub Pages static export) serves no custom headers anyway.
+ *    'unsafe-eval' was REMOVED — only the WASM escape hatch is needed, plain
+ *    JS eval is not (pdf.js and Tesseract both run fine without it).
+ *  - frame-ancestors / X-Frame-Options: default 'self' — blocks cross-origin
+ *    clickjacking on self-hosted deployments. Operators who must embed the app
+ *    in a dashboard can set FRAME_ANCESTORS ("*" or a host list) — the sandbox
+ *    preview does exactly that via .env.
  *  - Permissions-Policy keeps the mic (voice input) but denies camera/geo/etc.
  */
+const frameAncestors = process.env.FRAME_ANCESTORS || "'self'";
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
@@ -42,9 +46,11 @@ const securityHeaders = [
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
+      `frame-ancestors ${frameAncestors}`,
     ].join("; "),
   },
   { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
@@ -67,7 +73,7 @@ const nextConfig: NextConfig = {
         },
       }),
   ...(basePath ? { basePath } : {}),
-  reactStrictMode: false,
+  reactStrictMode: true,
   experimental: {
     // Compile-time tree-shaking for the huge lucide icon barrel — only the
     // icons actually imported ship in the client bundle.

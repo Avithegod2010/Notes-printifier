@@ -3,8 +3,17 @@
 import { useEffect, useState } from 'react';
 import { FileCheck2, Layers, Leaf, PiggyBank } from 'lucide-react';
 import { useT } from '@/lib/i18n';
-import { HAS_SERVER_API } from '@/lib/server-api';
 import { showServerFeature } from '@/components/printifier/server-feature';
+
+/**
+ * Compile-time switch: static exports / the APK ship no server, so every
+ * server-only feature must be DEAD-CODE-ELIMINATED, not just switched off at
+ * runtime. That's why this is a per-module inline expression instead of an
+ * import from server-api.ts — the bundler only constant-folds WITHIN a
+ * module, so a shared import would keep every fetch('/api/…') call site in
+ * the static bundle (scripts/static-export.sh fails builds that ship them).
+ */
+const HAS_SERVER_API = process.env.NEXT_PUBLIC_STATIC !== '1';
 
 interface Stats {
   totalFiles: number;

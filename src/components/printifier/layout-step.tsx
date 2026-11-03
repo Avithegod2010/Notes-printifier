@@ -350,7 +350,10 @@ export function LayoutStep() {
       ? selected[0].widthPt / selected[0].heightPt
       : layout.pageSize === 'custom' && layout.customPageW && layout.customPageH
         ? layout.customPageW / layout.customPageH
-        : PAGE_ASPECT[layout.pageSize];
+        : layout.pageSize === 'original'
+          ? // no page selected yet — fall back to A4's aspect for the preview box
+            PAGE_ASPECT.a4
+          : PAGE_ASPECT[layout.pageSize];
   const previewAspect = layout.orientation === 'landscape' ? 1 / aspect : aspect;
 
   const previewThumbs = selected.slice(0, perPage);

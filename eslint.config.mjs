@@ -10,14 +10,18 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
   rules: {
     // TypeScript rules
     "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-unused-vars": "off",
+    // Incremental re-enable (was off): unused code is surfaced as a warning
+    // so the build gates on real errors while the backlog shrinks.
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/prefer-as-const": "off",
     "@typescript-eslint/no-unused-disable-directive": "off",
-    
+
     // React rules
-    "react-hooks/exhaustive-deps": "off",
+    // Incremental re-enable (was off): missing-deps bugs are real bugs;
+    // warned, not errored, until the existing call sites are audited.
+    "react-hooks/exhaustive-deps": "warn",
     "react-hooks/purity": "off",
     // React Compiler advisory rules (new in eslint-config-next 16.4): they flag
     // pre-existing, verified patterns (scaffold hooks + app effects). Kept as
@@ -35,19 +39,20 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "@next/next/no-html-link-for-pages": "off",
     
     // General JavaScript rules
-    "prefer-const": "off",
-    "no-unused-vars": "off",
+    "prefer-const": "warn",
+    "no-unused-vars": "off", // TS files use @typescript-eslint/no-unused-vars
     "no-console": "off",
-    "no-debugger": "off",
-    "no-empty": "off",
-    "no-irregular-whitespace": "off",
+    "no-debugger": "warn",
+    "no-empty": "off", // idiomatic `catch {}` guards are everywhere by design
+    "no-irregular-whitespace": "warn",
     "no-case-declarations": "off",
-    "no-fallthrough": "off",
-    "no-mixed-spaces-and-tabs": "off",
-    "no-redeclare": "off",
-    "no-undef": "off",
-    "no-unreachable": "off",
-    "no-useless-escape": "off",
+    // was off — silent fallthrough is a real bug class, never acceptable
+    "no-fallthrough": "error",
+    "no-mixed-spaces-and-tabs": "warn",
+    "no-redeclare": "off", // TS handles
+    "no-undef": "off", // TS handles globals; re-enabling breaks TS projects
+    "no-unreachable": "warn",
+    "no-useless-escape": "warn",
   },
 }, {
   ignores: [
@@ -64,7 +69,6 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     // local dev tooling & sandbox scaffolding
     "scripts/dev/**",
     "examples/**",
-    "tests/**",
     "upload/**",
     "verify-shots/**",
     "tool-results/**",

@@ -10,7 +10,12 @@ const RATE_WINDOW_MS = 5 * 60 * 1000
 
 const MAX_COUNT = 1_000_000_000
 const MAX_INK_SAVED_PCT = 100
-const MAX_FILE_NAME_LENGTH = 300
+// fileName is a truncated SHA-256 of the joined document name — 16 hex
+// chars, exactly what the client sends (see printify-store
+// saveJobSideEffects). Real file names are NEVER accepted: the privacy
+// promise ("titles never leave the device") must hold even against
+// non-app clients, so the server rejects anything that isn't a hash.
+const FILE_NAME_HASH_RE = /^[a-f0-9]{16}$/
 const MAX_ENUM_LENGTH = 50
 
 interface PrintJobInput {
@@ -56,10 +61,10 @@ function parsePrintJob(body: unknown): ParseResult {
   const record = body as Record<string, unknown>
 
   const fileName = record.fileName
-  if (!isNonEmptyString(fileName, MAX_FILE_NAME_LENGTH)) {
+  if (typeof fileName !== 'string' || !FILE_NAME_HASH_RE.test(fileName)) {
     return {
       ok: false,
-      error: `fileName must be a non-empty string of at most ${MAX_FILE_NAME_LENGTH} characters`,
+      error: 'fileName must be a 16-character lowercase hex SHA-256 prefix (truncated file-name hash)',
     }
   }
 

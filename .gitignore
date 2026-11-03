@@ -20,6 +20,7 @@ android/signing.local
 # ── secrets & env ────────────────────────────────────────────
 .env
 .env.*
+!.env.example
 *.pem
 
 # ── databases (local runtime data) ───────────────────────────
@@ -61,7 +62,6 @@ next-env.d.ts
 # apksigner v4 incremental-install signature
 *.idsig
 local-*
-test
 tests/ocr-fixture.pdf
 tests-results/
 playwright-report/
@@ -72,6 +72,8 @@ test-results/
 # ── throwaway proof fixtures / local analysis scripts ────────
 /.proof/
 /agent-ctx/
-/scripts/
+# one-off analysis scripts kept out of the repo — tracked files in
+# scripts/ survive; only this subdir is ignored
+/scripts/dev/
 .e2e/
 .e2e-*.png

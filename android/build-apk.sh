@@ -45,8 +45,15 @@ need_pass() {
 
 EXTRA_LINK=()
 if [ "$CHANNEL" = "beta" ]; then
-  BETA_VERSION_CODE="${BETA_VERSION_CODE:-15}"
-  BETA_VERSION_NAME="${BETA_VERSION_NAME:-1.8.1}"
+  # Derive beta defaults from the single version source (package.json) so
+  # they can never drift from the web manifest (scripts/check-version.mjs
+  # FAILS the build when a hardcoded version sneaks back in here).
+  PKG_VERSION="$(node -p "require('$ROOT/package.json').version" 2>/dev/null \
+    || bun -p "require('./package.json').version" 2>/dev/null \
+    || sed -n 's/.*"version": "\([^"]*\)".*/\1/p' "$ROOT/package.json" | head -1)"
+  PKG_CODE="$(node -p "const [a,b,c]=$PKG_VERSION.split('.').map(Number); a*10000+b*100+c" 2>/dev/null || echo '')"
+  BETA_VERSION_CODE="${BETA_VERSION_CODE:-${PKG_CODE:-20}}"
+  BETA_VERSION_NAME="${BETA_VERSION_NAME:-${PKG_VERSION}-beta}"
   EXTRA_LINK=(--version-code "$BETA_VERSION_CODE" --version-name "$BETA_VERSION_NAME" --replace-version)
   OUT_APK="$ROOT/public/printifier.apk"
 else

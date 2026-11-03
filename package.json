@@ -2,7 +2,7 @@
   "name": "notes-printifier",
   "version": "2.4.0",
   "private": true,
-  "description": "Turn lecture PDFs into paper- and ink-saving print-ready PDFs — 100% client-side, bilingual (EN/हिन्दी), installable as a PWA and an offline Android app.",
+  "description": "Turn lecture PDFs into paper- and ink-saving print-ready PDFs \u2014 100% client-side, bilingual (EN/\u0939\u093f\u0928\u094d\u0926\u0940), installable as a PWA and an offline Android app.",
   "license": "MIT",
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
@@ -11,14 +11,18 @@
     "build:static": "bash scripts/static-export.sh",
     "budget": "node scripts/bundle-budget.mjs",
     "budget:update": "node scripts/bundle-budget.mjs --update",
-    "i18n:check": "bun scripts/i18n-missing.ts",
+    "i18n:check": "bun scripts/i18n-missing.ts --check",
     "test:smoke": "playwright test",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
-    "db:push": "prisma db push --accept-data-loss",
+    "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "i18n:gen": "bun scripts/i18n-missing.ts",
+    "db:push:force": "prisma db push --accept-data-loss",
+    "db:deploy": "prisma migrate deploy",
+    "test": "bun test tests/unit tests/api"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
@@ -70,7 +74,6 @@
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.91.0",
     "react-resizable-panels": "^2.1.7",
-    "recharts": "^2.15.4",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "tailwindcss-animate": "^1.0.7",

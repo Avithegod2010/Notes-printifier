@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { clientKey, rateLimit } from '@/lib/rate-limit'
+import { sanitizeFilters, sanitizeLayout } from '@/lib/settings-validate'
+import { presetCutoff, shouldPrune } from '@/lib/preset-share-ttl'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,9 +10,13 @@ export const dynamic = 'force-dynamic'
  * POST /api/presets — create a shareable preset link (F2).
  * Body: { name, filters, layout } → { id } (short url-safe id).
  * Only the recipe is stored — never any document content.
+ *
+ * filters/layout are whitelist-sanitized BEFORE storage (unknown keys
+ * dropped, every value type-checked and clamped) — the API is a trust
+ * boundary, not a JSON bucket; anything that survives the length check
+ * still cannot poison the render pipeline of whoever opens the link.
  */
 const MAX_NAME = 60
-const MAX_DATA = 20_000 // filters+layout JSON is ~1–2 KB; 20 KB is generous
 
 function shortId(): string {
   // unambiguous alphabet so links survive handwriting/reading
@@ -57,17 +63,20 @@ export async function POST(request: Request) {
     )
   }
 
-  const data = JSON.stringify({ filters: body.filters, layout: body.layout })
-  if (data.length > MAX_DATA) {
-    return NextResponse.json({ ok: false, error: 'Preset too large' }, { status: 413 })
-  }
+  // Validate on WRITE: store full, sanitized settings objects. What comes
+  // back out of the database later is therefore safe by construction too.
+  const data = JSON.stringify({
+    filters: sanitizeFilters(body.filters),
+    layout: sanitizeLayout(body.layout),
+  })
 
   try {
-    // hygiene: drop shares older than 30 days on every write
-    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    void db.presetShare
-      .deleteMany({ where: { createdAt: { lt: cutoff } } })
-      .catch(() => undefined)
+    // hygiene: drop shares older than 30 days — opportunistic, throttled
+    if (shouldPrune()) {
+      void db.presetShare
+        .deleteMany({ where: { createdAt: { lt: presetCutoff() } } })
+        .catch(() => undefined)
+    }
 
     for (let attempt = 0; attempt < 3; attempt++) {
       const id = shortId()

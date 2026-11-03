@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.notesprintifier.app"
-    android:versionCode="19"
-    android:versionName="2.2.0">
+    android:versionCode="20400"
+    android:versionName="2.4.0">
 
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- No permissions at all: the app is 100% offline. Everything is served
+         from assets/www via shouldInterceptRequest (synthetic
+         appassets.androidplatform.net host); requests that are not that host
+         are blocked with a 404, and nothing in the code touches the network
+         (no HttpURLConnection/OkHttp/sockets, no remote loadUrl, the service
+         worker is stripped from the APK assets by build-apk.sh). -->
 
     <application
         android:label="@string/app_name"

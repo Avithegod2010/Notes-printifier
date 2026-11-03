@@ -135,3 +135,108 @@ test('OCR-enabled run shows the confidence report card', async ({ page }) => {
     ignoreCase: true,
   });
 });
+
+/*
+ * ── Defect #8: PWA offline mode ────────────────────────────────────────────
+ * README promises "works offline after first visit", but the old SW never
+ * intercepted /_next/*, so an offline reload served cached HTML whose hashed
+ * JS/CSS chunks were then fetched over a dead network → white screen.
+ *
+ * Deterministic by construction:
+ *  1. wait until the SW actually CONTROLS the page (navigator.serviceWorker
+ *     .controller non-null, polled with a timeout — serviceWorker.ready alone
+ *     can resolve while this page is still uncontrolled);
+ *  2. reload once while ONLINE: on a true first visit every chunk is fetched
+ *     before the SW exists (registration waits for window load), so this
+ *     SW-controlled pass is what puts the /_next/static build assets into
+ *     the runtime cache;
+ *  3. poll CacheStorage until every /_next/static script/stylesheet the
+ *     document references is really cached (no fixed settle sleeps);
+ *  4. go offline, reload, and assert the upload UI renders AND no JS/CSS
+ *     build chunk failed or error'd (they must all come from the cache).
+ */
+test('offline reload renders the app shell from the service worker cache', async ({
+  page,
+  context,
+}) => {
+  await skipTour(page);
+  await page.goto(SITE);
+
+  // 1. The SW must be controlling this page before anything else matters.
+  await page.waitForFunction(
+    () => navigator.serviceWorker.controller !== null,
+    null,
+    { timeout: 30_000 },
+  );
+
+  // 2. Second load, still online: the SW now intercepts every request, so
+  //    stale-while-revalidate caches each build asset as it is fetched.
+  await page.reload();
+
+  // 3. Block until the cache really holds every static chunk the document
+  //    references (the SWR background writes may still be in flight).
+  await page.waitForFunction(
+    async () => {
+      if (typeof caches === 'undefined') return false;
+      const wanted = new Set<string>();
+      for (const el of document.querySelectorAll('script[src], link[href]')) {
+        const raw = (el as HTMLScriptElement).src || (el as HTMLLinkElement).href;
+        if (!raw) continue;
+        const url = new URL(raw, location.href);
+        if (
+          url.origin === location.origin &&
+          url.pathname.includes('/_next/static/')
+        ) {
+          wanted.add(url.href);
+        }
+      }
+      if (wanted.size === 0) return false;
+      const cached = new Set<string>();
+      for (const name of await caches.keys()) {
+        if (!name.startsWith('printifier-')) continue;
+        const cache = await caches.open(name);
+        for (const request of await cache.keys()) cached.add(request.url);
+      }
+      for (const url of wanted) if (!cached.has(url)) return false;
+      return true;
+    },
+    null,
+    { timeout: 60_000 },
+  );
+
+  // 4. Watch JS/CSS build chunks while the network is dead: they must all
+  //    be served from the cache — no failures, no 4xx/5xx (the old bug
+  //    surfaced as ERR_INTERNET_DISCONNECTED here, leaving a white screen).
+  const chunkProblems: string[] = [];
+  const isBuildChunk = (url: string) => url.includes('/_next/static/');
+  page.on('response', (res) => {
+    const type = res.request().resourceType();
+    if (
+      (type === 'script' || type === 'stylesheet') &&
+      isBuildChunk(res.url()) &&
+      res.status() >= 400
+    ) {
+      chunkProblems.push(`${res.status()} on ${res.url()}`);
+    }
+  });
+  page.on('requestfailed', (req) => {
+    const type = req.resourceType();
+    if ((type === 'script' || type === 'stylesheet') && isBuildChunk(req.url())) {
+      chunkProblems.push(
+        `failed ${req.url()} (${req.failure()?.errorText ?? 'unknown'})`,
+      );
+    }
+  });
+
+  await context.setOffline(true);
+  await page.reload();
+
+  // The app shell must actually render offline — the upload dropzone is the
+  // step-0 UI every other test starts from.
+  await expect(page.locator('[data-dropzone]')).toBeVisible({ timeout: 30_000 });
+
+  // page.reload() resolves on the load event, by which time every
+  // document-level script/stylesheet request has settled, so the problem
+  // record is complete and a plain assertion is deterministic.
+  expect(chunkProblems).toEqual([]);
+});

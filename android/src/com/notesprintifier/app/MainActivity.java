@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -43,11 +45,20 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+    /** JS bridge — injected only for the app's own origin (see onPageStarted). */
+    private DownloadBridge bridge;
 
     /** A PDF shared/opened into the app, waiting for the page to ingest it. */
     private boolean pendingShared;
     /** Staged copy of the shared PDF (cache dir), served to the WebView at /__shared.pdf. */
     private File sharedFile;
+    /**
+     * Fresh id for the staged share, passed to window.__npConsumeShared(token).
+     * Lets the web receiver (which stays armed across shares) tell repeat
+     * nudges for THIS file apart from nudges for a newly staged one.
+     */
+    private String shareToken;
+    private int shareSeq = 0;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -65,7 +76,10 @@ public class MainActivity extends Activity {
         s.setDisplayZoomControls(false);
         s.setMediaPlaybackRequiresUserGesture(true);
 
-        webView.addJavascriptInterface(new DownloadBridge(this), "AndroidBridge");
+        // The bridge object is created here but NOT injected WebView-wide:
+        // onPageStarted injects it only when the main frame is our own origin,
+        // so third-party frames/origins never see it.
+        bridge = new DownloadBridge(this);
         webView.setWebViewClient(new LocalContentClient());
         webView.setWebChromeClient(new ChromeClient());
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -126,6 +140,9 @@ public class MainActivity extends Activity {
 
             sharedFile = dest;
             pendingShared = true;
+            // Fresh token per staged file (seq guard makes it unique even if
+            // two shares ever landed in the same millisecond).
+            shareToken = "s" + (++shareSeq) + "-" + System.currentTimeMillis();
             maybeConsumeShared();
         } catch (Exception e) {
             runOnUiThread(new Runnable() {
@@ -155,8 +172,11 @@ public class MainActivity extends Activity {
         @Override
         public void run() {
             if (!pendingShared || webView == null) return;
+            // The token identifies the staged share: retries carry the same
+            // one (the receiver dedupes it) and a new share gets a new one.
+            String token = shareToken != null ? shareToken : "0";
             webView.evaluateJavascript(
-                    "(function(){if(window.__npConsumeShared){window.__npConsumeShared();return 'ok';}return 'no-hook';})()",
+                    "(function(){if(window.__npConsumeShared){window.__npConsumeShared('" + token + "');return 'ok';}return 'no-hook';})()",
                     new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String value) {
@@ -187,7 +207,11 @@ public class MainActivity extends Activity {
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             Uri url = request.getUrl();
-            if (url == null || !HOST.equals(url.getHost())) return null;
+            if (url == null || !HOST.equals(url.getHost())) {
+                // The app is 100% offline: anything that is not our own asset
+                // host (remote subresources, iframes, redirects) is blocked.
+                return notFoundResponse();
+            }
             String path = url.getPath();
             if (path == null || path.length() == 0) path = "/index.html";
             if (path.contains("..")) return null; // block path traversal
@@ -223,6 +247,32 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** Empty 404 for any request that is not our own asset host. */
+        private WebResourceResponse notFoundResponse() {
+            WebResourceResponse resp = new WebResourceResponse(
+                    "text/plain", "utf-8", new ByteArrayInputStream(new byte[0]));
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Cache-Control", "no-store");
+            resp.setResponseHeaders(headers);
+            resp.setStatusCodeAndReasonPhrase(404, "Not Found");
+            return resp;
+        }
+
+        @Override
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            // Expose the JS bridge only to the app's own origin: injected for
+            // our synthetic host, removed for anything else, so a frame from
+            // another origin can never reach DownloadBridge. (Remote content
+            // is blocked outright in shouldInterceptRequest; this is the
+            // second layer of that door.)
+            if (url != null && HOST.equals(Uri.parse(url).getHost())) {
+                view.addJavascriptInterface(bridge, "AndroidBridge");
+            } else {
+                view.removeJavascriptInterface("AndroidBridge");
+            }
+            super.onPageStarted(view, url, favicon);
+        }
+
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri url = request.getUrl();
@@ -236,12 +286,17 @@ public class MainActivity extends Activity {
 
         @Override
         public void onPageFinished(WebView view, String url) {
-            // Injected AFTER the page loads; the capture-phase click listener
-            // sits above React's handlers, so patched <a download> links win.
-            view.evaluateJavascript(INJECT_JS, null);
-            // The page may have finished loading after a cold-start share —
-            // give the web receiver another chance to pick the staged PDF up.
-            maybeConsumeShared();
+            if (url != null && HOST.equals(Uri.parse(url).getHost())) {
+                // Re-assert the bridge (in case the onPageStarted injection
+                // raced or was removed by an intermediate navigation).
+                view.addJavascriptInterface(bridge, "AndroidBridge");
+                // Injected AFTER the page loads; the capture-phase click listener
+                // sits above React's handlers, so patched <a download> links win.
+                view.evaluateJavascript(INJECT_JS, null);
+                // The page may have finished loading after a cold-start share —
+                // give the web receiver another chance to pick the staged PDF up.
+                maybeConsumeShared();
+            }
             super.onPageFinished(view, url);
         }
     }

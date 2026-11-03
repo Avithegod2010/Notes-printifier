@@ -16,7 +16,9 @@ name: Release APK
 #
 # Optional repository VARIABLES (fall back to build-apk.sh defaults):
 #   BETA_VERSION_CODE / BETA_VERSION_NAME — bump when rebuilding the beta
-#   channel so installed devices can upgrade (defaults: 7 / 1.5.0-beta).
+#   channel so installed devices can upgrade (defaults derive from
+#   package.json's version — the single source of truth; see
+#   scripts/sync-version.mjs / scripts/check-version.mjs).
 #
 # Channels:
 #   * tag push v*-beta*   → beta   (public/printifier.apk, published as prerelease)
@@ -156,7 +158,8 @@ jobs:
         if: steps.signing.outputs.apk == 'true'
         env:
           CHANNEL: ${{ steps.meta.outputs.channel }}
-          # empty variables fall back to the script defaults (7 / 1.5.0-beta)
+          # empty variables fall back to build-apk.sh's defaults, which
+          # derive from package.json (single version source of truth)
           BETA_VERSION_CODE: ${{ vars.BETA_VERSION_CODE }}
           BETA_VERSION_NAME: ${{ vars.BETA_VERSION_NAME }}
         run: bash android/build-apk.sh "$CHANNEL"

@@ -4,16 +4,20 @@
  * Strategy:
  *  - Precache the app shell ('/', manifest, icons) on install.
  *  - Navigations: network-first with cache fallback.
- *  - Same-origin static assets (icons, manifest, pdf worker, sample PDFs):
- *    stale-while-revalidate.
+ *  - Same-origin static assets (icons, manifest, pdf worker, sample PDFs)
+ *    and Next.js build assets (/_next/static/** — content-hashed, so
+ *    immutable): stale-while-revalidate.
  *  - NEVER intercept: non-GET requests, cross-origin requests, /_next/*
- *    (so dev HMR and build assets always pass straight through), or /api/*.
+ *    paths outside /_next/static/ (dev HMR), /api/*, or ANY request whose
+ *    URL carries a fragment (bundler worker loaders encode per-instance
+ *    import lists in the fragment; the Cache API strips fragments, so
+ *    caching those collides and hands a worker the WRONG import list).
  *
  * Every cache operation is wrapped in try/catch: a failed cache op must
  * never break the page.
  */
 
-const CACHE_NAME = 'printifier-v5';
+const CACHE_NAME = 'printifier-v6';
 
 // GitHub Pages hosts project sites under /<repo>/ — derive the base from the
 // registration scope so the same file works at the root (dev, APK) and under
@@ -31,6 +35,12 @@ const PRECACHE_URLS = [
 
 // Same-origin static assets eligible for stale-while-revalidate.
 const SWR_PATH_PATTERNS = [
+  // Next.js build assets — content-hashed filenames make them immutable, so
+  // serving a cached copy instantly and refreshing in the background is safe.
+  // This is what makes an offline reload work: the hashed JS/CSS chunks get
+  // cached during the first visit. (Worker-loader URLs with a fragment are
+  // excluded in the fetch handler — see the url.hash guard there.)
+  /^\/_next\/static\/.+/,
   /^\/icons\/.+\.png$/,
   /^\/manifest\.webmanifest$/,
   /^\/pdf\.worker\.min\.mjs$/,
@@ -159,8 +169,22 @@ self.addEventListener('fetch', (event) => {
         ? url.pathname.slice(BASE.length)
         : url.pathname;
 
-    // NEVER intercept Next.js build/HMR assets (dev would break).
-    if (path.startsWith('/_next/')) return;
+    // NEVER intercept /_next/ paths outside /_next/static/ (dev HMR and
+    // /_next/webpack-hmr would break). /_next/static/ build assets fall
+    // through to the SWR patterns below — see SWR_PATH_PATTERNS for why
+    // that is safe.
+    if (path.startsWith('/_next/') && !path.startsWith('/_next/static/')) {
+      return;
+    }
+
+    // NEVER intercept fragment-bearing URLs: bundler worker loaders
+    // (e.g. turbopack-worker-*.js#params=[[chunk, chunk, …]]) reuse ONE
+    // script with a DIFFERENT fragment-encoded import list per instance.
+    // The Cache API strips fragments, so caching those requests would
+    // collide on a single key and the second worker would receive the
+    // first one's import list — the compose worker then imports the wrong
+    // chunks and processing silently hangs on page 0. Pass them through.
+    if (url.hash) return;
 
     // API routes must always hit the network.
     if (path.startsWith('/api/')) return;

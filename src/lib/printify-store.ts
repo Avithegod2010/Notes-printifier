@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { loadPdfDocument, type PdfDocument } from './pdf/pdfjs';
 import { renderPageToCanvas, canvasToDataUrl, getPageDimensions } from './pdf/render';
+import { sanitizeFiltersPatch, sanitizeLayoutPatch } from './settings-validate';
 import {
   defaultFilters,
   type AnyCanvas,
@@ -43,7 +44,16 @@ import {
   saveTextRepaintFlag,
 } from './labs';
 import { translateStatic, useLangStore, type Lang } from './i18n';
-import { HAS_SERVER_API } from './server-api';
+
+/**
+ * Compile-time switch: static exports / the APK ship no server, so every
+ * server-only feature must be DEAD-CODE-ELIMINATED, not just switched off at
+ * runtime. That's why this is a per-module inline expression instead of an
+ * import from server-api.ts — the bundler only constant-folds WITHIN a
+ * module, so a shared import would keep every fetch('/api/…') call site in
+ * the static bundle (scripts/static-export.sh fails builds that ship them).
+ */
+const HAS_SERVER_API = process.env.NEXT_PUBLIC_STATIC !== '1';
 
 /**
  * v1.9 settings migration — the factory default colorMode used to be
@@ -731,9 +741,15 @@ export const usePrintifyStore = create<PrintifyState>((set, get) => ({
   },
 
   applyPresetData: (filters, layout) => {
+    // Validate at the trust boundary — this is the landing pad for QR
+    // recipe links, shared preset links and every other external payload.
+    // Unknown keys are dropped and every value is clamped (see
+    // settings-validate.ts) so a crafted link cannot poison the pipeline.
+    const safeFilters = sanitizeFiltersPatch(filters);
+    const safeLayout = sanitizeLayoutPatch(layout);
     set({
-      filters: { ...defaultFilters, ...filters },
-      layout: { ...defaultLayout, ...layout },
+      filters: { ...defaultFilters, ...safeFilters },
+      layout: { ...defaultLayout, ...safeLayout },
       filtersTouched: true,
     });
     if (get().labsRemember) savePrefs(get().filters, get().layout);
