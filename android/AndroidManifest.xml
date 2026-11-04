@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.notesprintifier.app"
-    android:versionCode="20400"
-    android:versionName="2.4.0">
+    android:versionCode="20500"
+    android:versionName="2.5.0">
 
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
     <!-- No permissions at all: the app is 100% offline. Everything is served

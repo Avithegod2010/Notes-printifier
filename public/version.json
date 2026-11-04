@@ -1,12 +1,14 @@
 {
-  "version": "2.4.0",
-  "updated": "2026-11-03",
+  "version": "2.5.0",
+  "updated": "2026-11-04",
   "notes": [
-    "New — edit anytime: after processing, tap the new “Change layout & re-process” button (or click any earlier step in the progress bar) to go back, tweak the layout, page selection or ink settings, and process again — as many times as you like, without re-uploading your PDF",
-    "Improved: repeated re-processing no longer keeps old output PDFs in memory, so many quick edits stay light on RAM"
+    "New — cloud import that works: paste a Google Drive or Dropbox share link and it is now converted to a direct download before fetching, so cloud imports stop failing with errors",
+    "Safer links & presets: shared links, presets and backups are now fully validated before use, so a malformed link can no longer freeze rendering or break the app",
+    "Lighter & stronger: smaller download (chart library removed), better protection against abuse, and the offline/Android app no longer tries to call a backend it doesn't have"
   ],
   "notes_hi": [
-    "नया — कभी भी बदलें: प्रोसेस करने के बाद नया “लेआउट बदलें और दोबारा बनाएँ” बटन दबाएँ (या प्रोग्रेस बार में कोई भी पिछला चरण चुनें), लेआउट/पेज/स्याही सेटिंग बदलें और दोबारा प्रोसेस करें — जितनी बार चाहें, बिना अपनी PDF दोबारा अपलोड किए",
-    "सुधरा: बार-बार दोबारा प्रोसेस करने पर अब पुराना आउटपुट PDF मेमोरी में नहीं रहता — तेज़-तेज़ बदलावों पर भी ऐप हल्का चलता है"
+    "नया — क्लाउड इंपोर्ट अब सही: Google Drive या Dropbox का शेयर लिंक पेस्ट करें, ऐप अब उसे खुद सीधे डाउनलोड लिंक में बदलकर लाता है — क्लाउड इंपोर्ट अब एरर नहीं देता",
+    "सुरक्षित लिंक और प्रीसेट: शेयर लिंक, प्रीसेट और बैकअप अब इस्तेमाल से पहले पूरी तरह जाँचे जाते हैं — गलत लिंक से ऐप अटकता या टूटता नहीं",
+    "हल्का और मज़बूत: डाउनलोड छोटा (चार्ट लाइब्रेरी हटाई), दुरुपयोग से बेहतर सुरक्षा, और ऑफ़लाइन/Android ऐप अब फ़ालतू सर्वर कॉल नहीं करता"
   ]
 }
