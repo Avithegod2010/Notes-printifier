@@ -257,6 +257,13 @@ const TINT_LUM_CUT = 200;
 const INVERT_CYAN_LUM_CUT = 170;
 /** Mean luminance below which a page counts as "dark" in auto mode. */
 const AUTO_INVERT_THRESHOLD = 110;
+/**
+ * Background white-point snap window — a pixel is paper when EVERY channel
+ * sits within this distance of the page's own measured paper colour.
+ * Wide enough to swallow the inverted dark-deck vignette (the film spans
+ * ~26 RGB points below the background), far below ink/wash separation.
+ */
+const BG_SNAP_TOL = 24;
 
 /** Create a canvas of the same kind as the given one. */
 function createLikeCanvas(canvas: AnyCanvas, w: number, h: number): AnyCanvas {
@@ -603,6 +610,141 @@ function penBoostValue(v: number, k: number): number {
   return v + (out - v) * t;
 }
 
+/** Mean colour of a 32-step RGB bucket over a sparse whole-page sample. */
+function bucketMean(
+  d: Uint8ClampedArray,
+  best: number,
+  stridePx: number,
+): { r: number; g: number; b: number; share: number } {
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let n = 0;
+  let total = 0;
+  for (let i = 0; i < d.length; i += 4 * stridePx) {
+    total++;
+    if ((((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3)) === best) {
+      r += d[i];
+      g += d[i + 1];
+      b += d[i + 2];
+      n++;
+    }
+  }
+  if (n === 0) return { r: 0, g: 0, b: 0, share: 0 };
+  return { r: r / n, g: g / n, b: b / n, share: n / total };
+}
+
+/** A colour qualifies as "paper": bright and near-neutral (any tint). */
+function isPaperColor(r: number, g: number, b: number): boolean {
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  return 0.299 * r + 0.587 * g + 0.114 * b >= 200 && mx - mn <= 40;
+}
+
+/**
+ * The page's own paper colour for the background white-point snap, or null
+ * when the page has no dominant paper colour.
+ *
+ * Two candidates, in priority order:
+ *   1. EDGE-RING dominant (border strips, same geometry as
+ *      edgeRingModeColor) — the film this snap exists for lives on the
+ *      border, and the border is the purest background sample on busy
+ *      pages (a cover slide with white margins still reports white);
+ *   2. whole-page dominant, but only when it covers ≥ 25 % of a sparse
+ *      sample — for pages whose border carries content but whose body is
+ *      clean paper. The share guard keeps photo/collage pages (no single
+ *      dominant colour) out of the snap.
+ * A candidate is judged AFTER the mode flip (a dark deck's raw background
+ * is near-black; it qualifies as paper only once inverted): luminance ≥ 200
+ * with channel spread ≤ 40 — white sheets, cream/light-tinted scans AND the
+ * light blue-gray backgrounds dark decks produce after inversion.
+ */
+function paperSnapAnchor(
+  d: Uint8ClampedArray,
+  w: number,
+  h: number,
+  invert: boolean,
+): { r: number; g: number; b: number } | null {
+  if (w < 2 || h < 2) return null;
+  const flip = (v: number): number => (invert ? 255 - v : v);
+  // 1) edge-ring dominant — full pass over ≤ 8 px border strips
+  const t = Math.max(1, Math.min(8, h >> 2));
+  const s = Math.max(1, Math.min(8, w >> 2));
+  const counts = new Int32Array(32768);
+  let ringN = 0;
+  const countStrip = (x: number, y: number, sw: number, sh: number): void => {
+    for (let yy = y; yy < y + sh; yy++) {
+      let idx = (yy * w + x) * 4;
+      for (let xx = 0; xx < sw; xx++) {
+        counts[((d[idx] >> 3) << 10) | ((d[idx + 1] >> 3) << 5) | (d[idx + 2] >> 3)]++;
+        idx += 4;
+        ringN++;
+      }
+    }
+  };
+  countStrip(0, 0, w, t);
+  countStrip(0, h - t, w, t);
+  countStrip(0, 0, s, h);
+  countStrip(w - s, 0, s, h);
+  let ringBest = 0;
+  let ringBestN = 0;
+  for (let q = 0; q < counts.length; q++) {
+    if (counts[q] > ringBestN) {
+      ringBestN = counts[q];
+      ringBest = q;
+    }
+  }
+  // mean-refine the winning bucket over the same ring pixels
+  let rr = 0;
+  let rg = 0;
+  let rb = 0;
+  let rn = 0;
+  const refineStrip = (x: number, y: number, sw: number, sh: number): void => {
+    for (let yy = y; yy < y + sh; yy++) {
+      let idx = (yy * w + x) * 4;
+      for (let xx = 0; xx < sw; xx++) {
+        if ((((d[idx] >> 3) << 10) | ((d[idx + 1] >> 3) << 5) | (d[idx + 2] >> 3)) === ringBest) {
+          rr += d[idx];
+          rg += d[idx + 1];
+          rb += d[idx + 2];
+          rn++;
+        }
+        idx += 4;
+      }
+    }
+  };
+  refineStrip(0, 0, w, t);
+  refineStrip(0, h - t, w, t);
+  refineStrip(0, 0, s, h);
+  refineStrip(w - s, 0, s, h);
+  if (rn > 0) {
+    const r = flip(rr / rn);
+    const g = flip(rg / rn);
+    const b = flip(rb / rn);
+    if (isPaperColor(r, g, b)) return { r, g, b };
+  }
+  // 2) whole-page dominant (sparse sample, ≥ 25 % share)
+  let pageBest = 0;
+  let pageBestN = 0;
+  const pageCounts = new Int32Array(32768);
+  for (let i = 0; i < d.length; i += 4 * 31) {
+    const q = ((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3);
+    pageCounts[q]++;
+    if (pageCounts[q] > pageBestN) {
+      pageBestN = pageCounts[q];
+      pageBest = q;
+    }
+  }
+  const page = bucketMean(d, pageBest, 31);
+  const pr = flip(page.r);
+  const pg = flip(page.g);
+  const pb = flip(page.b);
+  if (page.share >= 0.25 && isPaperColor(pr, pg, pb)) {
+    return { r: pr, g: pg, b: pb };
+  }
+  return null;
+}
+
 /**
  * Apply the filter settings to a canvas in place.
  * `effectiveMode` lets the caller pre-resolve 'auto' (per-page) — when
@@ -661,6 +803,26 @@ export function applyFilters(
   // computed for cleanStains alone — the stain rules now branch on it.
   const hasWash =
     boostBlue || clean ? pageHasPaleWash(d, canvas.width, canvas.height) : false;
+  // Background white-point snap (the "light/dark texture at the page edges"
+  // fix, part 2). Dark decks carry a warm vignette gradient (rgb 18-39) that
+  // INVERTS into a bluish-gray film (rgb 216-242): neutral-enough (diff ≤ 8)
+  // to escape isInvertStainPixel, too dark/hued for paper-white, and the
+  // levels pass that used to hide it never runs with ink saver off (the
+  // default) — so the film printed as a pale texture band around every
+  // placed page. Light scans tint the paper the same way (cream/blue cast,
+  // diff 10-30). Measure the page's OWN paper colour once, then snap every
+  // pixel within BG_SNAP_TOL per channel of it to pure white — in EVERY
+  // mode (the invert branch had no paper-white rule at all). Ink, washes
+  // and saturated fills sit far outside the window and never match; a page
+  // without a dominant paper colour (photos, collages) gets no anchor and
+  // is left untouched.
+  const snapAnchor = clean
+    ? paperSnapAnchor(d, canvas.width, canvas.height, mode === 'invert' || preInvert)
+    : null;
+  const snapOn = snapAnchor !== null;
+  const snapR = snapAnchor ? snapAnchor.r : 0;
+  const snapG = snapAnchor ? snapAnchor.g : 0;
+  const snapB = snapAnchor ? snapAnchor.b : 0;
   const boost = Math.min(100, Math.max(0, s.penBoost)) / 100;
   const usePen = boost > 0 && mode !== 'bw';
 
@@ -751,6 +913,20 @@ export function applyFilters(
         g = v;
         b = v;
       }
+    }
+
+    // Background white-point snap — see paperSnapAnchor above. Runs on the
+    // post-branch colour (after inversion) so both paths converge here.
+    if (
+      snapOn &&
+      Math.abs(r - snapR) <= BG_SNAP_TOL &&
+      Math.abs(g - snapG) <= BG_SNAP_TOL &&
+      Math.abs(b - snapB) <= BG_SNAP_TOL
+    ) {
+      d[i] = 255;
+      d[i + 1] = 255;
+      d[i + 2] = 255;
+      continue;
     }
 
     if (useLevels) {
