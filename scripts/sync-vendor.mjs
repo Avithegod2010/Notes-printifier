@@ -124,6 +124,23 @@ function readManifest() {
 }
 
 if (check) {
+  // Version drift: the manifest records the package versions the vendored
+  // files were copied FROM. If the installed node_modules no longer matches
+  // (a lockfile bump without re-vendoring, or node_modules re-resolved past
+  // the lockfile), the app loads a pdf.js API that mismatches the vendored
+  // worker at runtime — the exact "API version X does not match Worker
+  // version Y" failure that blanks every uploaded page. Fail loudly here
+  // instead of shipping a broken render pipeline.
+  const recordedPkgs = readManifest().packages ?? {};
+  for (const name of Object.keys(recordedPkgs)) {
+    const installed = pkgVersion(name);
+    if (installed !== recordedPkgs[name]) {
+      console.error(
+        `  ✗ ${name} version drift: manifest ${recordedPkgs[name] ?? '(none)'} vs installed node_modules ${installed ?? '(missing)'}`,
+      );
+      failures++;
+    }
+  }
   // Also fail on manifest entries whose file vanished from public/.
   const recorded = readManifest().files ?? {};
   for (const rel of Object.keys(recorded)) {
