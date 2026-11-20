@@ -1,42 +1,29 @@
 <div align="center">
 
-# 🖨️ Notes Printifier
+<h1>Notes Printifier</h1>
 
-### Turn 41 ink-heavy slides into 14 bright pages. For ₹0. In your browser.
+<p><strong>Turn ink-heavy lecture slides into print-ready pages, right in your browser.</strong></p>
 
-**[Try a sample PDF](https://avithegod2010.github.io/Notes-printifier/#:~:text=Try%20a%20sample%20lecture%20PDF)** · [Open Notes Printifier](https://avithegod2010.github.io/Notes-printifier/)
+<p><strong><a href="public/sample-lecture.pdf">🖨️ Open the sample PDF</a></strong> · <a href="https://avithegod2010.github.io/Notes-printifier/">🌐 Open Notes Printifier</a> · <a href="#the-41-to-14-page-example">📄 See the result</a></p>
 
-Your notes stay on your device. No login or upload required.
-
-[![Live site](https://img.shields.io/badge/🌍_Live_site-GitHub_Pages-8b5cf6?style=for-the-badge)](https://avithegod2010.github.io/Notes-printifier/)
-[![Latest APK](https://img.shields.io/badge/🤖_Download-Android_APK-22c55e?style=for-the-badge)](../../releases)
-[![License: MIT](https://img.shields.io/badge/⚖️_License-MIT-a78bfa?style=for-the-badge)](LICENSE)
-[![CodeQL](https://img.shields.io/badge/🔎_CodeQL-enabled-14b8a6?style=for-the-badge)](../../actions)
-[![English / हिन्दी](https://img.shields.io/badge/🗣️_English%20%2F%20हिन्दी-bilingual-f472b6?style=for-the-badge)](#-features)
-
-**Translation progress** ([help translate →](MISSING_TRANSLATIONS.md) · [📣 Translate-a-thon →](https://github.com/Avithegod2010/Notes-printifier/issues/20)):
-[![हिन्दी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.hi&suffix=%25&label=%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80&color=brightgreen)](MISSING_TRANSLATIONS.md)
-[![मराठी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.mr&suffix=%25&label=%E0%A4%AE%E0%A4%B0%E0%A4%BE%E0%A4%A0%E0%A5%80&color=orange)](MISSING_TRANSLATIONS.md)
-[![தமிழ்](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.ta&suffix=%25&label=%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D&color=orange)](MISSING_TRANSLATIONS.md)
-[![বাংলা](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.bn&suffix=%25&label=%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE&color=orange)](MISSING_TRANSLATIONS.md)
-[![ગુજરાતી](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.gu&suffix=%25&label=%E0%AA%97%E0%AB%81%E0%AA%9C%E0%AA%B0%E0%AA%BE%E0%AA%A4%E0%AB%80&color=orange)](MISSING_TRANSLATIONS.md)
-[![ਪੰਜਾਬੀ](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.pa&suffix=%25&label=%E0%A8%AA%E0%A9%B0%E0%A8%9C%E0%A8%BE%E0%A8%AC%E0%A9%80&color=orange)](MISSING_TRANSLATIONS.md)
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="readme-hero.png" />
+  <img src="readme-hero.gif" width="820" alt="A stack of dark slides beside a white page with three slides" />
+</picture>
 
 </div>
 
----
+<a name="the-41-to-14-page-example"></a>
+
+## 📄 The 41-to-14-page example
 
 <p align="center">
-  <img src="docs/screenshots/hero-dark.png" alt="Notes Printifier — Make Your Lecture Notes Print-Ready" width="820" />
+  <a href="docs/screenshots/result.png"><img src="docs/screenshots/result.png" width="720" alt="Notes Printifier’s sample result screen showing 41 pages reduced to 14" /></a>
 </p>
 
-Every exam season, the same tragedy: **41 dark PowerPoint slides** hit the xerox shop, come back as 41 ghostly sheets of wasted paper, and eat ₹200 of your pocket money.
+<p align="center"><sub>The sample uses three slides per printed page.</sub></p>
 
-Notes Printifier flips them bright, stacks **3 per sheet**, and hands you a 14-page PDF. It even counts what you saved — paper, ink, trees, and rupees — because watching that number climb is half the fun.
-
-> 🎉 **Real numbers from the sample lecture PDF:** `41 pages → 14 pages` · `86% ink saved` · `1.71 MB (60% smaller)` · `≈ ₹71 kept in your pocket`
-
----
+**[See the print-ready PDF](public/sample-printified.pdf)**
 
 ## ✨ Features
 
@@ -64,17 +51,18 @@ Notes Printifier flips them bright, stacks **3 per sheet**, and hands you a 14-p
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/app-loaded.png" alt="Upload step — drop lecture PDFs" width="412" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/result.png" alt="Result step — 41 pages to 14, 86% ink saved, ₹71 saved" width="412" />
+  <a href="docs/screenshots/app-loaded.png"><img src="docs/screenshots/app-loaded.png" width="400" alt="Notes Printifier loading a lecture PDF" /></a>
+  <a href="docs/screenshots/hero-dark.png"><img src="docs/screenshots/hero-dark.png" width="400" alt="Notes Printifier’s web landing page in dark mode" /></a>
 </p>
+
+<p align="center"><sub>Upload screen · Project website</sub></p>
 
 ## 🚀 Try it — pick your fighter
 
 | | Where | What you get |
 |---|---|---|
 | 🌍 **Web** | [avithegod2010.github.io/Notes-printifier](https://avithegod2010.github.io/Notes-printifier/) | The whole PDF pipeline: upload → arrange → enhance → layout → download/print/share. Installable PWA, works offline after first visit. |
-| 🤖 **Android APK** | [Releases](../../releases) → `printifier.apk` | Same pipeline, fully offline, plus Android share-sheet ("share PDF → Printifier") and home-screen app icon. |
+| 🤖 **Android APK** | [Build the offline APK](#build-android) | Same pipeline, fully offline, plus Android share-sheet ("share PDF → Printifier") and home-screen app icon. |
 | 💻 **Self-host** | `bun install && bun run dev` | Everything above **plus** the server features (AI doctor, voice, Listen, cloud import, preset links, community stats). |
 
 ### ☁️ The GitHub Pages fine print (honesty section)
@@ -84,6 +72,8 @@ The live site is hosted on **GitHub Pages — free, fast, static file hosting wi
 > AI Print Doctor · Voice commands · Listen (spoken receipt) · Cloud preset links & QR · Cloud import · Community stats
 
 On the static site **they stay visible** — tap one and a friendly dialog explains the situation, with a **Why?** button for the full story (and how to get the full experience). Nothing is hidden; nothing fires doomed requests. Self-host (below) or use the server deployment to light them up.
+
+<a name="build-android"></a>
 
 ## 🛠 Quick start
 
@@ -184,6 +174,19 @@ that ships to the static site must work without a server. Bilingual strings live
 claim a section for मराठी / தமிழ் / বাংলা (or a new language) via the
 [translation issue template](https://github.com/Avithegod2010/Notes-printifier/issues/new?template=translation.md).
 Partial PRs welcome — untranslated keys fall back to English automatically.
+
+<details>
+<summary>Translation progress</summary>
+
+**Translation progress** ([help translate →](MISSING_TRANSLATIONS.md) · [📣 Translate-a-thon →](https://github.com/Avithegod2010/Notes-printifier/issues/20)):
+[![हिन्दी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.hi&suffix=%25&label=%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80&color=brightgreen)](MISSING_TRANSLATIONS.md)
+[![मराठी](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.mr&suffix=%25&label=%E0%A4%AE%E0%A4%B0%E0%A4%BE%E0%A4%A0%E0%A5%80&color=orange)](MISSING_TRANSLATIONS.md)
+[![தமிழ்](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.ta&suffix=%25&label=%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D&color=orange)](MISSING_TRANSLATIONS.md)
+[![বাংলা](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.bn&suffix=%25&label=%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE&color=orange)](MISSING_TRANSLATIONS.md)
+[![ગુજરાતી](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.gu&suffix=%25&label=%E0%AA%97%E0%AB%81%E0%AA%9C%E0%AA%B0%E0%AA%BE%E0%AA%A4%E0%AB%80&color=orange)](MISSING_TRANSLATIONS.md)
+[![ਪੰਜਾਬੀ](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAvithegod2010%2FNotes-printifier%2Fmain%2Fi18n-progress.json&query=%24.pa&suffix=%25&label=%E0%A8%AA%E0%A9%B0%E0%A8%9C%E0%A8%BE%E0%A8%AC%E0%A9%80&color=orange)](MISSING_TRANSLATIONS.md)
+
+</details>
 
 ## ⚖️ License
 
