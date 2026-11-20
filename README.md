@@ -4,7 +4,9 @@
 
 ### Turn 41 ink-heavy slides into 14 bright pages. For ₹0. In your browser.
 
-**Your notes never leave your device. No login. No upload. No mercy for xerox bills.**
+**[Try a sample PDF](https://avithegod2010.github.io/Notes-printifier/#:~:text=Try%20a%20sample%20lecture%20PDF)** · [Open Notes Printifier](https://avithegod2010.github.io/Notes-printifier/)
+
+Your notes stay on your device. No login or upload required.
 
 [![Live site](https://img.shields.io/badge/🌍_Live_site-GitHub_Pages-8b5cf6?style=for-the-badge)](https://avithegod2010.github.io/Notes-printifier/)
 [![Latest APK](https://img.shields.io/badge/🤖_Download-Android_APK-22c55e?style=for-the-badge)](../../releases)
