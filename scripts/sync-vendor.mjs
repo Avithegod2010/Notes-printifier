@@ -28,7 +28,28 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const check = process.argv.includes('--check');
 const copy = process.argv.includes('--copy');
 
-const sha256 = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
+const sha256 = (p) => readAsset(p).hex;
+
+/** Read a vendor asset as the bytes that ship: text assets (pdf.js /
+ *  tesseract JS) are compared with CRLF normalised to LF because Git's EOL
+ *  policy (core.autocrlf on Windows) rewrites line endings in the working
+ *  tree while the committed bytes stay LF. Hashing raw bytes would flag every
+ *  Windows checkout as "drifted" and drown out real drift. */
+const TEXT_ASSET = /\.m?js$/;
+
+function readAsset(p) {
+  const buf = readFileSync(p);
+  // CR/LF as char codes: no escape sequences, so EOL rewriting cannot corrupt this.
+  const CRLF = String.fromCharCode(13, 10);
+  const LF = String.fromCharCode(10);
+  const shipped = TEXT_ASSET.test(p)
+    ? Buffer.from(buf.toString('latin1').split(CRLF).join(LF), 'latin1')
+    : buf;
+  return {
+    hex: createHash('sha256').update(shipped).digest('hex'),
+    bytes: shipped.length,
+  };
+}
 
 // path in public/ → source: 'pkg:<subpath>' (copied from node_modules) or
 // 'bundled' (hand-placed asset — recorded for tamper-evidence, not copied).
@@ -61,7 +82,18 @@ function pkgVersion(name) {
   try {
     return JSON.parse(readFileSync(join(ROOT, 'node_modules', name, 'package.json'), 'utf8')).version;
   } catch {
-    return null;
+    // No node_modules (bare checkout, or a partial install): the lockfile pins
+    // the exact version CI installs, so read the resolved entry instead of
+    // recording null — a null here would make every later --check "drift".
+    try {
+      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const hit = readFileSync(join(ROOT, 'bun.lock'), 'utf8').match(
+        new RegExp(`"${esc}": \\["${esc}@([^"]+)"`),
+      );
+      return hit ? hit[1] : null;
+    } catch {
+      return null;
+    }
   }
 }
 

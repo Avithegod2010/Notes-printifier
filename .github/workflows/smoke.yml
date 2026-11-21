@@ -27,6 +27,15 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # A dependency bump that changes pdfjs-dist / tesseract.js without
+      # re-vendoring public/ leaves the app loading a pdf.js API against an
+      # older vendored worker ("The API version X does not match the Worker
+      # version Y"): every upload then fails with "Could not read that PDF"
+      # and the smoke run only shows a 5-minute timeout on a disabled button.
+      # Fail here instead, with the exact drift named.
+      - name: Vendored binary provenance
+        run: node scripts/sync-vendor.mjs --check
+
       - name: Static export build
         run: bun run build:static
         env:
