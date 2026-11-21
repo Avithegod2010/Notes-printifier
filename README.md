@@ -4,26 +4,22 @@
 
 <p><strong>Turn ink-heavy lecture slides into print-ready pages, right in your browser.</strong></p>
 
-<p><strong><a href="public/sample-lecture.pdf">🖨️ Open the sample PDF</a></strong> · <a href="https://avithegod2010.github.io/Notes-printifier/">🌐 Open Notes Printifier</a> · <a href="#the-41-to-14-page-example">📄 See the result</a></p>
-
-<picture>
-  <source media="(prefers-reduced-motion: reduce)" srcset="readme-hero.png" />
-  <img src="readme-hero.gif" width="820" alt="A stack of dark slides beside a white page with three slides" />
-</picture>
+<p>
+  <a href="https://avithegod2010.github.io/Notes-printifier/"><img src="https://img.shields.io/badge/Open%20website-2563EB?style=for-the-badge" alt="Open website" /></a>
+  <a href="public/sample-printified.pdf"><img src="https://img.shields.io/badge/See%20an%20example-166534?style=for-the-badge" alt="See an example" /></a>
+</p>
 
 </div>
 
 <a name="the-41-to-14-page-example"></a>
 
-## 📄 The 41-to-14-page example
+## 📄 From 41 slides to 14 printable pages
 
 <p align="center">
-  <a href="docs/screenshots/result.png"><img src="docs/screenshots/result.png" width="720" alt="Notes Printifier’s sample result screen showing 41 pages reduced to 14" /></a>
+  <a href="public/sample-printified.pdf"><img src="docs/screenshots/result.png" width="760" alt="Notes Printifier’s results screen showing 41 original pages reduced to 14 printable pages" /></a>
 </p>
 
-<p align="center"><sub>The sample uses three slides per printed page.</sub></p>
-
-**[See the print-ready PDF](public/sample-printified.pdf)**
+<p align="center">Three slides per printed page. <a href="public/sample-lecture.pdf">Open the original PDF</a> · <strong><a href="public/sample-printified.pdf">View the finished printout</a></strong></p>
 
 ## ✨ Features
 
@@ -52,7 +48,7 @@
 
 <p align="center">
   <a href="docs/screenshots/app-loaded.png"><img src="docs/screenshots/app-loaded.png" width="400" alt="Notes Printifier loading a lecture PDF" /></a>
-  <a href="docs/screenshots/hero-dark.png"><img src="docs/screenshots/hero-dark.png" width="400" alt="Notes Printifier’s web landing page in dark mode" /></a>
+  <a href="https://avithegod2010.github.io/Notes-printifier/"><img src="docs/screenshots/hero-dark.png" width="400" alt="Notes Printifier’s web landing page in dark mode" /></a>
 </p>
 
 <p align="center"><sub>Upload screen · Project website</sub></p>
