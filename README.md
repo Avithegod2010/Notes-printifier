@@ -6,7 +6,7 @@
 
 <p>
   <a href="https://avithegod2010.github.io/Notes-printifier/"><img src="https://img.shields.io/badge/Open%20website-2563EB?style=for-the-badge" alt="Open website" /></a>
-  <a href="public/sample-printified.pdf"><img src="https://img.shields.io/badge/See%20an%20example-166534?style=for-the-badge" alt="See an example" /></a>
+  <a href="#the-41-to-14-page-example"><img src="https://img.shields.io/badge/See%20an%20example-166534?style=for-the-badge" alt="See an example" /></a>
 </p>
 
 </div>
@@ -16,10 +16,10 @@
 ## 📄 From 41 slides to 14 printable pages
 
 <p align="center">
-  <a href="public/sample-printified.pdf"><img src="docs/screenshots/result.png" width="760" alt="Notes Printifier’s results screen showing 41 original pages reduced to 14 printable pages" /></a>
+  <a href="docs/screenshots/website-before-after.jpg"><img src="docs/screenshots/website-before-after.jpg" width="820" alt="Live Notes Printifier comparison showing dark lecture slides on the left and the bright three-slides-per-page printout on the right" /></a>
 </p>
 
-<p align="center">Three slides per printed page. <a href="public/sample-lecture.pdf">Open the original PDF</a> · <strong><a href="public/sample-printified.pdf">View the finished printout</a></strong></p>
+<p align="center">On the website, choose <strong>See a real example</strong> to scroll through both PDFs. <a href="public/sample-lecture.pdf">Open the original PDF</a> · <strong><a href="public/sample-printified.pdf">View the finished printout</a></strong></p>
 
 ## ✨ Features
 
