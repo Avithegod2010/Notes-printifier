@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
-import { clientKey, rateLimit } from '@/lib/rate-limit'
+import { clientKey, globalBudget, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,6 +87,9 @@ const LANGS: readonly Lang[] = ['en', 'hi']
 
 const RATE_MAX = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
+// Instance-wide ceiling per minute; bounds what rotating user-agent strings can spend.
+const GLOBAL_MAX = 30
+const GLOBAL_WINDOW_MS = 60 * 1000
 // Generous but bounded: an LLM hang must not hold the client's spinner forever.
 const AI_TIMEOUT_MS = 15_000
 
@@ -413,6 +416,14 @@ export async function POST(request: Request) {
   if (!rateLimit(`doctor:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: 'Too many requests, try again in a few minutes' },
+      { status: 429 },
+    )
+  }
+  // Instance-wide ceiling: the per-client key is a user-agent hash, so this is the
+  // only limit an abuser cannot rotate away. Bounds credit spend and ffmpeg load.
+  if (!globalBudget('doctor', GLOBAL_MAX, GLOBAL_WINDOW_MS)) {
+    return NextResponse.json(
+      { ok: false, error: 'AI is busy on this server right now, try again shortly' },
       { status: 429 },
     )
   }

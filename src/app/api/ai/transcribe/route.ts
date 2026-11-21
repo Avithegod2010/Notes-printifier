@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
-import { clientKey, rateLimit } from '@/lib/rate-limit'
+import { clientKey, globalBudget, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +13,9 @@ export const dynamic = 'force-dynamic'
 
 const RATE_MAX = 30
 const RATE_WINDOW_MS = 5 * 60 * 1000
+// Instance-wide ceiling per minute; bounds what rotating user-agent strings can spend.
+const GLOBAL_MAX = 15
+const GLOBAL_WINDOW_MS = 60 * 1000
 const MAX_DECODED_BYTES = 10 * 1024 * 1024
 // Base64 charset; whitespace tolerated because recorders sometimes wrap lines.
 const BASE64_RE = /^[A-Za-z0-9+/=\s]+$/
@@ -25,6 +28,13 @@ export async function POST(request: Request) {
   if (!rateLimit(`transcribe:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: 'Too many requests, try again in a few minutes' },
+      { status: 429 },
+    )
+  }
+  // Instance-wide ceiling — see lib/rate-limit.ts.
+  if (!globalBudget('transcribe', GLOBAL_MAX, GLOBAL_WINDOW_MS)) {
+    return NextResponse.json(
+      { ok: false, error: 'Transcription is busy on this server right now, try again shortly' },
       { status: 429 },
     )
   }

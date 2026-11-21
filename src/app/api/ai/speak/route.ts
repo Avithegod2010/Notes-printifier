@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { spawn } from 'node:child_process'
 import ZAI from 'z-ai-web-dev-sdk'
-import { clientKey, rateLimit } from '@/lib/rate-limit'
+import { clientKey, globalBudget, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +15,9 @@ export const dynamic = 'force-dynamic'
 
 const RATE_MAX = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
+// Instance-wide ceiling per minute; bounds what rotating user-agent strings can spend.
+const GLOBAL_MAX = 10
+const GLOBAL_WINDOW_MS = 60 * 1000
 const MAX_CHARS = 1000 // SDK hard limit is 1024; we keep headroom
 const MIN_SPEED = 0.5
 const MAX_SPEED = 2
@@ -79,6 +82,13 @@ export async function POST(request: Request) {
   if (!rateLimit(`speak:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: 'Too many requests, try again in a few minutes' },
+      { status: 429 },
+    )
+  }
+  // Instance-wide ceiling — see lib/rate-limit.ts (also bounds ffmpeg spawning).
+  if (!globalBudget('speak', GLOBAL_MAX, GLOBAL_WINDOW_MS)) {
+    return NextResponse.json(
+      { ok: false, error: 'Speech is busy on this server right now, try again shortly' },
       { status: 429 },
     )
   }

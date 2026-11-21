@@ -29,6 +29,19 @@ export function rateLimit(key: string, max: number, windowMs: number): boolean {
 }
 
 /**
+ * Server-wide budget for one route, on top of the per-client limit.
+ *
+ * The per-client key falls back to a user-agent hash when no trusted proxy is
+ * configured, and a user agent is trivially rotated — so a per-client limit
+ * alone bounds nothing an abuser cannot raise itself. This caps total calls per
+ * window for the whole instance, which is what actually bounds spend on the
+ * operator's AI credits and the ffmpeg work those routes trigger.
+ */
+export function globalBudget(route: string, max: number, windowMs: number): boolean {
+  return rateLimit(`global:${route}`, max, windowMs)
+}
+
+/**
  * Client identity for rate limiting.
  *
  * `x-forwarded-for` / `x-real-ip` are CLIENT-SUPPLIED headers — any caller
