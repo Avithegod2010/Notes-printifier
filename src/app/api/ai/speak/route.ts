@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { spawn } from 'node:child_process'
 import ZAI from 'z-ai-web-dev-sdk'
+import { requireAiAccess } from '@/lib/ai-access'
 import { clientKey, globalBudget, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -79,6 +80,11 @@ function wavToMp3(wav: Buffer): Promise<Buffer> {
 }
 
 export async function POST(request: Request) {
+  // Auth gate first: an unauthenticated caller must not even reach the budget,
+  // the TTS service or ffmpeg. See lib/ai-access.ts.
+  const denied = requireAiAccess(request)
+  if (denied) return denied
+
   if (!rateLimit(`speak:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: 'Too many requests, try again in a few minutes' },

@@ -65,6 +65,16 @@ bridge sanitizes file names before writing to `Downloads/Printifier`.
   forwarded headers are honored only when the operator sets `TRUST_PROXY=1` behind a
   proxy that overwrites them; otherwise callers fall into per-user-agent buckets so
   users can't block each other (light abuse protection, not billing-grade).
+- `/api/ai/*` (paid LLM/ASR/TTS + an ffmpeg fallback) sits behind
+  `src/lib/ai-access.ts`. With `AI_ACCESS_TOKEN` set, every request must present that
+  token (`Authorization: Bearer …` or `x-printifier-token`, SHA-256 + `timingSafeEqual`)
+  and anything else gets 401 — this is the only mode that authenticates a caller. With
+  the variable unset, the routes accept only a same-origin browser request (`Origin`
+  matched against the request host, `Sec-Fetch-Site` not cross-site) and keep the
+  per-minute instance budget. Same-origin is abuse resistance, **not** authentication:
+  `Origin` is forgeable and any visitor who loads the app is same-origin with it.
+  A deployment that widens `FRAME_ANCESTORS` (embedded cross-origin) is not same-origin with its
+  framer, so it must set `AI_ACCESS_TOKEN` - mode 2 refuses the embedder's calls by design.
 - Settings payloads arriving over any trust boundary — QR recipe links (`?r=`), shared
   preset links (`?p=`), imported preset/backup files, the presets API (write AND read) —
   pass through the whitelist-and-clamp sanitizer in `src/lib/settings-validate.ts`.

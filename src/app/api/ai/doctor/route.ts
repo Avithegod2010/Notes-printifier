@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
+import { requireAiAccess } from '@/lib/ai-access'
 import { clientKey, globalBudget, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -412,6 +413,11 @@ function heuristicAdvice(ctx: DoctorContext): DoctorReply {
 }
 
 export async function POST(request: Request) {
+  // Auth gate first: an unauthenticated caller must not even reach the budget
+  // or the LLM. See lib/ai-access.ts for the token / same-origin trade-off.
+  const denied = requireAiAccess(request)
+  if (denied) return denied
+
   // Light IP rate limit before doing any parsing/LLM work.
   if (!rateLimit(`doctor:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
     return NextResponse.json(

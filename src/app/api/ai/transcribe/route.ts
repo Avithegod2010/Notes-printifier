@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
+import { requireAiAccess } from '@/lib/ai-access'
 import { clientKey, globalBudget, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -25,6 +26,11 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 export async function POST(request: Request) {
+  // Auth gate first: an unauthenticated caller must not even reach the budget
+  // or the ASR service. See lib/ai-access.ts.
+  const denied = requireAiAccess(request)
+  if (denied) return denied
+
   if (!rateLimit(`transcribe:${clientKey(request)}`, RATE_MAX, RATE_WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: 'Too many requests, try again in a few minutes' },
