@@ -1491,24 +1491,3 @@ export function buildErasedOverlayPixels(
   }
   return oimg;
 }
-
-/**
- * F8 — DOM wrapper around buildErasedOverlayPixels: returns the overlay as a
- * data URL so it can be dropped straight into an <img>. (The enhance preview
- * itself now runs the pixel core inside the filter worker — this wrapper
- * remains for the main-thread fallback.)
- */
-export function buildErasedOverlay(
-  before: AnyCanvas,
-  after: AnyCanvas,
-): string | null {
-  const img = buildErasedOverlayPixels(before, after);
-  if (!img) return null;
-  const out = document.createElement('canvas');
-  out.width = img.width;
-  out.height = img.height;
-  const octx = out.getContext('2d');
-  if (!octx) return null;
-  octx.putImageData(img, 0, 0);
-  return out.toDataURL('image/png');
-}

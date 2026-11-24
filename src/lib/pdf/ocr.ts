@@ -40,22 +40,6 @@ const MIN_WORD_CONFIDENCE = 35;
 const MAX_OCR_SLIDES = 120; // hard cap — beyond this the wait isn't worth it
 
 /**
- * Language codes accepted by Tesseract (ISO 639-2). The UI passes user-facing
- * combos (e.g. ['eng','hin']) straight through; the matching .traineddata.gz
- * files ship self-hosted in /public/tesseract so OCR stays fully offline.
- */
-export type OcrLang =
-  | 'eng'
-  | 'hin'
-  | 'tam'
-  | 'guj'
-  | 'pan'
-  | 'kan'
-  | 'mal'
-  | 'tel'
-  | 'ori';
-
-/**
  * Per-slide OCR quality report — feeds the result-page confidence card
  * ("page 7 looked like a handwriting scan, 61% confidence").
  */

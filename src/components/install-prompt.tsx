@@ -88,8 +88,3 @@ export function InstallButton() {
     </Button>
   );
 }
-
-/** Kept for future mobile-menu placement. */
-export function useCanInstall(): boolean {
-  return useSyncExternalStore(subscribe, canInstall, () => false);
-}
